@@ -1,0 +1,12 @@
+name = "osmosis-alloy-dashboard"
+#compatibility_date = "2024-07-29"
+compatibility_date = "2024-03-29"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[placement]
+mode = "smart"
+
+[[kv_namespaces]]
+binding = "__NEXT_ON_PAGES__KV_SUSPENSE_CACHE"
+id = "33cf38661be541dd8b6569fe4e47f97e"
