@@ -83,7 +83,6 @@ const ActivityChartContent = ({
     return _.chain(activities)
       .map((activity) => {
         const timestamp = new Date(activity.timestamp)
-        console.log(activity.in)
         return {
           timestamp,
           count: activity.count,

@@ -300,7 +300,6 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
 
   try {
     const url = `https://osmosis-lcd.stakely.io/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
-    console.log(url)
     const total = await fetch(`${url}&limit=1`)
       .then((d) => d.json())
       .then((d) => Number(d.total))
