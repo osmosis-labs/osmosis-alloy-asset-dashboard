@@ -74,9 +74,9 @@ const columns: ColumnDef<PoolOverview>[] = [
   },
   {
     header: "Assets",
-    accessorKey: "assets",
+    accessorKey: "reserveCoins",
     cell: (row) => {
-      const assets = row.getValue() as PoolOverview["assets"]
+      const assets = row.getValue() as PoolOverview["reserveCoins"]
       return (
         <div className="flex items-center gap-2">
           {assets?.map((asset) => {
@@ -84,13 +84,13 @@ const columns: ColumnDef<PoolOverview>[] = [
               <Avatar className="size-5">
                 <AvatarImage
                   src={asset.asset.images[0].svg}
-                  alt={asset.symbol}
+                  alt={asset.asset.symbol}
                 />
                 <AvatarFallback>{capitalName(asset.asset.name)}</AvatarFallback>
               </Avatar>
             )
             return (
-              <Tooltip key={asset.denom}>
+              <Tooltip key={asset.asset.denom}>
                 <TooltipTrigger asChild>{Image}</TooltipTrigger>
                 <TooltipContent className="flex items-center gap-2 font-mono">
                   {Image} {asset.asset.symbol}
@@ -122,7 +122,10 @@ const columns: ColumnDef<PoolOverview>[] = [
     accessorFn: (row) => ({
       price: row.alloy.price?.amount,
       totalAmount:
-        row.assets?.reduce((acc, a) => acc + valueFormatter(a), 0) || 0,
+        row.reserveCoins?.reduce(
+          (acc, a) => acc + valueFormatter(a.currency),
+          0
+        ) || 0,
     }),
     cell: (row) => {
       const { price, totalAmount } = row.getValue() as {

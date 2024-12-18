@@ -37,39 +37,29 @@ const UnsupportedPoolsTable = ({
       },
       {
         header: "Assets",
-        accessorKey: "coinDenoms",
+        accessorKey: "reserveCoins",
         cell: (cell) => {
-          const denoms =
-            cell.getValue() as NotSupportedPoolOverview["coinDenoms"]
-          const a = _.chain(denoms)
-            .map((denom, i) => (i % 2 === 1 ? denom : null))
-            .compact()
-            .map((d) => (assets[d] || d) as AssetWithDecimal | string)
-            .value()
+          const assets =
+            cell.getValue() as NotSupportedPoolOverview["reserveCoins"]
 
           return (
             <div className="flex items-center gap-2">
-              {a?.map((asset) => {
-                if (typeof asset === "string") {
-                  return (
-                    <span className="font-mono" key={asset}>
-                      {asset.slice(0, 6)}...
-                    </span>
-                  )
-                }
+              {assets?.map((asset) => {
                 return (
                   <div
                     className="flex items-center gap-1 font-mono"
-                    key={asset.denom}
+                    key={asset.currency.currency.coinMinimalDenom}
                   >
                     <Avatar className="size-5">
                       <AvatarImage
-                        src={asset.images[0].svg}
-                        alt={asset.symbol}
+                        src={asset.currency.currency.coinImageUrl}
+                        alt={asset.currency.currency.coinDenom}
                       />
-                      <AvatarFallback>{capitalName(asset.name)}</AvatarFallback>
+                      <AvatarFallback>
+                        {capitalName(asset.currency.currency.coinDenom)}
+                      </AvatarFallback>
                     </Avatar>
-                    <span>{asset.symbol}</span>
+                    <span>{asset.currency.currency.coinDenom}</span>
                   </div>
                 )
               })}

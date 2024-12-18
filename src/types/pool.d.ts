@@ -1,6 +1,7 @@
 import _ from "lodash"
 
 import {
+  Asset,
   AssetWithDecimal,
   Currency,
   CurrencyAmount,
@@ -24,7 +25,6 @@ export type RawPoolOverview = {
   reserveCoins: string[]
   spreadFactor: string
   totalFiatValueLocked: string
-  coinDenoms: string[]
   poolNameByDenom: string
   coinNames: string[][]
   market?: {
@@ -35,29 +35,17 @@ export type RawPoolOverview = {
   }
 }
 
-export type PoolAsset = {
-  symbol: string
-  amount: number
-  denom: string
-  coingecko_id: string
-  liquidity: number
-  liquidity_24h_change: number
-  volume_24h: number
-  volume_24h_change: number
-  price: number
-  price_24h_change: number
-  fees: string
-  asset: AssetWithDecimal
-}
 export type PoolOverview = {
   id: string
   type: "cosmwasm-transmuter" | "cosmwasm"
   contractAddress: string
   codeId: string
-  reserveCoins: CurrencyAmount[]
+  reserveCoins: {
+    currency: CurrencyAmount
+    asset: AssetWithDecimal
+  }[]
   spreadFactor: Rate
   totalFiatValueLocked: FiatAmount
-  coinDenoms: string[]
   poolNameByDenom: string
   coinNames: string[][]
   volume24hUsd: FiatAmount
@@ -68,7 +56,7 @@ export type PoolOverview = {
     time: string
     value: number
   }[]
-  assets: PoolAsset[] | null
+  prices: Record<string, number>
   alloy: {
     asset: AssetWithDecimal
     price: FiatAmount | null
@@ -76,18 +64,18 @@ export type PoolOverview = {
   limiters: _.Dictionary<Limiter>
 }
 
-export type NotSupportedPoolOverview = PoolOverview & {
-  assets:
-    | (PoolAsset & {
-        asset: AssetWithDecimal | null
-      })[]
-    | null
-  alloy: {
-    asset: null
-    price: FiatAmount | null
+type Modify<T, R> = Omit<T, keyof R> & R
+
+export type NotSupportedPoolOverview = Modify<
+  PoolOverview,
+  {
+    alloy: {
+      asset: null
+      price: FiatAmount | null
+    }
+    limiters: null
   }
-  limiters: null
-}
+>
 
 export type PoolInOutAssets = {
   timestamp: string

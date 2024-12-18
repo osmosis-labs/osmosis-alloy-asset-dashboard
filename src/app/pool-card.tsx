@@ -6,8 +6,9 @@ import _ from "lodash"
 import { ChevronRight, ExternalLink, Info } from "lucide-react"
 import numbro from "numbro"
 
+import { Asset, CurrencyAmount } from "@/types/asset"
 import { Limiter } from "@/types/limiter"
-import { PoolAsset, PoolOverview } from "@/types/pool"
+import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
 import { cn, percentColorCn } from "@/lib/utils"
@@ -26,17 +27,18 @@ import { DecimalSpan } from "@/components/decimal-span"
 
 import { OverviewChartContent } from "./overview-chart"
 
-const valueFormatter = (a: PoolAsset) => {
-  return !a.symbol
-    ? new BigNumber(Number.isNaN(a.amount) ? 0 : a.amount)
-        .shiftedBy(-a.asset.decimal)
-        .toNumber()
-    : a.amount
+const valueFormatter = (a: CurrencyAmount) => {
+  return new BigNumber(Number.isNaN(a.amount) ? 0 : a.amount)
+    .shiftedBy(-(a.currency?.coinDecimals || 6))
+    .toNumber()
 }
 
 const PoolCard = ({ pool }: { pool: PoolOverview }) => {
   const totalAmount =
-    pool.assets?.reduce((acc, a) => acc + valueFormatter(a), 0) || 0
+    pool.reserveCoins?.reduce(
+      (acc, a) => acc + valueFormatter(a.currency),
+      0
+    ) || 0
 
   return (
     <Card>
@@ -130,17 +132,18 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
             </div>
             <OverviewChartContent
               pools={[pool]}
-              className="min-h-[200px] flex-1 rounded-md border p-2"
+              className="max-h-[700px] min-h-[200px] flex-1 rounded-md border p-2"
             />
           </div>
-          {pool.assets && (
+          {pool.reserveCoins && (
             <div className="flex flex-col gap-2">
-              {pool.assets.map((c) => (
+              {pool.reserveCoins.map((c, i) => (
                 <PoolAssetCard
-                  key={c.denom}
+                  key={i}
                   asset={c}
                   totalAmount={totalAmount}
-                  limiter={pool.limiters[c.denom]}
+                  limiter={pool.limiters[c.asset.base]}
+                  price={pool.prices[c.asset.base]}
                 />
               ))}
             </div>
@@ -157,13 +160,18 @@ const PoolAssetCard = ({
   totalAmount,
   className,
   limiter,
+  price,
 }: {
-  asset: PoolAsset
+  asset: {
+    asset: Asset
+    currency: CurrencyAmount
+  }
   totalAmount: number
   className?: string
   limiter?: Limiter
+  price?: number
 }) => {
-  const thisAmount = valueFormatter(c)
+  const thisAmount = valueFormatter(c.currency)
   const percentage = thisAmount / totalAmount
   const counterparty = _.startCase(
     _.last(c.asset.traces)?.counterparty.chain_name
@@ -194,16 +202,18 @@ const PoolAssetCard = ({
         </div>
         <div className="text-center md:ml-auto md:text-end">
           <h2 className="font-semibold">
-            {c.price ? `$${NumberFormatter.formatValue(c.price)}` : "-"}
+            {price ? `$${NumberFormatter.formatValue(price)}` : "-"}
           </h2>
-          <p
-            className={cn(
-              "text-xs text-muted-foreground",
-              percentColorCn(c.price_24h_change / 100 + 1)
-            )}
-          >
-            {NumberFormatter.formatPercent(c.price_24h_change / 100)}
-          </p>
+          {
+            //<p
+            //className={cn(
+            //"text-xs text-muted-foreground",
+            //percentColorCn(c.price_24h_change / 100 + 1)
+            //)}
+            //>
+            //{NumberFormatter.formatPercent(c.price_24h_change / 100)}
+            //</p>
+          }
         </div>
       </div>
       {limiter && (

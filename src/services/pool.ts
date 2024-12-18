@@ -21,8 +21,8 @@ const MIN_LIQUIDITY = 10
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
-  "https://api-osmosis.imperator.co/pools/v2/liquidity/{poolId}/chart"
-const BASE_POOL_INFO_URL = "https://api-osmosis.imperator.co/pools/v2/{poolId}"
+  "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
+const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
 
 const ZERO_FIAT = {
   fiat: {
@@ -61,7 +61,7 @@ const fillPoolOverview = async (
 
   const alloyAssetDetail = assetMap[alloyDenom]
 
-  if (!alloyAssetDetail || pool.coinDenoms.length <= 2) {
+  if (!alloyAssetDetail || pool.reserveCoins.length <= 1) {
     return {
       id: pool.id,
       type: pool.type,
@@ -70,16 +70,18 @@ const fillPoolOverview = async (
       reserveCoins: pool.reserveCoins.map((coin) => {
         const c = JSON.parse(coin)
         return {
-          ...c,
+          asset: assetMap[c.currency.coinMinimalDenom],
           currency: {
-            ...c.currency,
-            coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+            ...c,
+            currency: {
+              ...c.currency,
+              coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+            },
           },
         }
       }),
       spreadFactor: JSON.parse(pool.spreadFactor),
       totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
-      coinDenoms: pool.coinDenoms,
       poolNameByDenom: pool.poolNameByDenom,
       coinNames: pool.coinNames,
       volume24hUsd: pool.market?.volume24hUsd
@@ -94,6 +96,7 @@ const fillPoolOverview = async (
       feesSpent7dUsd: pool.market?.feesSpent7dUsd
         ? JSON.parse(pool.market.feesSpent7dUsd)
         : ZERO_FIAT,
+      prices: {},
       liquidityChart: [],
       assets: null,
       alloy: {
@@ -104,24 +107,39 @@ const fillPoolOverview = async (
     } as NotSupportedPoolOverview
   }
 
-  const [liquidityChart, assets, limiters] = await Promise.all([
+  const [liquidityChart, prices, limiters] = await Promise.all([
     fetch(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
       .then((d) => d.json())
-      .then((d) => (!d || !_.isArray(d) ? [] : d)),
-    fetch(BASE_POOL_INFO_URL.replace("{poolId}", pool.id))
+      .then((d) => (!d || !_.isArray(d) ? [] : d))
+      .then((d) =>
+        d
+          .map((v) => ({
+            time: v.timestamp,
+            value: v.liquidity_usd,
+          }))
+          .slice(1)
+      ),
+    fetch(
+      BASE_PRICE_URL.replace(
+        "{denoms}",
+        pool.reserveCoins
+          .map((coin) => JSON.parse(coin).currency.coinMinimalDenom)
+          .join(",")
+      )
+    )
       .then((d) => d.json())
-      .then((e) => (_.isArray(e) ? e : null)),
+      .then((d) =>
+        _.chain(d)
+          .mapValues((v) => _.values(v)[0])
+          .value()
+      ),
     getLimiters(pool.raw.contract_address),
   ])
   let alloyAssetPrice = await getAssetPrice(alloyDenom)
   if (alloyAssetPrice && Number(alloyAssetPrice?.amount) > 1000000)
     alloyAssetPrice = null
   if (!alloyAssetPrice) {
-    const foundAssetPrice = _.chain(assets)
-      .map((a) => a.price)
-      .compact()
-      .mean()
-      .value()
+    const foundAssetPrice = _.chain(prices).values().compact().mean().value()
     if (foundAssetPrice) {
       alloyAssetPrice = {
         fiat: {
@@ -155,16 +173,18 @@ const fillPoolOverview = async (
     reserveCoins: pool.reserveCoins.map((coin) => {
       const c = JSON.parse(coin)
       return {
-        ...c,
+        asset: assetMap[c.currency.coinMinimalDenom],
         currency: {
-          ...c.currency,
-          coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+          ...c,
+          currency: {
+            ...c.currency,
+            coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+          },
         },
       }
     }),
     spreadFactor: JSON.parse(pool.spreadFactor),
     totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
-    coinDenoms: pool.coinDenoms,
     poolNameByDenom: pool.poolNameByDenom,
     coinNames: pool.coinNames,
     volume24hUsd: pool.market?.volume24hUsd
@@ -180,10 +200,11 @@ const fillPoolOverview = async (
       ? JSON.parse(pool.market.feesSpent7dUsd)
       : ZERO_FIAT,
     liquidityChart,
-    assets: assets?.map((a: any) => ({
-      ...a,
-      asset: assetMap[a.denom],
-    })),
+    prices,
+    //assets: assets?.map((a: any) => ({
+    //...a,
+    //asset: assetMap[a.denom],
+    //})),
     alloy: {
       asset: alloyAssetDetail,
       price: alloyAssetPrice,
@@ -213,7 +234,7 @@ export const getPoolsOverview = unstable_cache(
     )
 
     return {
-      pools: pools.filter((p) => p.alloy.asset),
+      pools: pools.filter((p) => p.alloy.asset) as PoolOverview[],
       unsupportedPools: pools.filter(
         (p) => !p.alloy.asset
       ) as NotSupportedPoolOverview[],

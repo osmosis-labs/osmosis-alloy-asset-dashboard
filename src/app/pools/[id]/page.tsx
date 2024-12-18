@@ -1,6 +1,5 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import { getLimiters } from "@/services/limiter"
 import { getPoolOverview } from "@/services/pool"
 import _ from "lodash"
 import { ExternalLink, Frown } from "lucide-react"
@@ -76,11 +75,14 @@ export default async function Home({
   }
 
   const totalAmount =
-    pool.assets?.reduce((acc, a) => acc + valueFormatter(a), 0) || 0
-  const counterparties = _.chain(pool.assets)
+    pool.reserveCoins?.reduce(
+      (acc, a) => acc + valueFormatter(a.currency),
+      0
+    ) || 0
+  const counterparties = _.chain(pool.reserveCoins)
     .map((a) => ({
       ...a,
-      formattedAmount: valueFormatter(a),
+      formattedAmount: valueFormatter(a.currency),
       counterparty: _.last(a.asset.traces)?.counterparty.chain_name,
     }))
     .groupBy("counterparty")
@@ -210,10 +212,11 @@ export default async function Home({
             <CardContent>
               <TabsContent value="individual">
                 <div className="grid gap-2 md:grid-cols-2">
-                  {pool.assets?.map((a) => (
+                  {pool.reserveCoins?.map((a) => (
                     <PoolAssetCard
                       key={a.asset.denom}
                       asset={a}
+                      price={pool.prices[a.asset.denom]}
                       totalAmount={totalAmount}
                       limiter={pool.limiters[a.asset.denom]}
                     />

@@ -10,9 +10,11 @@ export async function GET() {
   return NextResponse.json(
     pools.map((pool) => ({
       id: pool.id,
-      assets: pool.assets?.map((asset) => asset.denom),
+      assets: pool.reserveCoins?.map(
+        (asset) => asset.currency.currency.coinMinimalDenom
+      ),
       alloy: {
-        asset: pool.alloy.asset.denom,
+        asset: pool.alloy.asset?.denom,
         price: pool.alloy.price?.amount || "0",
       },
     }))
