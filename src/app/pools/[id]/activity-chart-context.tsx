@@ -29,7 +29,7 @@ const ActivityChartContent = ({
   className?: string
 }) => {
   const config = useMemo(() => {
-    return _.chain(pool.assets)
+    return _.chain(pool.reserveCoins)
       .map((p) => p.asset)
       .concat(pool.alloy.asset)
       .map((asset, i) => {
@@ -71,7 +71,7 @@ const ActivityChartContent = ({
   }, [config])
 
   const poolAssetDecimals = useMemo(() => {
-    return _.chain(pool.assets)
+    return _.chain(pool.reserveCoins)
       .map((p) => p.asset)
       .concat(pool.alloy.asset)
       .map((a) => [a.denom, a.decimal])
