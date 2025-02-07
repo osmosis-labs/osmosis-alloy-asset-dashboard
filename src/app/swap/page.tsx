@@ -9,10 +9,10 @@ import _ from "lodash"
 import { Loader2 } from "lucide-react"
 import useSWRImmutable from "swr/immutable"
 
-import { MinimalAssetPool, PoolOverview } from "@/types/pool"
+import { MinimalAssetPool } from "@/types/pool"
 
-import { SwapCard } from "./swap-card"
-import WalletProvider from "./wallet-provider"
+import { SwapCard } from "../../components/swap-card"
+import WalletProvider from "../../components/wallet-provider"
 
 export default function Home() {
   const { data } = useSWRImmutable(

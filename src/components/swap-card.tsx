@@ -198,17 +198,19 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
         contract: contractAddress,
         sender: address,
         funds: [],
-        msg: Buffer.from(
-          JSON.stringify({
-            exit_pool: {
-              tokens_out: [
-                {
-                  denom: outAsset[0].denom,
-                  amount: minAmountOut,
-                },
-              ],
-            },
-          })
+        msg: Uint8Array.from(
+          Buffer.from(
+            JSON.stringify({
+              exit_pool: {
+                tokens_out: [
+                  {
+                    denom: outAsset[0].denom,
+                    amount: minAmountOut,
+                  },
+                ],
+              },
+            })
+          )
         ),
       })
       const txId = await signAndBroadcast([msg])

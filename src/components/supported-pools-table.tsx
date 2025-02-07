@@ -45,7 +45,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-import { valueFormatter } from "../pool-card"
+import { valueFormatter } from "./pool-card"
 
 const columns: ColumnDef<PoolOverview>[] = [
   {

@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import { getPoolOverview } from "@/services/pool"
+import { getPoolOverview, getPoolsOverview } from "@/services/pool"
 import _ from "lodash"
 import { ExternalLink, Frown } from "lucide-react"
 
@@ -18,16 +18,15 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DecimalSpan } from "@/components/decimal-span"
-import { OverviewChart } from "@/app/overview-chart"
-import { PoolAssetCard, valueFormatter } from "@/app/pool-card"
+import { OverviewChart } from "@/components/overview-chart"
+import { PoolAssetCard, valueFormatter } from "@/components/pool-card"
 
-import { ActivityChart } from "./activity-chart"
-import { CopyDenom } from "./copy-denom"
-import { PriceVolumeChart } from "./price-volume-chart"
-import { SourceChart } from "./source-chart"
-import { TransactionTable } from "./transaction-table"
+import { ActivityChart } from "../../../components/activity-chart"
+import { CopyDenom } from "../../../components/copy-denom"
+import { PriceVolumeChart } from "../../../components/price-volume-chart"
+import { SourceChart } from "../../../components/source-chart"
+import { TransactionTable } from "../../../components/transaction-table"
 
-export const runtime = "edge"
 export const revalidate = 3600 // 1 hour
 
 export const generateMetadata = async ({
@@ -48,6 +47,14 @@ export const generateMetadata = async ({
     description:
       pool.alloy.asset.extended_description || pool.alloy.asset.description,
   }
+}
+
+export async function generateStaticParams() {
+  const { pools } = await getPoolsOverview()
+
+  return pools.map((pool) => ({
+    id: pool.id,
+  }))
 }
 
 export default async function Home({

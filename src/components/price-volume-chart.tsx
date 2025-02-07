@@ -30,8 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { PriceVolume, Timeframe, TIMEFRAMES } from "../lib/timeframe"
 import { getPriceVolumeChart } from "./query"
-import { PriceVolume, Timeframe, TIMEFRAMES } from "./timeframe"
 
 const PriceVolumeChart = ({ denom }: { denom: string }) => {
   const [timeframe, setTimeframe] = useState<Timeframe>("7 Days")

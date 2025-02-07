@@ -242,7 +242,7 @@ export const getPoolsOverview = unstable_cache(
   },
   ["pools-overview"],
   {
-    revalidate: 3600,
+    revalidate: 1800,
   }
 )
 
@@ -253,7 +253,7 @@ export const getPoolOverview = unstable_cache(
   },
   ["pool-overview"],
   {
-    revalidate: 3600,
+    revalidate: 1800,
   }
 )
 
@@ -407,6 +407,6 @@ export const getPoolInOutAssets = unstable_cache(
   },
   ["pool-in-out-assets"],
   {
-    revalidate: 3600,
+    revalidate: 1800,
   }
 )

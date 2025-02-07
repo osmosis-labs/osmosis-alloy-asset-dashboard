@@ -49,7 +49,7 @@ export const getAssetList = unstable_cache(
   },
   ["asset-list"],
   {
-    revalidate: 3600,
+    revalidate: 1800,
   }
 )
 

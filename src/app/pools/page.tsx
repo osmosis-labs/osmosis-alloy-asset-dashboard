@@ -2,8 +2,8 @@ import { Metadata } from "next"
 import { getAssetMap } from "@/services/asset"
 import { getPoolsOverview } from "@/services/pool"
 
-import { SupportedPoolsTable } from "./supported-pools-table"
-import { UnsupportedPoolsTable } from "./unsupported-pools-table"
+import { SupportedPoolsTable } from "@/components/supported-pools-table"
+import { UnsupportedPoolsTable } from "@/components/unsupported-pools-table"
 
 export const metadata: Metadata = {
   title: "All Pools",
@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     "List of all alloy/transmuter pools. Including supported and unsupported pools.",
 }
 
-export const runtime = "edge"
 export const revalidate = 3600 // 1 hour
 
 export default async function Home() {

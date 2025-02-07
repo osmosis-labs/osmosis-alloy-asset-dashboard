@@ -6,7 +6,7 @@ import {
   PRICE_VOLUME_CHART_TIMEFRAME,
   PriceVolume,
   PriceVolumeRaw,
-} from "./timeframe"
+} from "../lib/timeframe"
 
 export const getPriceVolumeChart = unstable_cache(
   async (denom: string, tf: keyof typeof PRICE_VOLUME_CHART_TIMEFRAME) => {

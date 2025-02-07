@@ -1,9 +1,8 @@
 import { getPoolsOverview } from "@/services/pool"
 
-import { OverviewChart } from "./overview-chart"
-import { PoolCard } from "./pool-card"
+import { OverviewChart } from "../components/overview-chart"
+import { PoolCard } from "../components/pool-card"
 
-export const runtime = "edge"
 export const revalidate = 3600 // 1 hour
 
 export default async function Home() {

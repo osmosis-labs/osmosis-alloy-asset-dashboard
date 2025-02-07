@@ -3,8 +3,6 @@ import { getPoolsOverview } from "@/services/pool"
 
 import { env } from "@/env.mjs"
 
-export const runtime = "edge"
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pools = (await getPoolsOverview().then(({ pools }) =>
     pools.map((pool) => ({

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { getPoolsOverview } from "@/services/pool"
 
-export const runtime = "edge"
 export const revalidate = 3600
 
 export async function GET() {
