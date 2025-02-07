@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     creator: "@osmosiszone",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/osmo-logo-icon.svg",
   },
 }
 

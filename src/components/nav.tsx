@@ -1,8 +1,5 @@
 import Link from "next/link"
 
-import { siteConfig } from "@/config/site"
-
-import { Icons } from "./icons"
 import { ModeToggle } from "./mode-toggle"
 import { NavItem } from "./nav-item"
 
@@ -15,8 +12,17 @@ const Nav = () => {
             href="/"
             className="flex items-center gap-2 font-semibold md:text-lg"
           >
-            <Icons.logo className="size-5" />
-            <span className="hidden md:block">{siteConfig.name}</span>
+            <img
+              src="/osmo-logo-icon.svg"
+              className="size-5 shrink-0"
+              alt="osmosis"
+            />
+            <div className="flex flex-col">
+              <span>Osmosis</span>
+              <span className="-mt-1 text-xs font-medium">
+                Alloy Asset Dashboard
+              </span>
+            </div>
           </Link>
         </div>
         <div className="flex gap-4 font-mono text-sm font-medium">
