@@ -2,6 +2,12 @@ import { clsx, type ClassValue } from "clsx"
 import _ from "lodash"
 import { twMerge } from "tailwind-merge"
 
+import { Asset } from "@/types/asset"
+
+export const getAssetImageUrl = (asset: Asset) => {
+  return asset.images[0]?.svg || asset.images[0]?.png
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }

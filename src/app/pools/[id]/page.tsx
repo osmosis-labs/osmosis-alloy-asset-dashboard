@@ -6,7 +6,7 @@ import { ExternalLink, Frown } from "lucide-react"
 
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { capitalName } from "@/lib/utils"
+import { capitalName, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -109,7 +109,7 @@ export default async function Home({
         <div className="flex w-full flex-col gap-4 text-start md:flex-row">
           <Avatar className="size-24">
             <AvatarImage
-              src={pool.alloy.asset.images[0]?.svg}
+              src={getAssetImageUrl(pool.alloy.asset)}
               alt={pool.alloy.asset.symbol}
             />
             <AvatarFallback>

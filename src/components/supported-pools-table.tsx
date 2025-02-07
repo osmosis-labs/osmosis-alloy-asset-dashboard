@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { capitalName } from "@/lib/utils"
+import { capitalName, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -62,7 +62,7 @@ const columns: ColumnDef<PoolOverview>[] = [
         <div className="flex items-center gap-2">
           <Avatar className="size-5">
             <AvatarImage
-              src={alloy.asset.images[0].svg}
+              src={getAssetImageUrl(alloy.asset)}
               alt={alloy.asset.symbol}
             />
             <AvatarFallback>{capitalName(alloy.asset.name)}</AvatarFallback>
@@ -83,7 +83,7 @@ const columns: ColumnDef<PoolOverview>[] = [
             const Image = (
               <Avatar className="size-5">
                 <AvatarImage
-                  src={asset.asset.images[0].svg}
+                  src={getAssetImageUrl(asset.asset)}
                   alt={asset.asset.symbol}
                 />
                 <AvatarFallback>{capitalName(asset.asset.name)}</AvatarFallback>

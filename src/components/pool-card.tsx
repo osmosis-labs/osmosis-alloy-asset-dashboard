@@ -10,7 +10,7 @@ import { Limiter } from "@/types/limiter"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { cn } from "@/lib/utils"
+import { cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -185,7 +185,7 @@ const PoolAssetCard = ({
     >
       <div className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
         <Avatar>
-          <AvatarImage src={c.asset.images[0].svg} alt={c.asset.name} />
+          <AvatarImage src={getAssetImageUrl(c.asset)} alt={c.asset.name} />
         </Avatar>
         <div className="mr-2 flex flex-col space-y-0.5">
           <div className="inline-flex flex-wrap items-center gap-2 font-semibold leading-none">
