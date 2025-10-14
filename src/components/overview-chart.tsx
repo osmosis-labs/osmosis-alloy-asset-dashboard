@@ -30,7 +30,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const PERIOD_OPTIONS = ["7", "30", "60", "90"] as const
+const PERIOD_OPTIONS = ["7", "30", "60", "90", "365"] as const
+
+// Hardcoded color mappings for alloy assets by pool ID. Add more pool IDs and their hex colors as needed
+const POOL_COLORS: Record<string, string> = {
+  "1868": "#F7931A", // Bitcoin - Orange (official)
+  "1878": "#627EEA", // Ethereum - Purple/Blue (commonly used, visible on dark backgrounds)
+  "1925": "#9945FF", // Solana - Purple (official)
+  "1816": "#009393", // Tether - Aqua (official)
+  "2434": "#00A5DF", // Ripple - Light Blue
+  "2242": "#C8A014", // Dogecoin - Gold
+}
 
 const OverviewChart = ({
   pools,
@@ -44,7 +54,7 @@ const OverviewChart = ({
   className?: string
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>(
-    PERIOD_OPTIONS[2]
+    PERIOD_OPTIONS[4]
   )
 
   return (
@@ -112,6 +122,17 @@ const OverviewChartContent = ({
       .sortBy((d) => dayjs(d.date).unix())
       .value()
 
+    // Find first non-zero value index
+    const firstNonZeroIndex = data.findIndex((d) => {
+      const poolKeys = _.keys(d).filter((k) => k !== "date")
+      return poolKeys.some((key) => (d as any)[key] > 0)
+    })
+
+    // Remove all data points before first non-zero value
+    if (firstNonZeroIndex > 0) {
+      data.splice(0, firstNonZeroIndex)
+    }
+
     if (period) {
       const cutoffAfterIndex = data.findIndex(
         (d) => now.diff(dayjs(d.date), "days") <= Number(period)
@@ -131,9 +152,10 @@ const OverviewChartContent = ({
           {
             label: pool.alloy.asset.name,
             color:
+              POOL_COLORS[pool.id] ||
               pool.alloy.asset.images.at(1)?.theme?.primary_color_hex ||
               pool.alloy.asset.images.at(0)?.theme?.primary_color_hex ||
-              `hsl(var(--chart-${idx})`,
+              `hsl(var(--chart-${idx}))`,
           },
         ]
       })

@@ -274,29 +274,57 @@ const calculdateAlloyAssetDenom = (
 
 export const getPoolInOutTxs = cache(async (poolId: string) => {
   const dayAgo = dayjs.utc().subtract(1, "day").format()
-  const height = await fetch(
-    "https://osmosis-1-graphql.alleslabs.dev/v1/graphql",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        query: `
-          query Blocks($where: blocks_bool_exp) {
-            blocks(where: $where, order_by: {height: desc}, limit: 1) {
-              height
-            }
-          }`,
-        variables: {
-          where: {
-            timestamp: {
-              _lte: dayAgo,
+
+  // Try to get height from GraphQL endpoint (may be blocked by CORS in local dev)
+  let height: number
+  try {
+    height = await fetch(
+      "https://osmosis-1-graphql.alleslabs.dev/v1/graphql",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `
+            query Blocks($where: blocks_bool_exp) {
+              blocks(where: $where, order_by: {height: desc}, limit: 1) {
+                height
+              }
+            }`,
+          variables: {
+            where: {
+              timestamp: {
+                _lte: dayAgo,
+              },
             },
           },
-        },
-      }),
+        }),
+      }
+    )
+      .then((d) => d.json())
+      .then((d) => d.data.blocks[0].height as number)
+  } catch (error) {
+    // Fallback: Calculate approximate height based on current block
+    // Osmosis has ~1.2 second block time, so 24h = ~72,000 blocks
+    console.warn("GraphQL endpoint unavailable, using block-based fallback", error)
+    const BLOCKS_PER_DAY = 72000
+
+    try {
+      const currentHeight = await fetch(
+        "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
+      )
+        .then((d) => d.json())
+        .then((d) => Number(d.block.header.height))
+
+      height = currentHeight - BLOCKS_PER_DAY
+    } catch (fallbackError) {
+      console.error("Failed to fetch block height from LCD endpoint", fallbackError)
+      throw new Error(
+        "Unable to determine block height: both GraphQL and LCD endpoints failed"
+      )
     }
-  )
-    .then((d) => d.json())
-    .then((d) => d.data.blocks[0].height as number)
+  }
 
   try {
     const url = `https://osmosis-lcd.stakely.io/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`

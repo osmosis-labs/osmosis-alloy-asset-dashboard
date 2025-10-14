@@ -223,9 +223,9 @@ export default async function Home({
                     <PoolAssetCard
                       key={a.asset.denom}
                       asset={a}
-                      price={pool.prices[a.asset.denom]}
+                      price={pool.prices[a.asset.base]}
                       totalAmount={totalAmount}
-                      limiter={pool.limiters[a.asset.denom]}
+                      limiter={pool.limiters[a.asset.base]}
                     />
                   ))}
                 </div>
@@ -259,8 +259,9 @@ export default async function Home({
                         <PoolAssetCard
                           key={a.asset.denom}
                           asset={a}
+                          price={pool.prices[a.asset.base]}
                           totalAmount={totalAmount}
-                          limiter={pool.limiters[a.asset.denom]}
+                          limiter={pool.limiters[a.asset.base]}
                         />
                       ))}
                     </div>
