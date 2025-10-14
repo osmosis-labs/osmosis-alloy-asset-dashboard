@@ -112,6 +112,17 @@ const OverviewChartContent = ({
       .sortBy((d) => dayjs(d.date).unix())
       .value()
 
+    // Find first non-zero value index
+    const firstNonZeroIndex = data.findIndex((d) => {
+      const poolKeys = _.keys(d).filter((k) => k !== "date")
+      return poolKeys.some((key) => d[key] > 0)
+    })
+
+    // Remove all data points before first non-zero value
+    if (firstNonZeroIndex > 0) {
+      data.splice(0, firstNonZeroIndex)
+    }
+
     if (period) {
       const cutoffAfterIndex = data.findIndex(
         (d) => now.diff(dayjs(d.date), "days") <= Number(period)
