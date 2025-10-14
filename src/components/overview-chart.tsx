@@ -125,7 +125,7 @@ const OverviewChartContent = ({
     // Find first non-zero value index
     const firstNonZeroIndex = data.findIndex((d) => {
       const poolKeys = _.keys(d).filter((k) => k !== "date")
-      return poolKeys.some((key) => d[key] > 0)
+      return poolKeys.some((key) => (d as any)[key] > 0)
     })
 
     // Remove all data points before first non-zero value
