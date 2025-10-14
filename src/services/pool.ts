@@ -310,13 +310,20 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
     console.warn("GraphQL endpoint unavailable, using block-based fallback", error)
     const BLOCKS_PER_DAY = 72000
 
-    const currentHeight = await fetch(
-      "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
-    )
-      .then((d) => d.json())
-      .then((d) => Number(d.block.header.height))
+    try {
+      const currentHeight = await fetch(
+        "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
+      )
+        .then((d) => d.json())
+        .then((d) => Number(d.block.header.height))
 
-    height = currentHeight - BLOCKS_PER_DAY
+      height = currentHeight - BLOCKS_PER_DAY
+    } catch (fallbackError) {
+      console.error("Failed to fetch block height from LCD endpoint", fallbackError)
+      throw new Error(
+        "Unable to determine block height: both GraphQL and LCD endpoints failed"
+      )
+    }
   }
 
   try {
