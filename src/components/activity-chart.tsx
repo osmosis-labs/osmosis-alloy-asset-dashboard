@@ -47,7 +47,20 @@ const SuspensedActivityChart = async ({
   pool: PoolOverview
   className?: string
 }) => {
-  const activites = await getPoolInOutAssets(pool.id)
+  let activites: Awaited<ReturnType<typeof getPoolInOutAssets>> = []
+
+  try {
+    activites = await getPoolInOutAssets(pool.id)
+  } catch (error) {
+    console.error(`Failed to fetch activities for pool ${pool.id}:`, error)
+    // Return empty activity state on error
+    return (
+      <div className="absolute left-0 right-0 top-1/3 m-auto">
+        <p className="text-muted-foreground">Unable to load asset activity</p>
+      </div>
+    )
+  }
+
   return (
     <>
       {activites.length === 0 && (
