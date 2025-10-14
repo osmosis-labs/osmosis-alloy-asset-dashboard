@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const PERIOD_OPTIONS = ["7", "30", "60", "90"] as const
+const PERIOD_OPTIONS = ["7", "30", "60", "90", "365"] as const
 
 const OverviewChart = ({
   pools,
@@ -44,7 +44,7 @@ const OverviewChart = ({
   className?: string
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>(
-    PERIOD_OPTIONS[2]
+    PERIOD_OPTIONS[4]
   )
 
   return (
