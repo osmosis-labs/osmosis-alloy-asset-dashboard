@@ -155,7 +155,7 @@ const OverviewChartContent = ({
               POOL_COLORS[pool.id] ||
               pool.alloy.asset.images.at(1)?.theme?.primary_color_hex ||
               pool.alloy.asset.images.at(0)?.theme?.primary_color_hex ||
-              `hsl(var(--chart-${idx})`,
+              `hsl(var(--chart-${idx}))`,
           },
         ]
       })
