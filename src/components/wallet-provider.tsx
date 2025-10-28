@@ -87,6 +87,7 @@ const WalletProvider = ({ children }: { children: ReactNode }) => {
           },
         },
       }}
+      throwErrors={false}
     >
       {children}
     </ChainProvider>
