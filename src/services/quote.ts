@@ -5,7 +5,7 @@ import { Quote } from "@/types/quote"
 const BASE_URL =
   "https://sqsprod.osmosis.zone/router/quote?tokenIn={tokenIn}&tokenOutDenom={tokenOutDenom}"
 const BASE_DIRECT_URL =
-  "https://sqs.osmosis.zone/router/custom-direct-quote?tokenIn={tokenIn}&tokenOutDenom={tokenOutDenom}&poolID={poolId}"
+  "https://sqsprod.osmosis.zone/router/custom-direct-quote?tokenIn={tokenIn}&tokenOutDenom={tokenOutDenom}&poolID={poolId}"
 
 export const getBaseQuote = async (denomIn: string, denomOut: string) => {
   unstable_noStore()
