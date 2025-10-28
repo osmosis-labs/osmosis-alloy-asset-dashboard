@@ -4,9 +4,16 @@ import { Limiter, RawLimiterResponse } from "@/types/limiter"
 
 export const getLimiters = async (contractAddress: string) => {
   try {
-    const response = await fetch(
+    const res = await fetch(
       `https://osmosis-rest.publicnode.com/cosmwasm/wasm/v1/contract/${contractAddress}/smart/ewogICJsaXN0X2xpbWl0ZXJzIjoge30KfQ==`
-    ).then((res) => res.json())
+    )
+
+    if (!res.ok) {
+      console.warn(`Failed to fetch limiters: ${res.status} ${res.statusText}`)
+      return {}
+    }
+
+    const response = await res.json()
 
     const limiters = response.data.limiters as [
       [string, string],

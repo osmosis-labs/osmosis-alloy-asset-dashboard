@@ -22,30 +22,52 @@ const BASE_MARKET_ASSET_URL =
   "https://app.osmosis.zone/api/edge-trpc-assets/assets.getMarketAssets?input=%7B%22json%22:%7B%22limit%22:50,%22search%22:%7B%22query%22:%22{denom}%22%7D,%22onlyVerified%22:false,%22includePreview%22:false,%22sort%22:null,%22watchListDenoms%22:%5B%5D,%22categories%22:null,%22cursor%22:0%7D,%22meta%22:%7B%22values%22:%7B%22sort%22:%5B%22undefined%22%5D,%22categories%22:%5B%22undefined%22%5D%7D%7D%7D"
 
 export const getAssetWithMarketPrice = cache(async (denom: string) => {
-  const response = await fetch(BASE_MARKET_ASSET_URL.replace("{denom}", denom))
-  const data = await response.json().then((d) => d.result.data.json.items[0])
-  return {
-    ...data,
-    coinImageUrl: `${BASE_ASSET_URL}${data.coinImageUrl}`,
-    currentPrice: JSON.parse(data.currentPrice),
-    marketCap: JSON.parse(data.marketCap),
-    liquidity: data.liquidity ? JSON.parse(data.liquidity) : null,
-    priceChange1h: JSON.parse(data.priceChange1h),
-    priceChange24h: JSON.parse(data.priceChange24h),
-    priceChange7d: JSON.parse(data.priceChange7d),
-    volume24h: JSON.parse(data.volume24h),
-  } as CurrencyWithMarketPrice
+  try {
+    const response = await fetch(BASE_MARKET_ASSET_URL.replace("{denom}", denom))
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch asset with market price: ${response.status} ${response.statusText}`)
+      return null
+    }
+
+    const data = await response.json().then((d) => d.result.data.json.items[0])
+    return {
+      ...data,
+      coinImageUrl: `${BASE_ASSET_URL}${data.coinImageUrl}`,
+      currentPrice: JSON.parse(data.currentPrice),
+      marketCap: JSON.parse(data.marketCap),
+      liquidity: data.liquidity ? JSON.parse(data.liquidity) : null,
+      priceChange1h: JSON.parse(data.priceChange1h),
+      priceChange24h: JSON.parse(data.priceChange24h),
+      priceChange7d: JSON.parse(data.priceChange7d),
+      volume24h: JSON.parse(data.volume24h),
+    } as CurrencyWithMarketPrice
+  } catch (e) {
+    console.error(`Error fetching asset with market price: ${e}`)
+    return null
+  }
 })
 
 export const getAssetList = unstable_cache(
   async () => {
-    const response = await fetch(BASE_ASSET_LIST)
-    const data: Asset[] = await response.json().then((d) => d.assets)
-    return data.map((a) => ({
-      ...a,
-      denom: _.first(a.denom_units)!.denom,
-      decimal: _.last(a.denom_units)!.exponent || 6,
-    })) as AssetWithDecimal[]
+    try {
+      const response = await fetch(BASE_ASSET_LIST)
+
+      if (!response.ok) {
+        console.error(`Failed to fetch asset list: ${response.status} ${response.statusText}`)
+        return []
+      }
+
+      const data: Asset[] = await response.json().then((d) => d.assets)
+      return data.map((a) => ({
+        ...a,
+        denom: _.first(a.denom_units)!.denom,
+        decimal: _.last(a.denom_units)!.exponent || 6,
+      })) as AssetWithDecimal[]
+    } catch (e) {
+      console.error(`Error fetching asset list: ${e}`)
+      return []
+    }
   },
   ["asset-list"],
   {
@@ -54,13 +76,24 @@ export const getAssetList = unstable_cache(
 )
 
 export const getAssetListUncached = async () => {
-  const response = await fetch(BASE_ASSET_LIST)
-  const data: Asset[] = await response.json().then((d) => d.assets)
-  return data.map((a) => ({
-    ...a,
-    denom: _.first(a.denom_units)!.denom,
-    decimal: _.last(a.denom_units)!.exponent || 6,
-  })) as AssetWithDecimal[]
+  try {
+    const response = await fetch(BASE_ASSET_LIST)
+
+    if (!response.ok) {
+      console.error(`Failed to fetch asset list (uncached): ${response.status} ${response.statusText}`)
+      return []
+    }
+
+    const data: Asset[] = await response.json().then((d) => d.assets)
+    return data.map((a) => ({
+      ...a,
+      denom: _.first(a.denom_units)!.denom,
+      decimal: _.last(a.denom_units)!.exponent || 6,
+    })) as AssetWithDecimal[]
+  } catch (e) {
+    console.error(`Error fetching asset list (uncached): ${e}`)
+    return []
+  }
 }
 
 export const getAssetMap = cache(async () => {
@@ -69,23 +102,41 @@ export const getAssetMap = cache(async () => {
 })
 
 export const getAssetWithPrice = cache(async (denom: string) => {
-  const response = await fetch(
-    BASE_ASSET_WITH_PRICE_URL.replace("{denom}", denom)
-  )
-  const data = await response.json().then((d) => d.result.data.json)
-  return {
-    ...data,
-    coinImageUrl: `${BASE_ASSET_URL}${data.coinImageUrl}`,
-    currentPrice: JSON.parse(data.currentPrice),
-  } as CurrencyWithPrice
+  try {
+    const response = await fetch(
+      BASE_ASSET_WITH_PRICE_URL.replace("{denom}", denom)
+    )
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch asset with price: ${response.status} ${response.statusText}`)
+      return null
+    }
+
+    const data = await response.json().then((d) => d.result.data.json)
+    return {
+      ...data,
+      coinImageUrl: `${BASE_ASSET_URL}${data.coinImageUrl}`,
+      currentPrice: JSON.parse(data.currentPrice),
+    } as CurrencyWithPrice
+  } catch (e) {
+    console.error(`Error fetching asset with price: ${e}`)
+    return null
+  }
 })
 
 export const getAssetPrice = cache(async (denom: string) => {
   try {
     const response = await fetch(BASE_ASSET_PRICE.replace("{denom}", denom))
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch asset price: ${response.status} ${response.statusText}`)
+      return null
+    }
+
     const data = await response.json().then((d) => d.result.data.json)
     return JSON.parse(data) as FiatAmount
   } catch (e) {
+    console.error(`Error fetching asset price: ${e}`)
     return null
   }
 })
@@ -93,11 +144,22 @@ export const getAssetPrice = cache(async (denom: string) => {
 export const getUserAssets = async (address: string) => {
   unstable_noStore()
 
-  const limit = 100
-  const offset = 0
-  const response = await fetch(
-    `https://lcd.osmosis.zone/cosmos/bank/v1beta1/spendable_balances/${address}?pagination.limit=${limit}&pagination.offset=${offset}`
-  ).then((d) => d.json())
+  try {
+    const limit = 100
+    const offset = 0
+    const response = await fetch(
+      `https://lcd.osmosis.zone/cosmos/bank/v1beta1/spendable_balances/${address}?pagination.limit=${limit}&pagination.offset=${offset}`
+    )
 
-  return response.balances as Coin[]
+    if (!response.ok) {
+      console.error(`Failed to fetch user assets: ${response.status} ${response.statusText}`)
+      return []
+    }
+
+    const data = await response.json()
+    return data.balances as Coin[]
+  } catch (e) {
+    console.error(`Error fetching user assets: ${e}`)
+    return []
+  }
 }
