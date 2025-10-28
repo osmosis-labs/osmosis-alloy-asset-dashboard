@@ -25,9 +25,22 @@ export const getQuote = async (
     `${amountIn}${encodeURIComponent(denomIn)}`
   ).replace("{tokenOutDenom}", encodeURIComponent(denomOut))
 
-  const response = await fetch(url).then((res) => res.json())
+  try {
+    const response = await fetch(url)
 
-  return response as Quote
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(
+        errorText || `Failed to fetch quote: ${response.status} ${response.statusText}`
+      )
+    }
+
+    const data = await response.json()
+    return data as Quote
+  } catch (e: any) {
+    console.error(`Error fetching quote: ${e.message}`)
+    throw e
+  }
 }
 
 export const getBaseDirectQuote = async (
@@ -55,7 +68,20 @@ export const getDirectQuote = async (
     .replace("{tokenOutDenom}", encodeURIComponent(denomOut))
     .replace("{poolId}", poolId)
 
-  const response = await fetch(url).then((res) => res.json())
+  try {
+    const response = await fetch(url)
 
-  return response as Quote
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(
+        errorText || `Failed to fetch direct quote: ${response.status} ${response.statusText}`
+      )
+    }
+
+    const data = await response.json()
+    return data as Quote
+  } catch (e: any) {
+    console.error(`Error fetching direct quote: ${e.message}`)
+    throw e
+  }
 }
