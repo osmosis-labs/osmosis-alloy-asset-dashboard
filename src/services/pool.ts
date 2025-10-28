@@ -18,7 +18,7 @@ import { getAssetMap, getAssetPrice } from "./asset"
 import { getLimiters } from "./limiter"
 
 const MIN_LIQUIDITY = 10
-const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
+const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
@@ -109,7 +109,18 @@ const fillPoolOverview = async (
 
   const [liquidityChart, prices, limiters] = await Promise.all([
     fetch(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
-      .then((d) => d.json())
+      .then(async (d) => {
+        if (!d.ok) {
+          console.warn(`Failed to fetch liquidity chart: ${d.status} ${d.statusText}`)
+          return []
+        }
+        try {
+          return await d.json()
+        } catch (e) {
+          console.warn(`Failed to parse liquidity chart JSON: ${e}`)
+          return []
+        }
+      })
       .then((d) => (!d || !_.isArray(d) ? [] : d))
       .then((d) =>
         d
@@ -118,7 +129,11 @@ const fillPoolOverview = async (
             value: v.liquidity_usd,
           }))
           .slice(1)
-      ),
+      )
+      .catch((e) => {
+        console.error(`Error fetching liquidity chart: ${e}`)
+        return []
+      }),
     fetch(
       BASE_PRICE_URL.replace(
         "{denoms}",
@@ -127,12 +142,27 @@ const fillPoolOverview = async (
           .join(",")
       )
     )
-      .then((d) => d.json())
+      .then(async (d) => {
+        if (!d.ok) {
+          console.warn(`Failed to fetch prices: ${d.status} ${d.statusText}`)
+          return {}
+        }
+        try {
+          return await d.json()
+        } catch (e) {
+          console.warn(`Failed to parse prices JSON: ${e}`)
+          return {}
+        }
+      })
       .then((d) =>
         _.chain(d)
           .mapValues((v) => _.values(v)[0])
           .value()
-      ),
+      )
+      .catch((e) => {
+        console.error(`Error fetching prices: ${e}`)
+        return {}
+      }),
     getLimiters(pool.raw.contract_address),
   ])
   let alloyAssetPrice = await getAssetPrice(alloyDenom)
@@ -215,14 +245,25 @@ const fillPoolOverview = async (
 
 export const getRawPoolsOverview = async () => {
   const response = await fetch(BASE_POOLS_URL)
-  const data = await response
-    .json()
-    .then((d) => d.result.data.json.items as RawPoolOverview[])
-    .then((d) =>
-      d.filter((pool) => env.NEXT_PUBLIC_CODE_IDS.includes(pool.raw.code_id))
-    )
 
-  return data
+  if (!response.ok) {
+    console.error(`Failed to fetch pools overview: ${response.status} ${response.statusText}`)
+    return []
+  }
+
+  try {
+    const data = await response
+      .json()
+      .then((d) => d.result.data.json.items as RawPoolOverview[])
+      .then((d) =>
+        d.filter((pool) => env.NEXT_PUBLIC_CODE_IDS.includes(pool.raw.code_id))
+      )
+
+    return data
+  } catch (e) {
+    console.error(`Failed to parse pools overview JSON: ${e}`)
+    return []
+  }
 }
 
 export const getPoolsOverview = unstable_cache(
@@ -278,7 +319,7 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   // Try to get height from GraphQL endpoint (may be blocked by CORS in local dev)
   let height: number
   try {
-    height = await fetch(
+    const response = await fetch(
       "https://osmosis-1-graphql.alleslabs.dev/v1/graphql",
       {
         method: "POST",
@@ -302,8 +343,13 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
         }),
       }
     )
-      .then((d) => d.json())
-      .then((d) => d.data.blocks[0].height as number)
+
+    if (!response.ok) {
+      throw new Error(`GraphQL endpoint returned ${response.status}`)
+    }
+
+    const data = await response.json()
+    height = data.data.blocks[0].height as number
   } catch (error) {
     // Fallback: Calculate approximate height based on current block
     // Osmosis has ~1.2 second block time, so 24h = ~72,000 blocks
@@ -311,12 +357,16 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
     const BLOCKS_PER_DAY = 72000
 
     try {
-      const currentHeight = await fetch(
+      const heightResponse = await fetch(
         "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
       )
-        .then((d) => d.json())
-        .then((d) => Number(d.block.header.height))
 
+      if (!heightResponse.ok) {
+        throw new Error(`LCD endpoint returned ${heightResponse.status}`)
+      }
+
+      const heightData = await heightResponse.json()
+      const currentHeight = Number(heightData.block.header.height)
       height = currentHeight - BLOCKS_PER_DAY
     } catch (fallbackError) {
       console.error("Failed to fetch block height from LCD endpoint", fallbackError)
@@ -328,18 +378,33 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
 
   try {
     const url = `https://osmosis-lcd.stakely.io/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
-    const total = await fetch(`${url}&limit=1`)
-      .then((d) => d.json())
-      .then((d) => Number(d.total))
+    const totalResponse = await fetch(`${url}&limit=1`)
+
+    if (!totalResponse.ok) {
+      console.error(`Failed to fetch tx count: ${totalResponse.status} ${totalResponse.statusText}`)
+      return { total: 0, txs: [] }
+    }
+
+    const totalData = await totalResponse.json()
+    const total = Number(totalData.total)
 
     const limit = 100
     const pages = Math.min(Math.ceil(total / limit), 10)
     const txs = await Promise.all(
-      _.range(1, pages + 1).map((page) =>
-        fetch(`${url}&limit=${limit}&page=${page}`)
-          .then((d) => d.json())
-          .then((d) => d.tx_responses)
-      )
+      _.range(1, pages + 1).map(async (page) => {
+        try {
+          const response = await fetch(`${url}&limit=${limit}&page=${page}`)
+          if (!response.ok) {
+            console.warn(`Failed to fetch tx page ${page}: ${response.status}`)
+            return []
+          }
+          const data = await response.json()
+          return data.tx_responses
+        } catch (e) {
+          console.warn(`Error fetching tx page ${page}: ${e}`)
+          return []
+        }
+      })
     )
 
     return {
