@@ -377,7 +377,7 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   }
 
   try {
-    const url = `https://osmosis-lcd.stakely.io/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
+    const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
     const totalResponse = await fetch(`${url}&limit=1`)
 
     if (!totalResponse.ok) {
