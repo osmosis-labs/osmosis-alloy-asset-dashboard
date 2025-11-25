@@ -287,16 +287,10 @@ export const getPoolsOverview = unstable_cache(
   }
 )
 
-export const getPoolOverview = unstable_cache(
-  async (poolId: string) => {
-    const pools = await getPoolsOverview()
-    return pools.pools.find((p) => p.id === poolId)
-  },
-  ["pool-overview"],
-  {
-    revalidate: 1800,
-  }
-)
+export const getPoolOverview = async (poolId: string) => {
+  const pools = await getPoolsOverview()
+  return pools.pools.find((p) => p.id === poolId)
+}
 
 export const getPoolsFromAPI = async () => {
   return await fetch("/api/pools").then((res) =>
