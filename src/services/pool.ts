@@ -18,7 +18,7 @@ import { getAssetMap, getAssetPrice } from "./asset"
 import { getLimiters } from "./limiter"
 
 const MIN_LIQUIDITY = 10
-const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
+const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
