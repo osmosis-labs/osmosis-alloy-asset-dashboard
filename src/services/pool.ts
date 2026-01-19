@@ -266,6 +266,26 @@ export const getRawPoolsOverview = async () => {
   }
 }
 
+// Last known good pools cache - lasts 7 days
+const getLastKnownGoodPools = unstable_cache(
+  async () => {
+    return {
+      pools: [] as PoolOverview[],
+      unsupportedPools: [] as NotSupportedPoolOverview[],
+    }
+  },
+  ["pools-overview-last-good"],
+  {
+    revalidate: 604800, // 7 days
+  }
+)
+
+// Mutable reference to store last good data
+let lastGoodPoolsData: {
+  pools: PoolOverview[]
+  unsupportedPools: NotSupportedPoolOverview[]
+} | null = null
+
 export const getPoolsOverview = unstable_cache(
   async () => {
     const data = await getRawPoolsOverview()
@@ -274,12 +294,37 @@ export const getPoolsOverview = unstable_cache(
       data.map((p) => fillPoolOverview(p, assetMap))
     )
 
-    return {
+    const result = {
       pools: pools.filter((p) => p.alloy.asset) as PoolOverview[],
       unsupportedPools: pools.filter(
         (p) => !p.alloy.asset
       ) as NotSupportedPoolOverview[],
     }
+
+    // If we got valid pools, save as last known good
+    if (result.pools.length > 0) {
+      lastGoodPoolsData = result
+      return result
+    }
+
+    // No valid pools found - fall back to last known good
+    console.warn(
+      "[getPoolsOverview] No valid pools found, using last known good data"
+    )
+
+    if (lastGoodPoolsData && lastGoodPoolsData.pools.length > 0) {
+      return lastGoodPoolsData
+    }
+
+    // If no in-memory cache, try to get from cache
+    const cached = await getLastKnownGoodPools()
+    if (cached.pools.length > 0) {
+      lastGoodPoolsData = cached
+      return cached
+    }
+
+    // Last resort - return empty (this shouldn't happen after initial successful load)
+    return result
   },
   ["pools-overview"],
   {
