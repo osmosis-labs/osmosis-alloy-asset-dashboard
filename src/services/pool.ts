@@ -111,7 +111,9 @@ const fillPoolOverview = async (
     fetch(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
       .then(async (d) => {
         if (!d.ok) {
-          console.warn(`Failed to fetch liquidity chart: ${d.status} ${d.statusText}`)
+          console.warn(
+            `Failed to fetch liquidity chart: ${d.status} ${d.statusText}`
+          )
           return []
         }
         try {
@@ -123,12 +125,13 @@ const fillPoolOverview = async (
       })
       .then((d) => (!d || !_.isArray(d) ? [] : d))
       .then((d) =>
-        d
-          .map((v) => ({
-            time: v.timestamp,
-            value: v.liquidity_usd,
-          }))
-          .slice(1)
+        // The first element is the "now" snapshot with a sub-day timestamp;
+        // drop it only when there is also at least one daily point to plot,
+        // so a single-element response is not emptied out.
+        (d.length > 1 ? d.slice(1) : d).map((v) => ({
+          time: v.timestamp,
+          value: v.liquidity_usd,
+        }))
       )
       .catch((e) => {
         console.error(`Error fetching liquidity chart: ${e}`)
