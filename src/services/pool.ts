@@ -336,12 +336,19 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
 // process memory), so it survives the serverless cold starts that made the
 // previous module-variable approach a no-op.
 //
-// The key property: this tier caches the VALUE it last successfully computed
-// and only re-executes every 7 days. Between re-executions it serves that held
-// value without touching any upstream, so a live outage cannot empty it. If a
-// re-execution lands during an outage, we THROW rather than return empty:
-// `unstable_cache` does not persist a thrown error, so the prior good value is
-// preserved instead of being overwritten with nothing for 7 days.
+// This tier holds the VALUE it last successfully built. It is SEEDED on the
+// success path below (not lazily on the failure path): every healthy 30-minute
+// cycle READS this function, so the very first healthy read after a deploy is a
+// cache miss that builds from a confirmed-up upstream and caches the good
+// value. Every later healthy read is a plain cache hit that returns the held
+// value with no upstream call. The entry self-refreshes on its own 7-day
+// revalidation. If a build (initial or a 7-day refresh) lands during an outage
+// it THROWS rather than returning empty, and `unstable_cache` does not persist
+// a thrown error, so the prior good value survives instead of being wiped.
+//
+// Reading (never revalidateTag) is deliberate: `revalidateTag` is unsupported
+// inside an `unstable_cache` function, and a plain read already gives seed-once
+// then serve-from-cache semantics, which is exactly last-known-good.
 const getLastKnownGoodPools = unstable_cache(
   async (): Promise<PoolsOverviewResult> => {
     const fresh = await buildPoolsOverview()
@@ -366,9 +373,20 @@ export const getPoolsOverview = unstable_cache(
       console.error(`[getPoolsOverview] build failed: ${e}`)
     }
 
-    // Fresh build succeeded: return it. (It is also what this 30-min tier
-    // caches, so it is served on cold starts for the next 30 min for free.)
+    // Fresh build succeeded: return it, but first READ the last-known-good tier
+    // so it gets seeded while upstream is confirmed healthy. On the first
+    // healthy cycle this is a cache miss that builds and stores the snapshot;
+    // afterwards it is a cache hit (no upstream call). Seeding here, on the
+    // success path, is what guarantees a good snapshot exists BEFORE an outage,
+    // which was the gap in the previous fallback.
     if (result.pools.length > 0) {
+      try {
+        await getLastKnownGoodPools()
+      } catch (e) {
+        // Reseed build can fail; non-fatal. The fresh result still returns and
+        // any previously cached good value stands.
+        console.warn(`[getPoolsOverview] could not seed last-good: ${e}`)
+      }
       return result
     }
 
