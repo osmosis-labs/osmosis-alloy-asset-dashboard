@@ -33,7 +33,7 @@ import { PoolTransaction } from "@/types/tx"
 import { actionFormatter } from "@/lib/action-formatter"
 import { BlockExplorer } from "@/lib/block-explorer"
 import dayjs from "@/lib/dayjs"
-import { cn } from "@/lib/utils"
+import { cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -78,7 +78,7 @@ const AssetAmountWithTooltip = ({
             {amount}
           </DecimalSpan>
           <Avatar className="size-4">
-            <AvatarImage src={asset.images[0].svg} />
+            <AvatarImage src={getAssetImageUrl(asset)} />
           </Avatar>
         </div>
       </TooltipTrigger>
