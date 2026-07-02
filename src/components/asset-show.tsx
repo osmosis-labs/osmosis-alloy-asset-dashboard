@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react"
 
 import { AssetWithDecimal, Coin } from "@/types/asset"
 import { MinimalAssetPool } from "@/types/pool"
-import { capitalName } from "@/lib/utils"
+import { capitalName, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Command,
@@ -43,7 +43,7 @@ const AssetShow = ({
       <PopoverTrigger asChild>
         <div className="flex cursor-pointer items-center gap-2">
           <Avatar className="size-8 md:size-10">
-            <AvatarImage src={asset.images[0].svg} alt={asset.symbol} />
+            <AvatarImage src={getAssetImageUrl(asset)} alt={asset.symbol} />
             <AvatarFallback>{capitalName(asset.name)}</AvatarFallback>
           </Avatar>
           <div className="max-w-1/2 truncate">
@@ -96,7 +96,7 @@ const AssetShow = ({
                             }}
                           >
                             <Avatar className="mr-2 size-6">
-                              <AvatarImage src={a.images[0].svg} />
+                              <AvatarImage src={getAssetImageUrl(a)} />
                             </Avatar>
                             <div>
                               <p className="truncate font-mono text-sm font-semibold">

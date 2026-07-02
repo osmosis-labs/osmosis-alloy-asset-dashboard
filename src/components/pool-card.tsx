@@ -44,7 +44,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
       <CardHeader className="flex-col gap-2 text-start md:flex-row md:items-center">
         <Avatar className="size-8 md:size-12">
           <AvatarImage
-            src={pool.alloy.asset.images[0].svg}
+            src={getAssetImageUrl(pool.alloy.asset)}
             alt={pool.alloy.asset.name}
           />
         </Avatar>

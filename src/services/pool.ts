@@ -13,6 +13,7 @@ import {
   RawPoolOverview,
 } from "@/types/pool"
 import dayjs from "@/lib/dayjs"
+import { fetchWithRetry } from "@/lib/utils"
 
 import { getAssetMap, getAssetPrice } from "./asset"
 import { getLimiters } from "./limiter"
@@ -108,7 +109,7 @@ const fillPoolOverview = async (
   }
 
   const [liquidityChart, prices, limiters] = await Promise.all([
-    fetch(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
+    fetchWithRetry(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
       .then(async (d) => {
         if (!d.ok) {
           console.warn(
@@ -137,7 +138,7 @@ const fillPoolOverview = async (
         console.error(`Error fetching liquidity chart: ${e}`)
         return []
       }),
-    fetch(
+    fetchWithRetry(
       BASE_PRICE_URL.replace(
         "{denoms}",
         pool.reserveCoins
@@ -246,36 +247,116 @@ const fillPoolOverview = async (
   } as PoolOverview
 }
 
+// Pool types the dashboard is designed to surface. Used as the safety-net
+// filter when the configured code-ID allowlist matches nothing (e.g. after a
+// transmuter contract upgrade rolls out a code ID not yet added to the env).
+const ALLOYED_POOL_TYPES = ["cosmwasm-alloyed", "cosmwasm-transmuter"]
+
 export const getRawPoolsOverview = async () => {
-  const response = await fetch(BASE_POOLS_URL)
+  let response: Response
+  try {
+    response = await fetchWithRetry(BASE_POOLS_URL)
+  } catch (e) {
+    console.error(`Failed to fetch pools overview: ${e}`)
+    return []
+  }
 
   if (!response.ok) {
-    console.error(`Failed to fetch pools overview: ${response.status} ${response.statusText}`)
+    console.error(
+      `Failed to fetch pools overview: ${response.status} ${response.statusText}`
+    )
     return []
   }
 
   try {
-    const data = await response
+    const allPools = await response
       .json()
       .then((d) => d.result.data.json.items as RawPoolOverview[])
-      .then((d) =>
-        d.filter((pool) => env.NEXT_PUBLIC_CODE_IDS.includes(pool.raw.code_id))
-      )
 
-    return data
+    const filtered = allPools.filter((pool) =>
+      env.NEXT_PUBLIC_CODE_IDS.includes(pool.raw.code_id)
+    )
+
+    // Never blank out: if the configured code-ID allowlist matches nothing but
+    // the endpoint did return alloyed/transmuter pools, the allowlist is stale
+    // (a contract upgrade shipped a new code ID). Fall back to the full set of
+    // alloyed/transmuter pools so the dashboard degrades to "shows extra pools"
+    // rather than "shows nothing". The allowlist stays the preferred filter.
+    if (filtered.length === 0) {
+      const fallback = allPools.filter((pool) =>
+        ALLOYED_POOL_TYPES.includes(pool.type)
+      )
+      if (fallback.length > 0) {
+        console.warn(
+          `[getRawPoolsOverview] Code-ID allowlist (${env.NEXT_PUBLIC_CODE_IDS.join(
+            ","
+          )}) matched 0 of ${allPools.length} returned pools; ` +
+            `falling back to ${fallback.length} alloyed/transmuter pools. ` +
+            `NEXT_PUBLIC_CODE_IDS is likely stale after a contract upgrade.`
+        )
+        return fallback
+      }
+    }
+
+    return filtered
   } catch (e) {
     console.error(`Failed to parse pools overview JSON: ${e}`)
     return []
   }
 }
 
-// Last known good pools cache - lasts 7 days
+type PoolsOverviewResult = {
+  pools: PoolOverview[]
+  unsupportedPools: NotSupportedPoolOverview[]
+}
+
+const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
+  pools: [],
+  unsupportedPools: [],
+}
+
+// Builds the overview from live upstream data. No caching here so the caller
+// controls when a rebuild happens and can decide whether to accept the result.
+const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
+  const data = await getRawPoolsOverview()
+  const assetMap = await getAssetMap()
+  const pools = await Promise.all(
+    data.map((p) => fillPoolOverview(p, assetMap))
+  )
+
+  return {
+    pools: pools.filter((p) => p.alloy.asset) as PoolOverview[],
+    unsupportedPools: pools.filter(
+      (p) => !p.alloy.asset
+    ) as NotSupportedPoolOverview[],
+  }
+}
+
+// Last-known-good tier. `unstable_cache` is backed by Next's data cache (not
+// process memory), so it survives the serverless cold starts that made the
+// previous module-variable approach a no-op.
+//
+// This tier holds the VALUE it last successfully built. It is SEEDED on the
+// success path below (not lazily on the failure path): every healthy 30-minute
+// cycle READS this function, so the very first healthy read after a deploy is a
+// cache miss that builds from a confirmed-up upstream and caches the good
+// value. Every later healthy read is a plain cache hit that returns the held
+// value with no upstream call. The entry self-refreshes on its own 7-day
+// revalidation. If a build (initial or a 7-day refresh) lands during an outage
+// it THROWS rather than returning empty, and `unstable_cache` does not persist
+// a thrown error, so the prior good value survives instead of being wiped.
+//
+// Reading (never revalidateTag) is deliberate: `revalidateTag` is unsupported
+// inside an `unstable_cache` function, and a plain read already gives seed-once
+// then serve-from-cache semantics, which is exactly last-known-good.
 const getLastKnownGoodPools = unstable_cache(
-  async () => {
-    return {
-      pools: [] as PoolOverview[],
-      unsupportedPools: [] as NotSupportedPoolOverview[],
+  async (): Promise<PoolsOverviewResult> => {
+    const fresh = await buildPoolsOverview()
+    if (fresh.pools.length === 0) {
+      // Do not let an empty build poison the long-lived entry.
+      throw new Error("last-known-good rebuild produced no pools")
     }
+    return fresh
   },
   ["pools-overview-last-good"],
   {
@@ -283,50 +364,49 @@ const getLastKnownGoodPools = unstable_cache(
   }
 )
 
-// Mutable reference to store last good data
-let lastGoodPoolsData: {
-  pools: PoolOverview[]
-  unsupportedPools: NotSupportedPoolOverview[]
-} | null = null
-
 export const getPoolsOverview = unstable_cache(
-  async () => {
-    const data = await getRawPoolsOverview()
-    const assetMap = await getAssetMap()
-    const pools = await Promise.all(
-      data.map((p) => fillPoolOverview(p, assetMap))
-    )
-
-    const result = {
-      pools: pools.filter((p) => p.alloy.asset) as PoolOverview[],
-      unsupportedPools: pools.filter(
-        (p) => !p.alloy.asset
-      ) as NotSupportedPoolOverview[],
+  async (): Promise<PoolsOverviewResult> => {
+    let result: PoolsOverviewResult = EMPTY_POOLS_OVERVIEW
+    try {
+      result = await buildPoolsOverview()
+    } catch (e) {
+      console.error(`[getPoolsOverview] build failed: ${e}`)
     }
 
-    // If we got valid pools, save as last known good
+    // Fresh build succeeded: return it, but first READ the last-known-good tier
+    // so it gets seeded while upstream is confirmed healthy. On the first
+    // healthy cycle this is a cache miss that builds and stores the snapshot;
+    // afterwards it is a cache hit (no upstream call). Seeding here, on the
+    // success path, is what guarantees a good snapshot exists BEFORE an outage,
+    // which was the gap in the previous fallback.
     if (result.pools.length > 0) {
-      lastGoodPoolsData = result
+      try {
+        await getLastKnownGoodPools()
+      } catch (e) {
+        // Reseed build can fail; non-fatal. The fresh result still returns and
+        // any previously cached good value stands.
+        console.warn(`[getPoolsOverview] could not seed last-good: ${e}`)
+      }
       return result
     }
 
-    // No valid pools found - fall back to last known good
+    // Empty this cycle (upstream down or allowlist matched nothing): serve the
+    // last-known-good snapshot so the dashboard does not blank out.
     console.warn(
       "[getPoolsOverview] No valid pools found, using last known good data"
     )
-
-    if (lastGoodPoolsData && lastGoodPoolsData.pools.length > 0) {
-      return lastGoodPoolsData
+    try {
+      const cached = await getLastKnownGoodPools()
+      if (cached.pools.length > 0) {
+        return cached
+      }
+    } catch (e) {
+      // No good snapshot has ever been cached, or its scheduled rebuild failed.
+      console.error(`[getPoolsOverview] no last-known-good available: ${e}`)
     }
 
-    // If no in-memory cache, try to get from cache
-    const cached = await getLastKnownGoodPools()
-    if (cached.pools.length > 0) {
-      lastGoodPoolsData = cached
-      return cached
-    }
-
-    // Last resort - return empty (this shouldn't happen after initial successful load)
+    // Nothing live and nothing cached yet (only before the first successful
+    // load). Return empty.
     return result
   },
   ["pools-overview"],
@@ -356,74 +436,41 @@ const calculdateAlloyAssetDenom = (
 }
 
 export const getPoolInOutTxs = cache(async (poolId: string) => {
-  const dayAgo = dayjs.utc().subtract(1, "day").format()
-
-  // Try to get height from GraphQL endpoint (may be blocked by CORS in local dev)
+  // Determine the block height ~24h ago from the LCD's latest block.
+  // (The previous AllesLabs GraphQL block-height lookup was removed: that host
+  // no longer resolves. Osmosis produces ~72,000 blocks/day at ~1.2s each.)
+  const BLOCKS_PER_DAY = 72000
   let height: number
   try {
-    const response = await fetch(
-      "https://osmosis-1-graphql.alleslabs.dev/v1/graphql",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: `
-            query Blocks($where: blocks_bool_exp) {
-              blocks(where: $where, order_by: {height: desc}, limit: 1) {
-                height
-              }
-            }`,
-          variables: {
-            where: {
-              timestamp: {
-                _lte: dayAgo,
-              },
-            },
-          },
-        }),
-      }
+    const heightResponse = await fetchWithRetry(
+      "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
     )
 
-    if (!response.ok) {
-      throw new Error(`GraphQL endpoint returned ${response.status}`)
+    if (!heightResponse.ok) {
+      throw new Error(`LCD endpoint returned ${heightResponse.status}`)
     }
 
-    const data = await response.json()
-    height = data.data.blocks[0].height as number
-  } catch (error) {
-    // Fallback: Calculate approximate height based on current block
-    // Osmosis has ~1.2 second block time, so 24h = ~72,000 blocks
-    console.warn("GraphQL endpoint unavailable, using block-based fallback", error)
-    const BLOCKS_PER_DAY = 72000
-
-    try {
-      const heightResponse = await fetch(
-        "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
-      )
-
-      if (!heightResponse.ok) {
-        throw new Error(`LCD endpoint returned ${heightResponse.status}`)
-      }
-
-      const heightData = await heightResponse.json()
-      const currentHeight = Number(heightData.block.header.height)
-      height = currentHeight - BLOCKS_PER_DAY
-    } catch (fallbackError) {
-      console.error("Failed to fetch block height from LCD endpoint", fallbackError)
-      throw new Error(
-        "Unable to determine block height: both GraphQL and LCD endpoints failed"
-      )
-    }
+    const heightData = await heightResponse.json()
+    const currentHeight = Number(heightData.block.header.height)
+    height = currentHeight - BLOCKS_PER_DAY
+  } catch (fallbackError) {
+    console.error(
+      "Failed to fetch block height from LCD endpoint",
+      fallbackError
+    )
+    throw new Error("Unable to determine block height: LCD endpoint failed")
   }
 
   try {
     const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
-    const totalResponse = await fetch(`${url}&limit=1`)
+    const totalResponse = await fetchWithRetry(`${url}&limit=1`, {
+      timeoutMs: 30000,
+    })
 
     if (!totalResponse.ok) {
-      console.error(`Failed to fetch tx count: ${totalResponse.status} ${totalResponse.statusText}`)
+      console.error(
+        `Failed to fetch tx count: ${totalResponse.status} ${totalResponse.statusText}`
+      )
       return { total: 0, txs: [] }
     }
 
@@ -435,7 +482,10 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
     const txs = await Promise.all(
       _.range(1, pages + 1).map(async (page) => {
         try {
-          const response = await fetch(`${url}&limit=${limit}&page=${page}`)
+          const response = await fetchWithRetry(
+            `${url}&limit=${limit}&page=${page}`,
+            { timeoutMs: 30000 }
+          )
           if (!response.ok) {
             console.warn(`Failed to fetch tx page ${page}: ${response.status}`)
             return []
