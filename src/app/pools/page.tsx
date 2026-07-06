@@ -1,6 +1,7 @@
 import { Metadata } from "next"
-import { getAssetMap } from "@/services/asset"
+import { getAssetListSafe } from "@/services/asset"
 import { getPoolsOverview } from "@/services/pool"
+import _ from "lodash"
 
 import { SupportedPoolsTable } from "@/components/supported-pools-table"
 import { UnsupportedPoolsTable } from "@/components/unsupported-pools-table"
@@ -14,10 +15,11 @@ export const metadata: Metadata = {
 export const revalidate = 3600 // 1 hour
 
 export default async function Home() {
-  const [{ pools, unsupportedPools }, assets] = await Promise.all([
+  const [{ pools, unsupportedPools }, assetList] = await Promise.all([
     getPoolsOverview(),
-    getAssetMap(),
+    getAssetListSafe(),
   ])
+  const assets = _.keyBy(assetList, "base")
 
   return (
     <main className="container my-6 flex flex-col gap-6">
