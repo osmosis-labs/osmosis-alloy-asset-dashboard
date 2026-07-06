@@ -62,7 +62,14 @@ const fillPoolOverview = async (
 
   const alloyAssetDetail = assetMap[alloyDenom]
 
-  if (!alloyAssetDetail || pool.reserveCoins.length <= 1) {
+  // A pool is a supported alloy iff its computed alloyed denom resolves to a
+  // listed chain-registry asset. Do NOT also require more than one reserve
+  // coin: the alloy-simplification programme has reduced many alloys (allSOL,
+  // allLINK, allPEPE, ...) to a single remaining variant, and those are still
+  // real, supported alloys. Assets with no chain-registry entry (ghost denoms
+  // used only for transmuter plumbing, e.g. allSTARS / allDGN) fall through to
+  // the unsupported branch here precisely because alloyAssetDetail is absent.
+  if (!alloyAssetDetail) {
     return {
       id: pool.id,
       type: pool.type,
@@ -320,6 +327,17 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
 const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   const data = await getRawPoolsOverview()
   const assetMap = await getAssetMap()
+
+  // The asset map gates every supported/unsupported decision. If it is empty
+  // (assetlist upstream failed), EVERY pool would be misclassified as
+  // unsupported and that all-unsupported result would be cached. Treat an empty
+  // map as a build failure so the caller serves the last-known-good snapshot
+  // instead of caching a wrongly-empty Supported list. (getAssetMap normally
+  // throws on assetlist failure; this guards the defensive path too.)
+  if (_.isEmpty(assetMap)) {
+    throw new Error("asset map is empty; refusing to build all-unsupported set")
+  }
+
   const pools = await Promise.all(
     data.map((p) => fillPoolOverview(p, assetMap))
   )
