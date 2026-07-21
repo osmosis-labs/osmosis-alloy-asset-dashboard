@@ -16,6 +16,7 @@ import dayjs from "@/lib/dayjs"
 import { fetchWithRetry } from "@/lib/utils"
 
 import { getAssetMap, getAssetPrice } from "./asset"
+import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
 
 const MIN_LIQUIDITY = 10
@@ -410,49 +411,99 @@ const getLastKnownGoodPools = unstable_cache(
   }
 )
 
+// Committed, durable last-known-good tier. This is shipped in the repo (see
+// scripts/generate-last-known-good.mjs) so that even the FIRST cold build after
+// a fresh deploy has a non-empty result to fall back to. The runtime
+// `getLastKnownGoodPools` tier above only ever holds a value AFTER a healthy
+// build has seeded it, so it provides no protection for the one case that
+// blanked the dashboard: the first cold build failing on a fresh deploy (a new
+// deploy starts with an empty Next data cache). This static snapshot closes
+// that gap. It is deliberately the LAST resort: live data and the runtime
+// last-known-good value are always preferred when available.
+// Double cast: the JSON module's structurally-inferred type (e.g. `type:
+// string`) does not overlap the union-typed PoolsOverviewResult, and this is
+// static generated data, so a widening assertion is the intended path. The
+// snapshot's shape is validated by the generator, which mirrors
+// fillPoolOverview field-for-field.
+const COMMITTED_SNAPSHOT =
+  lastKnownGoodPoolsSnapshot as unknown as PoolsOverviewResult
+
+// Resolves the best available overview WITHOUT caching, walking the fallback
+// tiers in preference order:
+//   1. Live build from current upstream data.
+//   2. Runtime last-known-good (a value a previous healthy build seeded).
+//   3. Committed snapshot shipped in the repo (always non-empty).
+// Returns EMPTY_POOLS_OVERVIEW only in the impossible case that all three fail,
+// which the caller treats as a hard error so an empty set is never cached.
+const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
+  let result: PoolsOverviewResult = EMPTY_POOLS_OVERVIEW
+  try {
+    result = await buildPoolsOverview()
+  } catch (e) {
+    console.error(`[getPoolsOverview] build failed: ${e}`)
+  }
+
+  // Fresh build succeeded: return it, but first READ the runtime last-known-good
+  // tier so it gets seeded while upstream is confirmed healthy. On the first
+  // healthy cycle this is a cache miss that builds and stores the snapshot;
+  // afterwards it is a cache hit (no upstream call).
+  if (result.pools.length > 0) {
+    try {
+      await getLastKnownGoodPools()
+    } catch (e) {
+      // Reseed build can fail; non-fatal. The fresh result still returns and
+      // any previously cached good value stands.
+      console.warn(`[getPoolsOverview] could not seed last-good: ${e}`)
+    }
+    return result
+  }
+
+  // Empty this cycle (upstream down or allowlist matched nothing): serve the
+  // runtime last-known-good snapshot so the dashboard does not blank out.
+  console.warn(
+    "[getPoolsOverview] No valid pools found, trying runtime last known good"
+  )
+  try {
+    const cached = await getLastKnownGoodPools()
+    if (cached.pools.length > 0) {
+      return cached
+    }
+  } catch (e) {
+    // No good snapshot has ever been cached, or its scheduled rebuild failed.
+    console.error(
+      `[getPoolsOverview] no runtime last-known-good available: ${e}`
+    )
+  }
+
+  // Runtime tiers both empty (e.g. first cold build after a deploy failing).
+  // Fall back to the committed snapshot shipped in the repo.
+  if (COMMITTED_SNAPSHOT.pools.length > 0) {
+    console.warn(
+      "[getPoolsOverview] Falling back to committed last-known-good snapshot"
+    )
+    return COMMITTED_SNAPSHOT
+  }
+
+  return result
+}
+
 export const getPoolsOverview = unstable_cache(
   async (): Promise<PoolsOverviewResult> => {
-    let result: PoolsOverviewResult = EMPTY_POOLS_OVERVIEW
-    try {
-      result = await buildPoolsOverview()
-    } catch (e) {
-      console.error(`[getPoolsOverview] build failed: ${e}`)
+    const result = await resolvePoolsOverview()
+
+    // Never cache an empty result. `unstable_cache` persists RETURNED values but
+    // NOT thrown errors, so returning EMPTY here would lock a blank dashboard in
+    // for the full `revalidate` window (the original blank-out bug). Throwing
+    // instead means a transient all-tiers-empty state is retried on the next
+    // request rather than cached. With the committed snapshot always present
+    // this branch is effectively unreachable, but the guard is the invariant
+    // that keeps an empty set from ever being served from cache.
+    if (result.pools.length === 0) {
+      throw new Error(
+        "[getPoolsOverview] all tiers produced no pools; refusing to cache empty"
+      )
     }
 
-    // Fresh build succeeded: return it, but first READ the last-known-good tier
-    // so it gets seeded while upstream is confirmed healthy. On the first
-    // healthy cycle this is a cache miss that builds and stores the snapshot;
-    // afterwards it is a cache hit (no upstream call). Seeding here, on the
-    // success path, is what guarantees a good snapshot exists BEFORE an outage,
-    // which was the gap in the previous fallback.
-    if (result.pools.length > 0) {
-      try {
-        await getLastKnownGoodPools()
-      } catch (e) {
-        // Reseed build can fail; non-fatal. The fresh result still returns and
-        // any previously cached good value stands.
-        console.warn(`[getPoolsOverview] could not seed last-good: ${e}`)
-      }
-      return result
-    }
-
-    // Empty this cycle (upstream down or allowlist matched nothing): serve the
-    // last-known-good snapshot so the dashboard does not blank out.
-    console.warn(
-      "[getPoolsOverview] No valid pools found, using last known good data"
-    )
-    try {
-      const cached = await getLastKnownGoodPools()
-      if (cached.pools.length > 0) {
-        return cached
-      }
-    } catch (e) {
-      // No good snapshot has ever been cached, or its scheduled rebuild failed.
-      console.error(`[getPoolsOverview] no last-known-good available: ${e}`)
-    }
-
-    // Nothing live and nothing cached yet (only before the first successful
-    // load). Return empty.
     return result
   },
   ["pools-overview"],
