@@ -9,6 +9,7 @@
     "lint": "next lint",
     "format": "pnpm prettier ./src --write",
     "format:check": "pnpm prettier ./src --check",
+    "snapshot:generate": "node scripts/generate-last-known-good.mjs",
     "pages:build": "pnpx @cloudflare/next-on-pages",
     "preview": "pnpm pages:build && wrangler pages dev",
     "deploy": "pnpm pages:build && wrangler pages deploy"
