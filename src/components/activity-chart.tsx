@@ -18,7 +18,7 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
     <Card className="w-full">
       <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle>Pool Asset Acitvity</CardTitle>
+          <CardTitle>Pool Asset Activity</CardTitle>
           <CardDescription>
             Asset inflow, outflow, and interaction count
           </CardDescription>

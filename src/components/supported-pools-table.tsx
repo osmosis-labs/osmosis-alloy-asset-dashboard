@@ -182,7 +182,7 @@ const columns: ColumnDef<PoolOverview>[] = [
                   onClick={() => {
                     navigator.clipboard
                       .writeText(row.original.alloy.asset.denom)
-                      .then(() => toast.success("Copied Pool Address"))
+                      .then(() => toast.success("Copied Pool Denom"))
                   }}
                 >
                   <Copy className="mr-2 size-4" />
