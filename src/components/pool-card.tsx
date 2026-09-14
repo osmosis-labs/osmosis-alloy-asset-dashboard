@@ -138,7 +138,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
             </div>
             <OverviewChartContent
               pools={[pool]}
-              className="max-h-[700px] min-h-[200px] flex-1 rounded-md border p-2"
+              className="aspect-auto h-[240px] rounded-md border p-2 md:h-auto md:max-h-[700px] md:min-h-[200px] md:flex-1"
             />
           </div>
           {pool.reserveCoins && (
