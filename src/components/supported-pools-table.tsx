@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { capitalName, getAssetImageUrl } from "@/lib/utils"
+import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -46,6 +46,13 @@ import {
 } from "@/components/ui/tooltip"
 
 import { valueFormatter } from "./pool-card"
+import {
+  assetRingClass,
+  AssetStatusLines,
+  isFlagged,
+  isFrozen,
+  PoolStatusBadges,
+} from "./status-badges"
 
 const columns: ColumnDef<PoolOverview>[] = [
   {
@@ -73,15 +80,31 @@ const columns: ColumnDef<PoolOverview>[] = [
     },
   },
   {
+    id: "status",
+    header: "Status",
+    accessorKey: "status",
+    cell: ({ row }) => (
+      <div className="flex flex-wrap items-center gap-1">
+        <PoolStatusBadges pool={row.original} size="xs" />
+      </div>
+    ),
+  },
+  {
     header: "Assets",
     accessorKey: "reserveCoins",
-    cell: (row) => {
-      const assets = row.getValue() as PoolOverview["reserveCoins"]
+    cell: ({ row }) => {
+      const assets = row.original.reserveCoins
+      const status = row.original.status
       return (
         <div className="flex items-center gap-2">
           {assets?.map((asset) => {
+            const assetStatus = status?.reserves?.[asset.asset.base]
+            const corrupted =
+              status?.corruptedDenoms?.includes(asset.asset.base) ?? false
             const Image = (
-              <Avatar className="size-5">
+              <Avatar
+                className={cn("size-5", assetRingClass(assetStatus, corrupted))}
+              >
                 <AvatarImage
                   src={getAssetImageUrl(asset.asset)}
                   alt={asset.asset.symbol}
@@ -92,8 +115,18 @@ const columns: ColumnDef<PoolOverview>[] = [
             return (
               <Tooltip key={asset.asset.denom}>
                 <TooltipTrigger asChild>{Image}</TooltipTrigger>
-                <TooltipContent className="flex items-center gap-2 font-mono">
-                  {Image} {asset.asset.symbol}
+                <TooltipContent className="max-w-[350px] space-y-1 text-start">
+                  <div className="flex items-center gap-2 font-mono">
+                    {Image} {asset.asset.symbol}
+                  </div>
+                  {corrupted && (
+                    <p className="text-xs font-semibold text-destructive">
+                      Corrupted asset (marked by the pool moderator)
+                    </p>
+                  )}
+                  {isFlagged(assetStatus) && (
+                    <AssetStatusLines status={assetStatus} />
+                  )}
                 </TooltipContent>
               </Tooltip>
             )
@@ -291,6 +324,7 @@ const SupportedPoolsTable = ({ pools }: { pools: PoolOverview[] }) => {
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                className={cn(isFrozen(row.original.status) && "frozen-row")}
               >
                 {row.getVisibleCells().map((cell) => {
                   return (

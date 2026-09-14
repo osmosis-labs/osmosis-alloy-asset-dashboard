@@ -30,6 +30,7 @@ export default function Home() {
           asset: assets[pool.alloy.asset],
           price: pool.alloy.price,
         },
+        status: pool.status ?? { isActive: null, corruptedDenoms: null },
       })) as MinimalAssetPool[]
     },
     {

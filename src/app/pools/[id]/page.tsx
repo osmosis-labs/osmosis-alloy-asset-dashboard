@@ -6,7 +6,7 @@ import { ExternalLink, Frown } from "lucide-react"
 
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { capitalName, getAssetImageUrl } from "@/lib/utils"
+import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DecimalSpan } from "@/components/decimal-span"
 import { OverviewChart } from "@/components/overview-chart"
 import { PoolAssetCard, valueFormatter } from "@/components/pool-card"
+import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
 
 import { ActivityChart } from "../../../components/activity-chart"
 import { CopyDenom } from "../../../components/copy-denom"
@@ -106,7 +107,13 @@ export default async function Home({
   return (
     <main className="flex items-center justify-center">
       <div className="container my-6 flex flex-col items-center gap-6 text-center">
-        <div className="flex w-full flex-col gap-4 text-start md:flex-row">
+        <div
+          className={cn(
+            "flex w-full flex-col gap-4 text-start md:flex-row",
+            poolTileClass(pool.status) && "rounded-lg border p-4",
+            poolTileClass(pool.status)
+          )}
+        >
           <Avatar className="size-24">
             <AvatarImage
               src={getAssetImageUrl(pool.alloy.asset)}
@@ -117,7 +124,12 @@ export default async function Home({
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start gap-0.5">
-            <h1 className="text-2xl font-semibold">{pool.alloy.asset.name}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold">
+                {pool.alloy.asset.name}
+              </h1>
+              <PoolStatusBadges pool={pool} />
+            </div>
             <p className="line-clamp-1 break-all text-sm font-light italic text-muted-foreground">
               {pool.poolNameByDenom}
             </p>
@@ -226,6 +238,10 @@ export default async function Home({
                       price={pool.prices[a.asset.base]}
                       totalAmount={totalAmount}
                       limiter={pool.limiters[a.asset.base]}
+                      status={pool.status?.reserves?.[a.asset.base]}
+                      corrupted={pool.status?.corruptedDenoms?.includes(
+                        a.asset.base
+                      )}
                     />
                   ))}
                 </div>
@@ -262,6 +278,10 @@ export default async function Home({
                           price={pool.prices[a.asset.base]}
                           totalAmount={totalAmount}
                           limiter={pool.limiters[a.asset.base]}
+                          status={pool.status?.reserves?.[a.asset.base]}
+                          corrupted={pool.status?.corruptedDenoms?.includes(
+                            a.asset.base
+                          )}
                         />
                       ))}
                     </div>

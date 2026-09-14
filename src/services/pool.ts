@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js"
 import _ from "lodash"
 
 import { env } from "@/env.mjs"
-import { AssetWithDecimal } from "@/types/asset"
+import { AssetStatus, AssetWithDecimal } from "@/types/asset"
 import {
   MinimalPool,
   NotSupportedPoolOverview,
@@ -15,17 +15,15 @@ import {
 import dayjs from "@/lib/dayjs"
 import { fetchWithRetry } from "@/lib/utils"
 
-import { getAssetMap, getAssetPrice } from "./asset"
+import { getAssetMap, getAssetPrice, getAssetStatusMapSafe } from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
+import { getPoolContractStatus } from "./transmuter"
 
 const MIN_LIQUIDITY = 10
 // Alloys with less than this much value locked are treated as unsupported
 // (surfaced in the Not Supported table, not hidden). Dust/near-empty alloys.
 const MIN_SUPPORTED_TVL_USD = 1000
-// A single-variant alloy that only wraps an 18-decimal token down to a lower
-// exponent is a pure wrapping alloy, not a multi-source alloy worth surfacing.
-const WRAPPER_RESERVE_DECIMALS = 18
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
@@ -56,7 +54,8 @@ const ZERO_FIAT = {
 
 const fillPoolOverview = async (
   pool: RawPoolOverview,
-  assetMap?: _.Dictionary<AssetWithDecimal>
+  assetMap?: _.Dictionary<AssetWithDecimal>,
+  statusMap: Record<string, AssetStatus> = {}
 ) => {
   if (!assetMap) {
     assetMap = await getAssetMap()
@@ -70,35 +69,24 @@ const fillPoolOverview = async (
   const alloyAssetDetail = assetMap[alloyDenom]
 
   // A pool is a supported alloy iff its computed alloyed denom resolves to a
-  // listed chain-registry asset. Do NOT also require more than one reserve
-  // coin: the alloy-simplification programme has reduced many alloys (allSOL,
-  // allLINK, allPEPE, ...) to a single remaining variant, and those are still
-  // real, supported alloys. Assets with no chain-registry entry (ghost denoms
-  // used only for transmuter plumbing, e.g. allSTARS / allDGN) fall through to
-  // the unsupported branch here precisely because alloyAssetDetail is absent.
+  // listed chain-registry asset. Assets with no chain-registry entry (ghost
+  // denoms used only for transmuter plumbing, e.g. allSTARS / allDGN) fall
+  // through to the unsupported branch here because alloyAssetDetail is absent.
   //
-  // Two further demotions to the unsupported table (both require a valid alloy
-  // asset to evaluate, hence they are computed here):
-  //   1. Pure single-asset wrapper: exactly one reserve coin whose underlying
-  //      has 18 decimals wrapped down to a lower-exponent alloy (e.g. the
-  //      18 -> 12 wrappers allOP / allPEPE / allLINK ...). These are wrapping
-  //      plumbing, not multi-source alloys. A single-variant alloy that is NOT
-  //      an 18 -> lower wrap (allSOL, allTRX, allDOT, ...) stays supported.
+  // Two further demotions to the unsupported table:
+  //   1. Single-asset alloys: exactly one reserve coin. Whether it is a pure
+  //      18 -> lower decimal wrapper (allOP, allPEPE, allLINK, ...) or the last
+  //      remaining variant after alloy simplification (allSOL, allTRX, ...),
+  //      there is nothing multi-source to show, matching the "pools with 1
+  //      asset" wording on the Not Supported section.
   //   2. Dust alloys: less than MIN_SUPPORTED_TVL_USD of value locked.
-  const reserveDecimals = pool.reserveCoins.map(
-    (coin) => JSON.parse(coin).currency.coinDecimals as number
-  )
-  const isSingleAssetWrapper =
-    !!alloyAssetDetail &&
-    reserveDecimals.length === 1 &&
-    reserveDecimals[0] === WRAPPER_RESERVE_DECIMALS &&
-    alloyAssetDetail.decimal < WRAPPER_RESERVE_DECIMALS
+  const isSingleAsset = pool.reserveCoins.length === 1
 
   const tvlUsd = Number(JSON.parse(pool.totalFiatValueLocked).amount)
   const isBelowMinTvl =
     Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
 
-  if (!alloyAssetDetail || isSingleAssetWrapper || isBelowMinTvl) {
+  if (!alloyAssetDetail || isSingleAsset || isBelowMinTvl) {
     return {
       id: pool.id,
       type: pool.type,
@@ -141,10 +129,15 @@ const fillPoolOverview = async (
         price: null,
       },
       limiters: null,
+      status: null,
     } as NotSupportedPoolOverview
   }
 
-  const [liquidityChart, prices, limiters] = await Promise.all([
+  const reserveDenoms = pool.reserveCoins.map(
+    (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
+  )
+
+  const [liquidityChart, prices, limiters, contractStatus] = await Promise.all([
     fetchWithRetry(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
       .then(async (d) => {
         if (!d.ok) {
@@ -204,6 +197,7 @@ const fillPoolOverview = async (
         return {}
       }),
     getLimiters(pool.raw.contract_address),
+    getPoolContractStatus(pool.raw.contract_address),
   ])
   let alloyAssetPrice = await getAssetPrice(alloyDenom)
   if (alloyAssetPrice && Number(alloyAssetPrice?.amount) > 1000000)
@@ -280,6 +274,11 @@ const fillPoolOverview = async (
       price: alloyAssetPrice,
     },
     limiters,
+    status: {
+      ...contractStatus,
+      alloy: statusMap[alloyDenom] ?? null,
+      reserves: _.pick(statusMap, reserveDenoms),
+    },
   } as PoolOverview
 }
 
@@ -354,8 +353,11 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
 // Builds the overview from live upstream data. No caching here so the caller
 // controls when a rebuild happens and can decide whether to accept the result.
 const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
-  const data = await getRawPoolsOverview()
-  const assetMap = await getAssetMap()
+  const [data, assetMap, statusMap] = await Promise.all([
+    getRawPoolsOverview(),
+    getAssetMap(),
+    getAssetStatusMapSafe(),
+  ])
 
   // The asset map gates every supported/unsupported decision. If it is empty
   // (assetlist upstream failed), EVERY pool would be misclassified as
@@ -368,7 +370,7 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   }
 
   const pools = await Promise.all(
-    data.map((p) => fillPoolOverview(p, assetMap))
+    data.map((p) => fillPoolOverview(p, assetMap, statusMap))
   )
 
   return {
