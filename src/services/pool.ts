@@ -24,9 +24,6 @@ const MIN_LIQUIDITY = 10
 // Alloys with less than this much value locked are treated as unsupported
 // (surfaced in the Not Supported table, not hidden). Dust/near-empty alloys.
 const MIN_SUPPORTED_TVL_USD = 1000
-// A single-variant alloy that only wraps an 18-decimal token down to a lower
-// exponent is a pure wrapping alloy, not a multi-source alloy worth surfacing.
-const WRAPPER_RESERVE_DECIMALS = 18
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
@@ -72,35 +69,24 @@ const fillPoolOverview = async (
   const alloyAssetDetail = assetMap[alloyDenom]
 
   // A pool is a supported alloy iff its computed alloyed denom resolves to a
-  // listed chain-registry asset. Do NOT also require more than one reserve
-  // coin: the alloy-simplification programme has reduced many alloys (allSOL,
-  // allLINK, allPEPE, ...) to a single remaining variant, and those are still
-  // real, supported alloys. Assets with no chain-registry entry (ghost denoms
-  // used only for transmuter plumbing, e.g. allSTARS / allDGN) fall through to
-  // the unsupported branch here precisely because alloyAssetDetail is absent.
+  // listed chain-registry asset. Assets with no chain-registry entry (ghost
+  // denoms used only for transmuter plumbing, e.g. allSTARS / allDGN) fall
+  // through to the unsupported branch here because alloyAssetDetail is absent.
   //
-  // Two further demotions to the unsupported table (both require a valid alloy
-  // asset to evaluate, hence they are computed here):
-  //   1. Pure single-asset wrapper: exactly one reserve coin whose underlying
-  //      has 18 decimals wrapped down to a lower-exponent alloy (e.g. the
-  //      18 -> 12 wrappers allOP / allPEPE / allLINK ...). These are wrapping
-  //      plumbing, not multi-source alloys. A single-variant alloy that is NOT
-  //      an 18 -> lower wrap (allSOL, allTRX, allDOT, ...) stays supported.
+  // Two further demotions to the unsupported table:
+  //   1. Single-asset alloys: exactly one reserve coin. Whether it is a pure
+  //      18 -> lower decimal wrapper (allOP, allPEPE, allLINK, ...) or the last
+  //      remaining variant after alloy simplification (allSOL, allTRX, ...),
+  //      there is nothing multi-source to show, matching the "pools with 1
+  //      asset" wording on the Not Supported section.
   //   2. Dust alloys: less than MIN_SUPPORTED_TVL_USD of value locked.
-  const reserveDecimals = pool.reserveCoins.map(
-    (coin) => JSON.parse(coin).currency.coinDecimals as number
-  )
-  const isSingleAssetWrapper =
-    !!alloyAssetDetail &&
-    reserveDecimals.length === 1 &&
-    reserveDecimals[0] === WRAPPER_RESERVE_DECIMALS &&
-    alloyAssetDetail.decimal < WRAPPER_RESERVE_DECIMALS
+  const isSingleAsset = pool.reserveCoins.length === 1
 
   const tvlUsd = Number(JSON.parse(pool.totalFiatValueLocked).amount)
   const isBelowMinTvl =
     Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
 
-  if (!alloyAssetDetail || isSingleAssetWrapper || isBelowMinTvl) {
+  if (!alloyAssetDetail || isSingleAsset || isBelowMinTvl) {
     return {
       id: pool.id,
       type: pool.type,

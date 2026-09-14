@@ -31,7 +31,6 @@ const OUT_PATH = join(
 // --- Mirror of the constants in src/services/pool.ts ---
 const MIN_LIQUIDITY = 10
 const MIN_SUPPORTED_TVL_USD = 1000
-const WRAPPER_RESERVE_DECIMALS = 18
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
@@ -278,20 +277,13 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
   )
   const alloyAssetDetail = assetMap[alloyDenom]
 
-  const reserveDecimals = pool.reserveCoins.map(
-    (coin) => JSON.parse(coin).currency.coinDecimals
-  )
-  const isSingleAssetWrapper =
-    !!alloyAssetDetail &&
-    reserveDecimals.length === 1 &&
-    reserveDecimals[0] === WRAPPER_RESERVE_DECIMALS &&
-    alloyAssetDetail.decimal < WRAPPER_RESERVE_DECIMALS
+  const isSingleAsset = pool.reserveCoins.length === 1
 
   const tvlUsd = Number(JSON.parse(pool.totalFiatValueLocked).amount)
   const isBelowMinTvl =
     Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
 
-  if (!alloyAssetDetail || isSingleAssetWrapper || isBelowMinTvl) {
+  if (!alloyAssetDetail || isSingleAsset || isBelowMinTvl) {
     return {
       id: pool.id,
       type: pool.type,
