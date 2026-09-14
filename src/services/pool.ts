@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js"
 import _ from "lodash"
 
 import { env } from "@/env.mjs"
-import { AssetWithDecimal } from "@/types/asset"
+import { AssetStatus, AssetWithDecimal } from "@/types/asset"
 import {
   MinimalPool,
   NotSupportedPoolOverview,
@@ -15,9 +15,10 @@ import {
 import dayjs from "@/lib/dayjs"
 import { fetchWithRetry } from "@/lib/utils"
 
-import { getAssetMap, getAssetPrice } from "./asset"
+import { getAssetMap, getAssetPrice, getAssetStatusMapSafe } from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
+import { getPoolContractStatus } from "./transmuter"
 
 const MIN_LIQUIDITY = 10
 // Alloys with less than this much value locked are treated as unsupported
@@ -56,7 +57,8 @@ const ZERO_FIAT = {
 
 const fillPoolOverview = async (
   pool: RawPoolOverview,
-  assetMap?: _.Dictionary<AssetWithDecimal>
+  assetMap?: _.Dictionary<AssetWithDecimal>,
+  statusMap: Record<string, AssetStatus> = {}
 ) => {
   if (!assetMap) {
     assetMap = await getAssetMap()
@@ -141,10 +143,15 @@ const fillPoolOverview = async (
         price: null,
       },
       limiters: null,
+      status: null,
     } as NotSupportedPoolOverview
   }
 
-  const [liquidityChart, prices, limiters] = await Promise.all([
+  const reserveDenoms = pool.reserveCoins.map(
+    (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
+  )
+
+  const [liquidityChart, prices, limiters, contractStatus] = await Promise.all([
     fetchWithRetry(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
       .then(async (d) => {
         if (!d.ok) {
@@ -204,6 +211,7 @@ const fillPoolOverview = async (
         return {}
       }),
     getLimiters(pool.raw.contract_address),
+    getPoolContractStatus(pool.raw.contract_address),
   ])
   let alloyAssetPrice = await getAssetPrice(alloyDenom)
   if (alloyAssetPrice && Number(alloyAssetPrice?.amount) > 1000000)
@@ -280,6 +288,11 @@ const fillPoolOverview = async (
       price: alloyAssetPrice,
     },
     limiters,
+    status: {
+      ...contractStatus,
+      alloy: statusMap[alloyDenom] ?? null,
+      reserves: _.pick(statusMap, reserveDenoms),
+    },
   } as PoolOverview
 }
 
@@ -354,8 +367,11 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
 // Builds the overview from live upstream data. No caching here so the caller
 // controls when a rebuild happens and can decide whether to accept the result.
 const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
-  const data = await getRawPoolsOverview()
-  const assetMap = await getAssetMap()
+  const [data, assetMap, statusMap] = await Promise.all([
+    getRawPoolsOverview(),
+    getAssetMap(),
+    getAssetStatusMapSafe(),
+  ])
 
   // The asset map gates every supported/unsupported decision. If it is empty
   // (assetlist upstream failed), EVERY pool would be misclassified as
@@ -368,7 +384,7 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   }
 
   const pools = await Promise.all(
-    data.map((p) => fillPoolOverview(p, assetMap))
+    data.map((p) => fillPoolOverview(p, assetMap, statusMap))
   )
 
   return {

@@ -16,6 +16,12 @@ export async function GET() {
         asset: pool.alloy.asset?.denom,
         price: pool.alloy.price?.amount || "0",
       },
+      // Unknown stays unknown: an overview built before this field existed
+      // must not be reported as active.
+      status: {
+        isActive: pool.status?.isActive ?? null,
+        corruptedDenoms: pool.status?.corruptedDenoms ?? null,
+      },
     }))
   )
 }

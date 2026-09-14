@@ -2,6 +2,7 @@ import _ from "lodash"
 
 import {
   Asset,
+  AssetStatus,
   AssetWithDecimal,
   Currency,
   CurrencyAmount,
@@ -35,6 +36,23 @@ export type RawPoolOverview = {
   }
 }
 
+// Onchain operational state of the transmuter contract behind a pool, plus the
+// assetlist status flags for the alloyed denom and each constituent.
+export type PoolStatus = {
+  // `is_active` smart query. false = the moderator has frozen the pool: joins,
+  // swaps in either direction and exit_pool are all rejected. null = the query
+  // failed, in which case the UI must say "unknown", never assume active.
+  isActive: boolean | null
+  // `get_corrupted_denoms` smart query. A corrupted constituent can never
+  // increase in amount or weight; it can only leave the pool. null = the query
+  // failed or the code id does not support it.
+  corruptedDenoms: string[] | null
+  // Frontend-assetlist flags for the alloyed denom itself.
+  alloy: AssetStatus | null
+  // Frontend-assetlist flags per constituent, keyed by minimal denom.
+  reserves: Record<string, AssetStatus>
+}
+
 export type PoolOverview = {
   id: string
   type: "cosmwasm-transmuter" | "cosmwasm"
@@ -62,6 +80,7 @@ export type PoolOverview = {
     price: FiatAmount | null
   }
   limiters: _.Dictionary<Limiter>
+  status: PoolStatus
 }
 
 type Modify<T, R> = Omit<T, keyof R> & R
@@ -74,6 +93,7 @@ export type NotSupportedPoolOverview = Modify<
       price: FiatAmount | null
     }
     limiters: null
+    status: null
   }
 >
 
@@ -88,6 +108,10 @@ export type PoolInOutAssets = {
   }
 }
 
+// Subset of PoolStatus the swap page needs to refuse actions a frozen
+// contract would reject anyway.
+export type MinimalPoolStatus = Pick<PoolStatus, "isActive" | "corruptedDenoms">
+
 export type MinimalPool = {
   id: string
   assets: string[]
@@ -95,6 +119,7 @@ export type MinimalPool = {
     asset: string
     price: string
   }
+  status: MinimalPoolStatus
 }
 
 export type MinimalAssetPool = {
@@ -104,4 +129,5 @@ export type MinimalAssetPool = {
     asset: AssetWithDecimal
     price: string
   }
+  status: MinimalPoolStatus
 }

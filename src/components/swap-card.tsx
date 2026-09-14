@@ -1,4 +1,5 @@
 import { Reducer, useEffect, useMemo, useReducer, useState } from "react"
+import { POOL_STATUS } from "@/constants/status"
 import { getUserAssets } from "@/services/asset"
 import { getBaseDirectQuote, getDirectQuote } from "@/services/quote"
 import { isDeliverTxSuccess } from "@cosmjs/stargate"
@@ -11,6 +12,8 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  ShieldAlert,
+  Snowflake,
   UserRound,
   WalletMinimal,
 } from "lucide-react"
@@ -99,6 +102,20 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
   const inPrice = useMemo(() => {
     return pools.find((pool) => pool.id === inAsset[1])?.alloy.price || "0"
   }, [inAsset[1], pools])
+
+  // Onchain state of the contract behind the selected pool. A frozen contract
+  // rejects swaps in both directions and exit_pool, so both Swap and Force
+  // Exit are blocked up front instead of failing at broadcast. Depositing a
+  // corrupted constituent is rejected by the contract as well (its amount may
+  // never increase), so that direction is blocked too; taking it out stays
+  // allowed.
+  const selectedPoolStatus = useMemo(
+    () => pools.find((pool) => pool.id === inAsset[1])?.status,
+    [inAsset[1], pools]
+  )
+  const isPoolFrozen = selectedPoolStatus?.isActive === false
+  const isInAssetCorrupted =
+    selectedPoolStatus?.corruptedDenoms?.includes(inAsset[0].denom) ?? false
 
   const estimatedInPrice = useMemo(() => {
     return inAmount.multipliedBy(inPrice)
@@ -397,6 +414,28 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
           )}
           <span className="font-mono">{outAsset[0].symbol}</span>
         </div>
+        {isPoolFrozen && (
+          <div className="flex items-start gap-2 rounded-md bg-destructive p-2 text-xs font-medium text-destructive-foreground">
+            <Snowflake className="mt-0.5 size-3 shrink-0" />
+            <span>
+              <span className="font-semibold">{POOL_STATUS.frozen.title}.</span>{" "}
+              {POOL_STATUS.frozen.description}
+            </span>
+          </div>
+        )}
+        {!isPoolFrozen && isInAssetCorrupted && (
+          <div className="flex items-start gap-2 rounded-md bg-destructive p-2 text-xs font-medium text-destructive-foreground">
+            <ShieldAlert className="mt-0.5 size-3 shrink-0" />
+            <span>
+              <span className="font-semibold">
+                {POOL_STATUS.corrupted.title}.
+              </span>{" "}
+              <span className="font-mono">{inAsset[0].symbol}</span> is marked
+              corrupted in this pool and cannot be deposited into it. It can
+              only be taken out.
+            </span>
+          </div>
+        )}
         {(price.error?.message || estimatedOut.error?.message) && (
           <div className="break-all rounded-md bg-destructive p-1 text-xs font-medium text-destructive-foreground opacity-70">
             {(price.error?.message || estimatedOut.error?.message)?.replace(
@@ -414,6 +453,8 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
           <Button
             disabled={
               isSwapping ||
+              isPoolFrozen ||
+              isInAssetCorrupted ||
               estimatedOut.error ||
               !estimatedOut.data ||
               estimatedOut.data.amount.isZero() ||
@@ -424,13 +465,17 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
             variant={isForceExit ? "destructive" : "default"}
           >
             {isSwapping && <Loader2 className="mr-2 size-4 animate-spin" />}
-            {inBalance.isLessThan(inAmount)
-              ? "Insufficient Balance"
-              : isForceExit && !inAsset[0].denom.includes("alloy")
-                ? "Force Exit Only Available For Alloy Asset"
-                : isForceExit
-                  ? "Force Exit"
-                  : "Swap"}
+            {isPoolFrozen
+              ? "Pool Frozen"
+              : isInAssetCorrupted
+                ? "Corrupted Asset Cannot Be Deposited"
+                : inBalance.isLessThan(inAmount)
+                  ? "Insufficient Balance"
+                  : isForceExit && !inAsset[0].denom.includes("alloy")
+                    ? "Force Exit Only Available For Alloy Asset"
+                    : isForceExit
+                      ? "Force Exit"
+                      : "Swap"}
           </Button>
         )}
         {isForceExit && (

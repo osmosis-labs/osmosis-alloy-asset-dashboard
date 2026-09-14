@@ -39,6 +39,10 @@ const BASE_LIQUIDITY_CHART_URL =
 const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
 const BASE_ASSET_LIST =
   "https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/generated/chain_registry/assetlist.json"
+const BASE_FRONTEND_ASSET_LIST =
+  "https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/generated/frontend/assetlist.json"
+const BASE_SMART_QUERY_URL =
+  "https://osmosis-rest.publicnode.com/cosmwasm/wasm/v1/contract/{contract}/smart/{query}"
 const BASE_ASSET_PRICE =
   "https://app.osmosis.zone/api/edge-trpc-assets/assets.getAssetPrice?input=%7B%22json%22:%7B%22coinMinimalDenom%22:%22{denom}%22%7D%7D"
 
@@ -88,6 +92,72 @@ const getAssets = async () => {
     denom: a.denom_units[0].denom,
     decimal: a.denom_units[a.denom_units.length - 1].exponent || 6,
   }))
+}
+
+// Mirror of fetchAssetStatusMap in src/services/asset.ts: frontend-assetlist
+// operational flags keyed by minimal denom, flagged assets only. Non-fatal:
+// an empty map only hides tooltips, the onchain status below stays intact.
+const getAssetStatusMap = async () => {
+  try {
+    const data = await fetchJson(BASE_FRONTEND_ASSET_LIST)
+    const assets = data.assets
+    if (!Array.isArray(assets) || assets.length === 0) return {}
+    const map = {}
+    for (const a of assets) {
+      const status = {
+        unstable: a.unstable === true,
+        unstableReason: a.unstableReason ?? null,
+        disabled: a.disabled === true,
+        haltDeposits: a.haltDeposits === true,
+        haltWithdrawals: a.haltWithdrawals === true,
+        depositHaltReason: a.depositHaltReason ?? null,
+        withdrawalHaltReason: a.withdrawalHaltReason ?? null,
+        tooltipMessage: a.tooltipMessage?.trim() || null,
+        lastDowntimeDate: a.lastDowntimeDate ?? null,
+      }
+      const flagged =
+        status.unstable ||
+        status.disabled ||
+        status.haltDeposits ||
+        status.haltWithdrawals ||
+        !!status.tooltipMessage
+      if (flagged && a.coinMinimalDenom) map[a.coinMinimalDenom] = status
+    }
+    return map
+  } catch (e) {
+    console.warn(`  frontend assetlist unavailable, no status flags: ${e}`)
+    return {}
+  }
+}
+
+// Mirror of getPoolContractStatus in src/services/transmuter.ts. null means
+// "unknown" and is preserved as such; it is never defaulted to active/empty.
+const smartQuery = async (contractAddress, msg) => {
+  try {
+    const url = BASE_SMART_QUERY_URL.replace(
+      "{contract}",
+      contractAddress
+    ).replace("{query}", Buffer.from(JSON.stringify(msg)).toString("base64"))
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const body = await res.json()
+    return body?.data ?? null
+  } catch {
+    return null
+  }
+}
+
+const getPoolContractStatus = async (contractAddress) => {
+  const [active, corrupted] = await Promise.all([
+    smartQuery(contractAddress, { is_active: {} }),
+    smartQuery(contractAddress, { get_corrupted_denoms: {} }),
+  ])
+  return {
+    isActive: typeof active?.is_active === "boolean" ? active.is_active : null,
+    corruptedDenoms: Array.isArray(corrupted?.corrupted_denoms)
+      ? corrupted.corrupted_denoms
+      : null,
+  }
 }
 
 // Mirror of calculdateAlloyAssetDenom in src/services/pool.ts.
@@ -201,7 +271,7 @@ const market = (pool) => ({
 })
 
 // Mirror of fillPoolOverview in src/services/pool.ts.
-const fillPoolOverview = async (pool, assetMap) => {
+const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
   const alloyDenom = calcAlloyDenom(
     pool.raw.contract_address,
     pool.raw.instantiate_msg
@@ -238,17 +308,19 @@ const fillPoolOverview = async (pool, assetMap) => {
       assets: null,
       alloy: { asset: null, price: null },
       limiters: null,
+      status: null,
     }
   }
 
-  const [liquidityChart, prices, limiters] = await Promise.all([
+  const reserveDenoms = pool.reserveCoins.map(
+    (coin) => JSON.parse(coin).currency.coinMinimalDenom
+  )
+
+  const [liquidityChart, prices, limiters, contractStatus] = await Promise.all([
     getLiquidityChart(pool.id),
-    getPrices(
-      pool.reserveCoins.map(
-        (coin) => JSON.parse(coin).currency.coinMinimalDenom
-      )
-    ),
+    getPrices(reserveDenoms),
     getLimiters(pool.raw.contract_address),
+    getPoolContractStatus(pool.raw.contract_address),
   ])
 
   let alloyAssetPrice = await getAssetPrice(alloyDenom)
@@ -280,14 +352,22 @@ const fillPoolOverview = async (pool, assetMap) => {
     prices,
     alloy: { asset: alloyAssetDetail, price: alloyAssetPrice },
     limiters,
+    status: {
+      ...contractStatus,
+      alloy: statusMap[alloyDenom] ?? null,
+      reserves: Object.fromEntries(
+        reserveDenoms.filter((d) => statusMap[d]).map((d) => [d, statusMap[d]])
+      ),
+    },
   }
 }
 
 const main = async () => {
   console.log("Fetching pools + assetlist ...")
-  const [poolsResponse, assets] = await Promise.all([
+  const [poolsResponse, assets, statusMap] = await Promise.all([
     fetchJson(BASE_POOLS_URL),
     getAssets(),
+    getAssetStatusMap(),
   ])
   const allPools = poolsResponse.result.data.json.items
   const assetMap = Object.fromEntries(
@@ -304,7 +384,7 @@ const main = async () => {
   console.log(`  ${data.length} alloyed/transmuter pools to classify`)
 
   const built = await Promise.all(
-    data.map((p) => fillPoolOverview(p, assetMap))
+    data.map((p) => fillPoolOverview(p, assetMap, statusMap))
   )
 
   const pools = built.filter((p) => p.alloy.asset)
@@ -322,6 +402,14 @@ const main = async () => {
   console.log(
     `\nWrote ${OUT_PATH}\n  supported: ${pools.length}\n  unsupported: ${unsupportedPools.length}`
   )
+  const frozen = pools.filter((p) => p.status.isActive === false)
+  const unknown = pools.filter((p) => p.status.isActive === null)
+  const corrupted = pools.filter((p) => p.status.corruptedDenoms?.length)
+  const symbols = (ps) =>
+    ps.map((p) => p.alloy.asset.symbol).join(", ") || "none"
+  console.log(`  frozen: ${symbols(frozen)}`)
+  console.log(`  status unknown: ${symbols(unknown)}`)
+  console.log(`  with corrupted assets: ${symbols(corrupted)}`)
   console.log(
     "  supported subdenoms:",
     pools

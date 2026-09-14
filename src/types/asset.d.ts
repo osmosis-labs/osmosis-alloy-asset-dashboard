@@ -115,3 +115,25 @@ export type Coin = {
   denom: string
   amount: string
 }
+
+// Operational status flags for a single denom, sourced from the FRONTEND
+// generated assetlist (osmosis-1/generated/frontend/assetlist.json). This is
+// the same data that drives the "unstable" badges and tooltips on
+// app.osmosis.zone. The chain-registry generated list the dashboard uses for
+// metadata does not carry these fields. All values are null/false when the
+// list has no entry for the denom.
+export type AssetStatus = {
+  unstable: boolean
+  // "market" | "manual" | "source_chain_killed" | "ibc_client" | ...
+  unstableReason: string | null
+  disabled: boolean
+  haltDeposits: boolean
+  haltWithdrawals: boolean
+  // "bridge_down" | "extended_unstable_market" | "source_chain_killed" |
+  // "manual" | "planned_shutdown" | ...
+  depositHaltReason: string | null
+  withdrawalHaltReason: string | null
+  // Free-text explanation written by the assetlist maintainers.
+  tooltipMessage: string | null
+  lastDowntimeDate: string | null
+}

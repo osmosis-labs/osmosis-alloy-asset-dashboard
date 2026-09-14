@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js"
 import _ from "lodash"
 import { ChevronRight, ExternalLink, Info } from "lucide-react"
 
-import { Asset, CurrencyAmount } from "@/types/asset"
+import { Asset, AssetStatus, CurrencyAmount } from "@/types/asset"
 import { Limiter } from "@/types/limiter"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
@@ -23,6 +23,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DecimalSpan } from "@/components/decimal-span"
+import {
+  AssetStatusBadges,
+  assetTileClass,
+  PoolStatusBadges,
+  poolTileClass,
+} from "@/components/status-badges"
 
 import { OverviewChartContent } from "./overview-chart"
 
@@ -40,7 +46,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
     ) || 0
 
   return (
-    <Card>
+    <Card className={poolTileClass(pool.status)}>
       <CardHeader className="flex-col gap-2 text-start md:flex-row md:items-center">
         <Avatar className="size-8 md:size-12">
           <AvatarImage
@@ -52,6 +58,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 md:mb-0">
             <h1 className="text-lg font-semibold">{pool.alloy.asset.name}</h1>
             <Badge size="sm">{pool.alloy.asset.symbol}</Badge>
+            <PoolStatusBadges pool={pool} />
             <Link
               href={BlockExplorer.pool(pool.id)}
               target="_blank"
@@ -143,6 +150,10 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   totalAmount={totalAmount}
                   limiter={pool.limiters[c.asset.base]}
                   price={pool.prices[c.asset.base]}
+                  status={pool.status?.reserves?.[c.asset.base]}
+                  corrupted={pool.status?.corruptedDenoms?.includes(
+                    c.asset.base
+                  )}
                 />
               ))}
             </div>
@@ -160,6 +171,8 @@ const PoolAssetCard = ({
   className,
   limiter,
   price,
+  status,
+  corrupted = false,
 }: {
   asset: {
     asset: Asset
@@ -169,6 +182,10 @@ const PoolAssetCard = ({
   className?: string
   limiter?: Limiter
   price?: number
+  // Assetlist flags for this constituent (undefined/null = none).
+  status?: AssetStatus | null
+  // True when the contract lists this denom in get_corrupted_denoms.
+  corrupted?: boolean
 }) => {
   const thisAmount = valueFormatter(c.currency)
   const percentage = thisAmount / totalAmount
@@ -180,6 +197,7 @@ const PoolAssetCard = ({
     <div
       className={cn(
         "flex h-fit flex-col gap-2 rounded-md border p-2 text-start",
+        assetTileClass(status, corrupted),
         className
       )}
     >
@@ -194,6 +212,7 @@ const PoolAssetCard = ({
             <Badge size="xs" variant="secondary">
               {counterparty}
             </Badge>
+            <AssetStatusBadges status={status} corrupted={corrupted} />
           </div>
           <p className="line-clamp-2 whitespace-pre-wrap break-all text-xs text-muted-foreground">
             {c.asset.description}

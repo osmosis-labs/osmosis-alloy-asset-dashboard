@@ -4,6 +4,7 @@ import _ from "lodash"
 
 import {
   Asset,
+  AssetStatus,
   AssetWithDecimal,
   Coin,
   CurrencyWithMarketPrice,
@@ -19,6 +20,11 @@ const BASE_ASSET_PRICE =
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_ASSET_LIST =
   "https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/generated/chain_registry/assetlist.json"
+// Frontend-flavoured generated list: same assets, but carrying the operational
+// flags (unstable, halted deposits/withdrawals, tooltipMessage) that the
+// chain-registry-format list above does not.
+const BASE_FRONTEND_ASSET_LIST =
+  "https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/generated/frontend/assetlist.json"
 const BASE_MARKET_ASSET_URL =
   "https://app.osmosis.zone/api/edge-trpc-assets/assets.getMarketAssets?input=%7B%22json%22:%7B%22limit%22:50,%22search%22:%7B%22query%22:%22{denom}%22%7D,%22onlyVerified%22:false,%22includePreview%22:false,%22sort%22:null,%22watchListDenoms%22:%5B%5D,%22categories%22:null,%22cursor%22:0%7D,%22meta%22:%7B%22values%22:%7B%22sort%22:%5B%22undefined%22%5D,%22categories%22:%5B%22undefined%22%5D%7D%7D%7D"
 
@@ -104,6 +110,85 @@ export const getAssetListUncached = async () => {
   } catch (e) {
     console.error(`Error fetching asset list (uncached): ${e}`)
     return []
+  }
+}
+
+type FrontendAsset = {
+  coinMinimalDenom: string
+  unstable?: boolean
+  unstableReason?: string | null
+  disabled?: boolean
+  haltDeposits?: boolean | null
+  haltWithdrawals?: boolean | null
+  depositHaltReason?: string | null
+  withdrawalHaltReason?: string | null
+  tooltipMessage?: string | null
+  lastDowntimeDate?: string | null
+}
+
+// Status flags keyed by minimal denom. Only assets that carry at least one
+// flag are kept, so a lookup miss means "no flags", not "unknown".
+const fetchAssetStatusMap = async (): Promise<Record<string, AssetStatus>> => {
+  const response = await fetchWithRetry(BASE_FRONTEND_ASSET_LIST, {
+    timeoutMs: 20000,
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch frontend asset list: ${response.status} ${response.statusText}`
+    )
+  }
+
+  const data: FrontendAsset[] = await response.json().then((d) => d.assets)
+  if (!_.isArray(data) || data.length === 0) {
+    throw new Error("Frontend asset list fetch returned no assets")
+  }
+
+  const map: Record<string, AssetStatus> = {}
+  for (const a of data) {
+    const status: AssetStatus = {
+      unstable: a.unstable === true,
+      unstableReason: a.unstableReason ?? null,
+      disabled: a.disabled === true,
+      haltDeposits: a.haltDeposits === true,
+      haltWithdrawals: a.haltWithdrawals === true,
+      depositHaltReason: a.depositHaltReason ?? null,
+      withdrawalHaltReason: a.withdrawalHaltReason ?? null,
+      tooltipMessage: a.tooltipMessage?.trim() || null,
+      lastDowntimeDate: a.lastDowntimeDate ?? null,
+    }
+    const flagged =
+      status.unstable ||
+      status.disabled ||
+      status.haltDeposits ||
+      status.haltWithdrawals ||
+      !!status.tooltipMessage
+    if (flagged && a.coinMinimalDenom) {
+      map[a.coinMinimalDenom] = status
+    }
+  }
+  return map
+}
+
+export const getAssetStatusMap = unstable_cache(
+  fetchAssetStatusMap,
+  ["asset-status-map"],
+  { revalidate: 1800 }
+)
+
+// Non-throwing variant. The status flags are supplementary: the authoritative
+// frozen signal is the contract's own is_active query, so a missing map only
+// hides the assetlist tooltips, it never claims a pool is healthy. Like
+// getAssetList, the cached function throws on failure so an empty map is never
+// cached over a good one.
+export const getAssetStatusMapSafe = async (): Promise<
+  Record<string, AssetStatus>
+> => {
+  try {
+    return await getAssetStatusMap()
+  } catch (e) {
+    console.error(`Error fetching asset status map: ${e}`)
+    return {}
   }
 }
 
