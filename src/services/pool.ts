@@ -29,6 +29,14 @@ const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
 const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
+// Numia returns the liquidity series newest-first: element 0 is a live "now"
+// snapshot with a sub-day timestamp, followed by one point per UTC day. The
+// "now" point duplicates the head of the daily series, so it is normally
+// dropped. When Numia's daily aggregation stalls (as it did from 2026-08-26),
+// that snapshot is the ONLY current data point and dropping it freezes the
+// chart on the last aggregated day. Keep it once the gap exceeds this many
+// hours so the chart still runs to the present during an upstream stall.
+const LIVE_SNAPSHOT_KEEP_AFTER_HOURS = 36
 
 const ZERO_FIAT = {
   fiat: {
@@ -50,6 +58,33 @@ const ZERO_FIAT = {
     lowerCase: false,
   },
   amount: "0",
+}
+
+type RawLiquidityPoint = { timestamp: string; liquidity_usd: number }
+
+// Decides whether to keep Numia's leading "now" snapshot (see
+// LIVE_SNAPSHOT_KEEP_AFTER_HOURS). Healthy upstream: the snapshot sits within
+// hours of the newest daily point and is dropped as a duplicate. Stalled
+// upstream: it is days ahead, so it is kept and the chart reaches the present
+// instead of flatlining on the last aggregated day. No data is invented; this
+// only chooses whether to discard a point Numia already returned.
+const dropRedundantLiveSnapshot = (
+  points: RawLiquidityPoint[]
+): RawLiquidityPoint[] => {
+  // A single point is all there is to plot: never empty it out.
+  if (points.length <= 1) return points
+
+  const [live, ...daily] = points
+  const liveAt = dayjs.utc(live?.timestamp)
+  const latestDailyAt = dayjs.utc(daily[0]?.timestamp)
+
+  // Unparseable timestamps: fall back to the historical drop-the-head
+  // behaviour rather than risk plotting a bogus point.
+  if (!liveAt.isValid() || !latestDailyAt.isValid()) return daily
+
+  const gapHours = liveAt.diff(latestDailyAt, "hour")
+
+  return gapHours > LIVE_SNAPSHOT_KEEP_AFTER_HOURS ? points : daily
 }
 
 const fillPoolOverview = async (
@@ -155,10 +190,7 @@ const fillPoolOverview = async (
       })
       .then((d) => (!d || !_.isArray(d) ? [] : d))
       .then((d) =>
-        // The first element is the "now" snapshot with a sub-day timestamp;
-        // drop it only when there is also at least one daily point to plot,
-        // so a single-element response is not emptied out.
-        (d.length > 1 ? d.slice(1) : d).map((v) => ({
+        dropRedundantLiveSnapshot(d).map((v) => ({
           time: v.timestamp,
           value: v.liquidity_usd,
         }))
