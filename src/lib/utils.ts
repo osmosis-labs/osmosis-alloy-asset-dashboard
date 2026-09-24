@@ -55,6 +55,61 @@ export const fetchWithRetry = async (
     : new Error(`fetchWithRetry failed for ${String(input)}`)
 }
 
+/**
+ * Like fetchWithRetry, but the JSON body read is inside the retry loop and
+ * under the per-attempt timeout. fetchWithRetry resolves as soon as headers
+ * arrive, so a connection dropped mid-body ("TypeError: terminated", "other
+ * side closed") surfaces later in response.json() with no retry. Large bodies
+ * such as the multi-MB assetlists hit exactly that from Vercel. Each URL in
+ * `inputs` is tried in order (e.g. a primary then a mirror), each with its own
+ * retry budget. Non-2xx responses throw; 4xx other than 429 skip the remaining
+ * retries for that URL.
+ */
+export const fetchJsonWithRetry = async <T = unknown>(
+  inputs: string | URL | (string | URL)[],
+  init?: RequestInit & { retries?: number; timeoutMs?: number }
+): Promise<T> => {
+  const { retries = 2, timeoutMs = 15000, ...rest } = init ?? {}
+  const urls = _.castArray(inputs)
+
+  let lastError: unknown
+  for (const input of urls) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), timeoutMs)
+      try {
+        const response = await fetch(input, {
+          ...rest,
+          signal: rest.signal ?? controller.signal,
+        })
+
+        if (!response.ok) {
+          lastError = new Error(
+            `Upstream returned ${response.status} for ${String(input)}`
+          )
+          // Discard the body so the socket can be released.
+          await response.body?.cancel().catch(() => {})
+          if (response.status < 500 && response.status !== 429) break
+        } else {
+          return (await response.json()) as T
+        }
+      } catch (e) {
+        lastError = e
+      } finally {
+        clearTimeout(timer)
+      }
+
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 250 * 2 ** attempt))
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`fetchJsonWithRetry failed for ${urls.map(String).join(", ")}`)
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
