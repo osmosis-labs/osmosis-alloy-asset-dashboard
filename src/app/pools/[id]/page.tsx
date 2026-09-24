@@ -29,6 +29,8 @@ import { SourceChart } from "../../../components/source-chart"
 import { TransactionTable } from "../../../components/transaction-table"
 
 export const revalidate = 3600 // 1 hour
+// Above Vercel's 15s default; see src/app/page.tsx.
+export const maxDuration = 60
 
 export const generateMetadata = async ({
   params: { id },

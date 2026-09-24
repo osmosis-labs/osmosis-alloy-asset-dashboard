@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getPoolsOverview } from "@/services/pool"
 
 export const revalidate = 3600
+// Above Vercel's 15s default; see src/app/page.tsx.
+export const maxDuration = 60
 
 export async function GET() {
   const { pools } = await getPoolsOverview()

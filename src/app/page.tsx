@@ -4,6 +4,10 @@ import { OverviewChart } from "../components/overview-chart"
 import { PoolCard } from "../components/pool-card"
 
 export const revalidate = 3600 // 1 hour
+// ISR regenerations and the unstable_cache refreshes behind them run inside
+// this function. Vercel's 15s default kills the pools build mid-fetch, so
+// the cached overview is never replaced and the page freezes on old data.
+export const maxDuration = 60
 
 export default async function Home() {
   const { pools } = await getPoolsOverview()
