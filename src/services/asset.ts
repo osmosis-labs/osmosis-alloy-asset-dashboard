@@ -11,7 +11,7 @@ import {
   CurrencyWithPrice,
   FiatAmount,
 } from "@/types/asset"
-import { fetchWithRetry } from "@/lib/utils"
+import { fetchJsonWithRetry } from "@/lib/utils"
 
 const BASE_ASSET_WITH_PRICE_URL =
   "https://app.osmosis.zone/api/edge-trpc-assets/assets.getAssetWithPrice?input=%7B%22json%22:%7B%22findMinDenomOrSymbol%22:%22{denom}%22%7D%7D"
@@ -25,6 +25,13 @@ const BASE_ASSET_LIST =
 // chain-registry-format list above does not.
 const BASE_FRONTEND_ASSET_LIST =
   "https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/generated/frontend/assetlist.json"
+// jsDelivr mirrors of the same files, tried only after raw.githubusercontent.com
+// has exhausted its retries. jsDelivr can lag `main` by a few hours, which is
+// fine for a fallback: the lists change slowly.
+const ASSETLIST_MIRROR_BASE =
+  "https://cdn.jsdelivr.net/gh/osmosis-labs/assetlists@main/osmosis-1/generated"
+const MIRROR_ASSET_LIST = `${ASSETLIST_MIRROR_BASE}/chain_registry/assetlist.json`
+const MIRROR_FRONTEND_ASSET_LIST = `${ASSETLIST_MIRROR_BASE}/frontend/assetlist.json`
 const BASE_MARKET_ASSET_URL =
   "https://app.osmosis.zone/api/edge-trpc-assets/assets.getMarketAssets?input=%7B%22json%22:%7B%22limit%22:50,%22search%22:%7B%22query%22:%22{denom}%22%7D,%22onlyVerified%22:false,%22includePreview%22:false,%22sort%22:null,%22watchListDenoms%22:%5B%5D,%22categories%22:null,%22cursor%22:0%7D,%22meta%22:%7B%22values%22:%7B%22sort%22:%5B%22undefined%22%5D,%22categories%22:%5B%22undefined%22%5D%7D%7D%7D"
 
@@ -65,19 +72,14 @@ export const getAssetWithMarketPrice = cache(async (denom: string) => {
 // that failure, this THROWS on a fetch/parse failure or an empty list rather
 // than returning []. `unstable_cache` does not persist a thrown error, so the
 // previous good list keeps being served instead of an empty one poisoning the
-// cache for the whole revalidate window. Fetches go through fetchWithRetry
-// because the 1.7MB list occasionally responds slowly or drops the first
-// connection, and a single un-retried failure here blanks the Supported table.
+// cache for the whole revalidate window. Fetches go through fetchJsonWithRetry
+// because the 1.7MB list occasionally responds slowly or drops the connection
+// mid-body, and a single un-retried failure here blanks the Supported table.
 const fetchAssetList = async (): Promise<AssetWithDecimal[]> => {
-  const response = await fetchWithRetry(BASE_ASSET_LIST, { timeoutMs: 20000 })
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch asset list: ${response.status} ${response.statusText}`
-    )
-  }
-
-  const data: Asset[] = await response.json().then((d) => d.assets)
+  const data = await fetchJsonWithRetry<{ assets: Asset[] }>(
+    [BASE_ASSET_LIST, MIRROR_ASSET_LIST],
+    { timeoutMs: 20000 }
+  ).then((d) => d?.assets)
   if (!_.isArray(data) || data.length === 0) {
     throw new Error("Asset list fetch returned no assets")
   }
@@ -129,17 +131,10 @@ type FrontendAsset = {
 // Status flags keyed by minimal denom. Only assets that carry at least one
 // flag are kept, so a lookup miss means "no flags", not "unknown".
 const fetchAssetStatusMap = async (): Promise<Record<string, AssetStatus>> => {
-  const response = await fetchWithRetry(BASE_FRONTEND_ASSET_LIST, {
-    timeoutMs: 20000,
-  })
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch frontend asset list: ${response.status} ${response.statusText}`
-    )
-  }
-
-  const data: FrontendAsset[] = await response.json().then((d) => d.assets)
+  const data = await fetchJsonWithRetry<{ assets: FrontendAsset[] }>(
+    [BASE_FRONTEND_ASSET_LIST, MIRROR_FRONTEND_ASSET_LIST],
+    { timeoutMs: 20000 }
+  ).then((d) => d?.assets)
   if (!_.isArray(data) || data.length === 0) {
     throw new Error("Frontend asset list fetch returned no assets")
   }

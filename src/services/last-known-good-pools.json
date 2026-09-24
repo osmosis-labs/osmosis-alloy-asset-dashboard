@@ -467,7 +467,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "8032812.000000000000000000"
+        "amount": "8222604.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -509,7 +509,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "721042.687958681300000000"
+        "amount": "0.000000000000000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -554,6 +554,122 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-24 00:00:00",
+          "value": 8718495.514139561
+        },
+        {
+          "time": "2026-09-23 00:00:00",
+          "value": 8908324.982454134
+        },
+        {
+          "time": "2026-09-22 00:00:00",
+          "value": 8841292.003702737
+        },
+        {
+          "time": "2026-09-21 00:00:00",
+          "value": 8623954.042388784
+        },
+        {
+          "time": "2026-09-20 00:00:00",
+          "value": 8379921.913373403
+        },
+        {
+          "time": "2026-09-19 00:00:00",
+          "value": 8484068.046834147
+        },
+        {
+          "time": "2026-09-18 00:00:00",
+          "value": 8269741.944311806
+        },
+        {
+          "time": "2026-09-17 00:00:00",
+          "value": 8149352.907547651
+        },
+        {
+          "time": "2026-09-16 00:00:00",
+          "value": 8098963.633828281
+        },
+        {
+          "time": "2026-09-15 00:00:00",
+          "value": 8130312.624830986
+        },
+        {
+          "time": "2026-09-14 00:00:00",
+          "value": 8199712.310816524
+        },
+        {
+          "time": "2026-09-13 00:00:00",
+          "value": 8213567.025116656
+        },
+        {
+          "time": "2026-09-12 00:00:00",
+          "value": 8285364.447815759
+        },
+        {
+          "time": "2026-09-11 00:00:00",
+          "value": 8259529.132737203
+        },
+        {
+          "time": "2026-09-10 00:00:00",
+          "value": 8242107.556230052
+        },
+        {
+          "time": "2026-09-09 00:00:00",
+          "value": 8216825.8983678175
+        },
+        {
+          "time": "2026-09-08 00:00:00",
+          "value": 8218279.820119656
+        },
+        {
+          "time": "2026-09-07 00:00:00",
+          "value": 8909451.595449055
+        },
+        {
+          "time": "2026-09-06 00:00:00",
+          "value": 9399478.776034357
+        },
+        {
+          "time": "2026-09-05 00:00:00",
+          "value": 9519071.82183677
+        },
+        {
+          "time": "2026-09-04 00:00:00",
+          "value": 9649640.094731316
+        },
+        {
+          "time": "2026-09-03 00:00:00",
+          "value": 9569170.13846429
+        },
+        {
+          "time": "2026-09-02 00:00:00",
+          "value": 9409874.371332964
+        },
+        {
+          "time": "2026-09-01 00:00:00",
+          "value": 9285424.252893856
+        },
+        {
+          "time": "2026-08-31 00:00:00",
+          "value": 9435950.945733223
+        },
+        {
+          "time": "2026-08-30 00:00:00",
+          "value": 9519120.268129386
+        },
+        {
+          "time": "2026-08-29 00:00:00",
+          "value": 9328253.277190572
+        },
+        {
+          "time": "2026-08-28 00:00:00",
+          "value": 9754793.98986723
+        },
+        {
+          "time": "2026-08-27 00:00:00",
+          "value": 9704063.039474102
+        },
         {
           "time": "2026-08-26 00:00:00",
           "value": 9625771.72782895
@@ -4519,7 +4635,13 @@
           "value": 0
         }
       ],
-      "prices": {},
+      "prices": {
+        "factory/osmo1z0qrq605sjgcqpylfl4aa6s90x738j7m58wyatt0tdzflg2ha26q67k743/wbtc": "72340.484956713250027800000000000000000000",
+        "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A": "73951.164902164303570300000000000000000000",
+        "ibc/75345531D87BD90BF108BE7240BD721CB2CB0A1F16D4EBA71B09EC3C43E15C8F": "72213.066051913244987200000000000000000000",
+        "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB": "71223.422860253000000000000000000000000000",
+        "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F": "72376.316335448536164000000000000000000000"
+      },
       "alloy": {
         "asset": {
           "description": "An alloy of BTC asset variants on Osmosis.",
@@ -4589,7 +4711,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "72787.647410604307270700"
+          "amount": "72376.316335448536164000"
         }
       },
       "limiters": {
@@ -4641,6 +4763,626 @@
             "lastDowntimeDate": "2026-09-08T15:16:31.113Z"
           }
         }
+      }
+    },
+    {
+      "id": "3497",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0",
+      "reserveCoins": [
+        {
+          "asset": {
+            "description": "USDC is a fully collateralized US Dollar stablecoin developed by CENTRE, the open source project with Circle being the first of several forthcoming issuers.",
+            "denom_units": [
+              {
+                "denom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
+                "exponent": 0,
+                "aliases": [
+                  "microusdc",
+                  "uusdc"
+                ]
+              },
+              {
+                "denom": "usdc",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
+            "name": "USDC",
+            "display": "usdc",
+            "symbol": "USDC.n",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "noble",
+                  "base_denom": "uusdc",
+                  "channel_id": "channel-1"
+                },
+                "chain": {
+                  "channel_id": "channel-750",
+                  "path": "transfer/channel-750/uusdc"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "ethereum",
+                  "base_denom": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg",
+                "theme": {
+                  "circle": true
+                }
+              }
+            ],
+            "coingecko_id": "usd-coin",
+            "denom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
+            "decimal": 6
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "USDC.noble",
+              "coinName": "USDC (Noble)",
+              "coinMinimalDenom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
+              "coinDecimals": 6,
+              "coinGeckoId": "usd-coin",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdc.noble.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "1549699348196"
+          }
+        },
+        {
+          "asset": {
+            "description": "USD Coin issued natively on Injective by Circle",
+            "denom_units": [
+              {
+                "denom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
+                "exponent": 0
+              },
+              {
+                "denom": "usdc",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
+            "name": "USDC",
+            "display": "usdc",
+            "symbol": "USDC.inj",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "injective",
+                  "base_denom": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
+                  "channel_id": "channel-8"
+                },
+                "chain": {
+                  "channel_id": "channel-122",
+                  "path": "transfer/channel-122/erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "injective",
+                  "base_denom": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg",
+                "theme": {
+                  "circle": true
+                }
+              }
+            ],
+            "coingecko_id": "usd-coin",
+            "denom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
+            "decimal": 6
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "USDC.inj",
+              "coinName": "USDC (Injective)",
+              "coinMinimalDenom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
+              "coinDecimals": 6,
+              "coinGeckoId": "usd-coin",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdc.inj.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "162964327761"
+          }
+        },
+        {
+          "asset": {
+            "description": "Circle's stablecoin on Axelar",
+            "denom_units": [
+              {
+                "denom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
+                "exponent": 0,
+                "aliases": [
+                  "uusdc"
+                ]
+              },
+              {
+                "denom": "usdc",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
+            "name": "USD Coin",
+            "display": "usdc",
+            "symbol": "USDC",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "axelar",
+                  "base_denom": "uusdc",
+                  "channel_id": "channel-3"
+                },
+                "chain": {
+                  "channel_id": "channel-208",
+                  "path": "transfer/channel-208/uusdc"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "axelar",
+                  "base_denom": "uusdc"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.svg"
+              }
+            ],
+            "coingecko_id": "axlusdc",
+            "denom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
+            "decimal": 6
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "USDC.eth.axl",
+              "coinName": "USDC (Ethereum via Axelar)",
+              "coinMinimalDenom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
+              "coinDecimals": 6,
+              "coinGeckoId": "axlusdc",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdc.eth.axl.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "1349"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "1712666.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "909393.886050779500000000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "3984272.609373826500000000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "liquidityChart": [
+        {
+          "time": "2026-09-24 00:00:00",
+          "value": 1707850.8467087331
+        },
+        {
+          "time": "2026-09-23 00:00:00",
+          "value": 1671659.2851741982
+        },
+        {
+          "time": "2026-09-22 00:00:00",
+          "value": 1620603.364461917
+        },
+        {
+          "time": "2026-09-21 00:00:00",
+          "value": 1588244.2430813685
+        },
+        {
+          "time": "2026-09-20 00:00:00",
+          "value": 1538255.019280538
+        },
+        {
+          "time": "2026-09-19 00:00:00",
+          "value": 827007.1387888408
+        },
+        {
+          "time": "2026-09-18 00:00:00",
+          "value": 768799.6808902932
+        },
+        {
+          "time": "2026-09-17 00:00:00",
+          "value": 756633.0860124481
+        },
+        {
+          "time": "2026-09-16 00:00:00",
+          "value": 741595.1310132458
+        },
+        {
+          "time": "2026-09-15 00:00:00",
+          "value": 736047.5781995453
+        },
+        {
+          "time": "2026-09-14 00:00:00",
+          "value": 688691.2462188498
+        },
+        {
+          "time": "2026-09-13 00:00:00",
+          "value": 628994.1368127668
+        },
+        {
+          "time": "2026-09-12 00:00:00",
+          "value": 622115.5159257498
+        },
+        {
+          "time": "2026-09-11 00:00:00",
+          "value": 620870.8041862443
+        },
+        {
+          "time": "2026-09-10 00:00:00",
+          "value": 613711.9829765413
+        },
+        {
+          "time": "2026-09-09 00:00:00",
+          "value": 514892.62224504724
+        },
+        {
+          "time": "2026-09-08 00:00:00",
+          "value": 437139.7508681745
+        },
+        {
+          "time": "2026-09-07 00:00:00",
+          "value": 282084.8842861809
+        },
+        {
+          "time": "2026-09-06 00:00:00",
+          "value": 243201.91235193418
+        },
+        {
+          "time": "2026-09-05 00:00:00",
+          "value": 225702.4626097753
+        },
+        {
+          "time": "2026-09-04 00:00:00",
+          "value": 226341.8391050415
+        },
+        {
+          "time": "2026-09-03 00:00:00",
+          "value": 205709.412527512
+        },
+        {
+          "time": "2026-09-02 00:00:00",
+          "value": 162710.75859470794
+        },
+        {
+          "time": "2026-09-01 00:00:00",
+          "value": 135243.9294857822
+        },
+        {
+          "time": "2026-08-31 00:00:00",
+          "value": 108811.58434328323
+        },
+        {
+          "time": "2026-08-30 00:00:00",
+          "value": 102308.53814541895
+        },
+        {
+          "time": "2026-08-29 00:00:00",
+          "value": 91104.81759623715
+        },
+        {
+          "time": "2026-08-28 00:00:00",
+          "value": 90249.81078250187
+        },
+        {
+          "time": "2026-08-27 00:00:00",
+          "value": 5560.7601796291965
+        },
+        {
+          "time": "2026-08-26 00:00:00",
+          "value": 5163.208522928952
+        },
+        {
+          "time": "2026-08-25 00:00:00",
+          "value": 5143.801826649885
+        },
+        {
+          "time": "2026-08-24 00:00:00",
+          "value": 5143.740260964293
+        },
+        {
+          "time": "2026-08-23 00:00:00",
+          "value": 5144.0167337786725
+        },
+        {
+          "time": "2026-08-22 00:00:00",
+          "value": 5068.470016817564
+        },
+        {
+          "time": "2026-08-21 00:00:00",
+          "value": 4998.478886622623
+        },
+        {
+          "time": "2026-08-20 00:00:00",
+          "value": 3400.786392327307
+        },
+        {
+          "time": "2026-08-19 00:00:00",
+          "value": 500.95040166409007
+        }
+      ],
+      "prices": {
+        "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4": "1.000000000000000000000000000000000000",
+        "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138": "1.000000000000000000000000000000000000",
+        "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858": "1.002467356234666548180773557920173700"
+      },
+      "alloy": {
+        "asset": {
+          "description": "An alloy of USDC asset variants on Osmosis.",
+          "extended_description": "Multiple USD Coin variants on Osmosis comprise the liquidity backing of a tokenized transmuter pool to create an alloy of USDC.",
+          "denom_units": [
+            {
+              "denom": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
+              "exponent": 0
+            },
+            {
+              "denom": "allUSDC",
+              "exponent": 6
+            }
+          ],
+          "type_asset": "sdk.coin",
+          "address": "osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0",
+          "base": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
+          "name": "USDC",
+          "display": "allUSDC",
+          "symbol": "USDC",
+          "traces": [
+            {
+              "type": "synthetic",
+              "counterparty": {
+                "chain_name": "ethereum",
+                "base_denom": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+              },
+              "provider": "Osmosis"
+            }
+          ],
+          "logo_URIs": {
+            "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
+            "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"
+          },
+          "images": [
+            {
+              "image_sync": {
+                "chain_name": "ethereum",
+                "base_denom": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+              },
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg",
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
+              "theme": {
+                "circle": true
+              }
+            }
+          ],
+          "denom": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
+          "decimal": 6
+        },
+        "price": {
+          "fiat": {
+            "currency": "usd",
+            "symbol": "$",
+            "maxDecimals": 2,
+            "locale": "en-US"
+          },
+          "options": {
+            "maxDecimals": 2,
+            "trim": true,
+            "shrink": true,
+            "ready": true,
+            "locale": "en-US",
+            "inequalitySymbol": true,
+            "inequalitySymbolSeparator": " ",
+            "separator": "",
+            "upperCase": false,
+            "lowerCase": false
+          },
+          "amount": "1.000000000000000000"
+        }
+      },
+      "limiters": {},
+      "status": {
+        "isActive": true,
+        "corruptedDenoms": [],
+        "alloy": null,
+        "reserves": {}
       }
     },
     {
@@ -4726,7 +5468,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "363887974984890915"
+            "amount": "117596746319754958"
           }
         },
         {
@@ -4826,7 +5568,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "433582294478313865427"
+            "amount": "424472426306454511367"
           }
         }
       ],
@@ -4863,7 +5605,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1080919.000000000000000000"
+        "amount": "1126051.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -4884,7 +5626,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "8655.014207485023000000"
+        "amount": "57391.940402874250000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -4905,7 +5647,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "227286.402980745940000000"
+        "amount": "189024.752908384220000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -4950,6 +5692,122 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-24 00:00:00",
+          "value": 1137748.712487946
+        },
+        {
+          "time": "2026-09-23 00:00:00",
+          "value": 1171810.1657673116
+        },
+        {
+          "time": "2026-09-22 00:00:00",
+          "value": 1180678.2833254577
+        },
+        {
+          "time": "2026-09-21 00:00:00",
+          "value": 1148986.1459043473
+        },
+        {
+          "time": "2026-09-20 00:00:00",
+          "value": 1150282.5339366638
+        },
+        {
+          "time": "2026-09-19 00:00:00",
+          "value": 1139592.8441804566
+        },
+        {
+          "time": "2026-09-18 00:00:00",
+          "value": 1068053.4517363152
+        },
+        {
+          "time": "2026-09-17 00:00:00",
+          "value": 1050295.1216038223
+        },
+        {
+          "time": "2026-09-16 00:00:00",
+          "value": 1037147.9721470036
+        },
+        {
+          "time": "2026-09-15 00:00:00",
+          "value": 1041118.2486984314
+        },
+        {
+          "time": "2026-09-14 00:00:00",
+          "value": 1044883.2330398443
+        },
+        {
+          "time": "2026-09-13 00:00:00",
+          "value": 1096386.192749323
+        },
+        {
+          "time": "2026-09-12 00:00:00",
+          "value": 1098530.9110142044
+        },
+        {
+          "time": "2026-09-11 00:00:00",
+          "value": 1121654.34586108
+        },
+        {
+          "time": "2026-09-10 00:00:00",
+          "value": 1136528.846041869
+        },
+        {
+          "time": "2026-09-09 00:00:00",
+          "value": 1151404.421359017
+        },
+        {
+          "time": "2026-09-08 00:00:00",
+          "value": 1157181.338515549
+        },
+        {
+          "time": "2026-09-07 00:00:00",
+          "value": 1155408.9815419752
+        },
+        {
+          "time": "2026-09-06 00:00:00",
+          "value": 1184025.5356792542
+        },
+        {
+          "time": "2026-09-05 00:00:00",
+          "value": 1182466.6619101905
+        },
+        {
+          "time": "2026-09-04 00:00:00",
+          "value": 1189397.245532261
+        },
+        {
+          "time": "2026-09-03 00:00:00",
+          "value": 1166569.8986352491
+        },
+        {
+          "time": "2026-09-02 00:00:00",
+          "value": 1162115.397455551
+        },
+        {
+          "time": "2026-09-01 00:00:00",
+          "value": 1149317.0001491217
+        },
+        {
+          "time": "2026-08-31 00:00:00",
+          "value": 1191048.3605306095
+        },
+        {
+          "time": "2026-08-30 00:00:00",
+          "value": 1214823.2527743734
+        },
+        {
+          "time": "2026-08-29 00:00:00",
+          "value": 1171923.5105187045
+        },
+        {
+          "time": "2026-08-28 00:00:00",
+          "value": 1204549.9492455162
+        },
+        {
+          "time": "2026-08-27 00:00:00",
+          "value": 1209333.0412543893
+        },
         {
           "time": "2026-08-26 00:00:00",
           "value": 1176305.750956322
@@ -8915,7 +9773,10 @@
           "value": 0
         }
       ],
-      "prices": {},
+      "prices": {
+        "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B": "2652.089090000000000000000000000000000000",
+        "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5": "2650.919718000000000000000000000000000000"
+      },
       "alloy": {
         "asset": {
           "description": "An alloy of ETH asset variants on Osmosis.",
@@ -8982,7 +9843,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "2502.120331470847130025"
+          "amount": "2640.162658385007399088"
         }
       },
       "limiters": {
@@ -8991,506 +9852,6 @@
           "upper_limit": "0.75"
         }
       },
-      "status": {
-        "isActive": true,
-        "corruptedDenoms": [],
-        "alloy": null,
-        "reserves": {}
-      }
-    },
-    {
-      "id": "3497",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0",
-      "reserveCoins": [
-        {
-          "asset": {
-            "description": "USDC is a fully collateralized US Dollar stablecoin developed by CENTRE, the open source project with Circle being the first of several forthcoming issuers.",
-            "denom_units": [
-              {
-                "denom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-                "exponent": 0,
-                "aliases": [
-                  "microusdc",
-                  "uusdc"
-                ]
-              },
-              {
-                "denom": "usdc",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-            "name": "USDC",
-            "display": "usdc",
-            "symbol": "USDC.n",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "noble",
-                  "base_denom": "uusdc",
-                  "channel_id": "channel-1"
-                },
-                "chain": {
-                  "channel_id": "channel-750",
-                  "path": "transfer/channel-750/uusdc"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "ethereum",
-                  "base_denom": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "coingecko_id": "usd-coin",
-            "denom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-            "decimal": 6
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "USDC.noble",
-              "coinName": "USDC (Noble)",
-              "coinMinimalDenom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-              "coinDecimals": 6,
-              "coinGeckoId": "usd-coin",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdc.noble.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "409788088888"
-          }
-        },
-        {
-          "asset": {
-            "description": "USD Coin issued natively on Injective by Circle",
-            "denom_units": [
-              {
-                "denom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
-                "exponent": 0
-              },
-              {
-                "denom": "usdc",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
-            "name": "USDC",
-            "display": "usdc",
-            "symbol": "USDC.inj",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "injective",
-                  "base_denom": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a",
-                  "channel_id": "channel-8"
-                },
-                "chain": {
-                  "channel_id": "channel-122",
-                  "path": "transfer/channel-122/erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "injective",
-                  "base_denom": "erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "coingecko_id": "usd-coin",
-            "denom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
-            "decimal": 6
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "USDC.inj",
-              "coinName": "USDC (Injective)",
-              "coinMinimalDenom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
-              "coinDecimals": 6,
-              "coinGeckoId": "usd-coin",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdc.inj.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "298340172223"
-          }
-        },
-        {
-          "asset": {
-            "description": "Circle's stablecoin on Axelar",
-            "denom_units": [
-              {
-                "denom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
-                "exponent": 0,
-                "aliases": [
-                  "uusdc"
-                ]
-              },
-              {
-                "denom": "usdc",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
-            "name": "USD Coin",
-            "display": "usdc",
-            "symbol": "USDC",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "uusdc",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/uusdc"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "axelar",
-                  "base_denom": "uusdc"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/axelar/images/usdc.svg"
-              }
-            ],
-            "coingecko_id": "axlusdc",
-            "denom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
-            "decimal": 6
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "USDC.eth.axl",
-              "coinName": "USDC (Ethereum via Axelar)",
-              "coinMinimalDenom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
-              "coinDecimals": 6,
-              "coinGeckoId": "axlusdc",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdc.eth.axl.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "45947702"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "684047.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "194724.271293038070000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "1877408.824571943000000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "liquidityChart": [
-        {
-          "time": "2026-08-26 00:00:00",
-          "value": 5163.208522928952
-        },
-        {
-          "time": "2026-08-25 00:00:00",
-          "value": 5143.801826649885
-        },
-        {
-          "time": "2026-08-24 00:00:00",
-          "value": 5143.740260964293
-        },
-        {
-          "time": "2026-08-23 00:00:00",
-          "value": 5144.0167337786725
-        },
-        {
-          "time": "2026-08-22 00:00:00",
-          "value": 5068.470016817564
-        },
-        {
-          "time": "2026-08-21 00:00:00",
-          "value": 4998.478886622623
-        },
-        {
-          "time": "2026-08-20 00:00:00",
-          "value": 3400.786392327307
-        },
-        {
-          "time": "2026-08-19 00:00:00",
-          "value": 500.95040166409007
-        }
-      ],
-      "prices": {},
-      "alloy": {
-        "asset": {
-          "description": "An alloy of USDC asset variants on Osmosis.",
-          "extended_description": "Multiple USD Coin variants on Osmosis comprise the liquidity backing of a tokenized transmuter pool to create an alloy of USDC.",
-          "denom_units": [
-            {
-              "denom": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
-              "exponent": 0
-            },
-            {
-              "denom": "allUSDC",
-              "exponent": 6
-            }
-          ],
-          "type_asset": "sdk.coin",
-          "address": "osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0",
-          "base": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
-          "name": "USDC",
-          "display": "allUSDC",
-          "symbol": "USDC",
-          "traces": [
-            {
-              "type": "synthetic",
-              "counterparty": {
-                "chain_name": "ethereum",
-                "base_denom": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-              },
-              "provider": "Osmosis"
-            }
-          ],
-          "logo_URIs": {
-            "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
-            "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"
-          },
-          "images": [
-            {
-              "image_sync": {
-                "chain_name": "ethereum",
-                "base_denom": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-              },
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg",
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png",
-              "theme": {
-                "circle": true
-              }
-            }
-          ],
-          "denom": "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC",
-          "decimal": 6
-        },
-        "price": {
-          "fiat": {
-            "currency": "usd",
-            "symbol": "$",
-            "maxDecimals": 2,
-            "locale": "en-US"
-          },
-          "options": {
-            "maxDecimals": 2,
-            "trim": true,
-            "shrink": true,
-            "ready": true,
-            "locale": "en-US",
-            "inequalitySymbol": true,
-            "inequalitySymbolSeparator": " ",
-            "separator": "",
-            "upperCase": false,
-            "lowerCase": false
-          },
-          "amount": "1.000000000000000000"
-        }
-      },
-      "limiters": {},
       "status": {
         "isActive": true,
         "corruptedDenoms": [],
@@ -9587,7 +9948,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "433613575731"
+            "amount": "440598352883"
           }
         },
         {
@@ -9670,7 +10031,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "5373410"
+            "amount": "1203835"
           }
         },
         {
@@ -9758,7 +10119,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "155172366896"
+            "amount": "148758540338"
           }
         }
       ],
@@ -9795,7 +10156,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "586520.000000000000000000"
+        "amount": "589163.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -9816,7 +10177,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3823.174025023326000000"
+        "amount": "5042.759312154700000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -9837,7 +10198,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "75133.782910628160000000"
+        "amount": "31089.558580355282000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -9882,6 +10243,122 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-24 00:00:00",
+          "value": 591106.7387051291
+        },
+        {
+          "time": "2026-09-23 00:00:00",
+          "value": 592345.1368208482
+        },
+        {
+          "time": "2026-09-22 00:00:00",
+          "value": 591095.2613946123
+        },
+        {
+          "time": "2026-09-21 00:00:00",
+          "value": 588529.5519907413
+        },
+        {
+          "time": "2026-09-20 00:00:00",
+          "value": 587364.5457114461
+        },
+        {
+          "time": "2026-09-19 00:00:00",
+          "value": 587958.8019679936
+        },
+        {
+          "time": "2026-09-18 00:00:00",
+          "value": 599255.2316206716
+        },
+        {
+          "time": "2026-09-17 00:00:00",
+          "value": 599615.5920807853
+        },
+        {
+          "time": "2026-09-16 00:00:00",
+          "value": 597879.0348852938
+        },
+        {
+          "time": "2026-09-15 00:00:00",
+          "value": 588678.7451976428
+        },
+        {
+          "time": "2026-09-14 00:00:00",
+          "value": 590272.5868207116
+        },
+        {
+          "time": "2026-09-13 00:00:00",
+          "value": 589024.3203580382
+        },
+        {
+          "time": "2026-09-12 00:00:00",
+          "value": 588926.5684691889
+        },
+        {
+          "time": "2026-09-11 00:00:00",
+          "value": 583581.4902022006
+        },
+        {
+          "time": "2026-09-10 00:00:00",
+          "value": 580193.0944407195
+        },
+        {
+          "time": "2026-09-09 00:00:00",
+          "value": 581692.0949692654
+        },
+        {
+          "time": "2026-09-08 00:00:00",
+          "value": 614961.6849952871
+        },
+        {
+          "time": "2026-09-07 00:00:00",
+          "value": 623104.1850582426
+        },
+        {
+          "time": "2026-09-06 00:00:00",
+          "value": 620963.4038176149
+        },
+        {
+          "time": "2026-09-05 00:00:00",
+          "value": 621662.8444146069
+        },
+        {
+          "time": "2026-09-04 00:00:00",
+          "value": 621742.8182509999
+        },
+        {
+          "time": "2026-09-03 00:00:00",
+          "value": 625504.7120144076
+        },
+        {
+          "time": "2026-09-02 00:00:00",
+          "value": 625689.3325199401
+        },
+        {
+          "time": "2026-09-01 00:00:00",
+          "value": 627196.579832051
+        },
+        {
+          "time": "2026-08-31 00:00:00",
+          "value": 628263.0747999168
+        },
+        {
+          "time": "2026-08-30 00:00:00",
+          "value": 628865.6779896092
+        },
+        {
+          "time": "2026-08-29 00:00:00",
+          "value": 635724.143237592
+        },
+        {
+          "time": "2026-08-28 00:00:00",
+          "value": 639733.3274688629
+        },
+        {
+          "time": "2026-08-27 00:00:00",
+          "value": 641130.3156429168
+        },
         {
           "time": "2026-08-26 00:00:00",
           "value": 643645.2495125988
@@ -13847,7 +14324,11 @@
           "value": 0
         }
       ],
-      "prices": {},
+      "prices": {
+        "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D": "0.999665853363389008000000000000000000",
+        "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6": "0.840979782270606532000000000000000000",
+        "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4": "0.999665853363389008000000000000000000"
+      },
       "alloy": {
         "asset": {
           "description": "An alloy of USDT asset variants on Osmosis.",
@@ -13926,7 +14407,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "0.997728133564260730"
+          "amount": "0.994955846721391413"
         }
       },
       "limiters": {
@@ -14020,11 +14501,10 @@
               "isUnstable": true,
               "unstableReason": "ibc_client",
               "lastDowntimeDate": "2026-05-22T09:57:52.115Z",
+              "lastRecoveryDate": "2026-09-21T15:15:27.818Z",
               "areTransfersDisabled": false,
-              "areDepositsHalted": true,
-              "depositHaltReason": "bridge_down",
-              "areWithdrawalsHalted": true,
-              "withdrawalHaltReason": "bridge_down",
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
               "isVerified": true,
               "variantGroupKey": "factory/osmo1qnglc04tmhg32uc4kxlxh55a5cmhj88cpa3rmtly484xqu82t79sfv94w0/alloyed/allXRP",
               "isAlloyed": false
@@ -14167,7 +14647,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "42114.000000000000000000"
+        "amount": "41602.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -14254,6 +14734,122 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-24 00:00:00",
+          "value": 44911.532588437134
+        },
+        {
+          "time": "2026-09-23 00:00:00",
+          "value": 43664.539997726795
+        },
+        {
+          "time": "2026-09-22 00:00:00",
+          "value": 42335.05694098667
+        },
+        {
+          "time": "2026-09-21 00:00:00",
+          "value": 40949.76100216528
+        },
+        {
+          "time": "2026-09-20 00:00:00",
+          "value": 40798.94920845801
+        },
+        {
+          "time": "2026-09-19 00:00:00",
+          "value": 41550.19740857194
+        },
+        {
+          "time": "2026-09-18 00:00:00",
+          "value": 41271.196825472594
+        },
+        {
+          "time": "2026-09-17 00:00:00",
+          "value": 41269.64046453234
+        },
+        {
+          "time": "2026-09-16 00:00:00",
+          "value": 40653.16730004984
+        },
+        {
+          "time": "2026-09-15 00:00:00",
+          "value": 40758.32706737914
+        },
+        {
+          "time": "2026-09-14 00:00:00",
+          "value": 41339.08399956745
+        },
+        {
+          "time": "2026-09-13 00:00:00",
+          "value": 41064.26420886997
+        },
+        {
+          "time": "2026-09-12 00:00:00",
+          "value": 40677.18841068793
+        },
+        {
+          "time": "2026-09-11 00:00:00",
+          "value": 40454.53175348101
+        },
+        {
+          "time": "2026-09-10 00:00:00",
+          "value": 41205.36665373571
+        },
+        {
+          "time": "2026-09-09 00:00:00",
+          "value": 41497.19774962327
+        },
+        {
+          "time": "2026-09-08 00:00:00",
+          "value": 42279.231066587476
+        },
+        {
+          "time": "2026-09-07 00:00:00",
+          "value": 43631.37145231805
+        },
+        {
+          "time": "2026-09-06 00:00:00",
+          "value": 44305.86806209019
+        },
+        {
+          "time": "2026-09-05 00:00:00",
+          "value": 44704.94975545808
+        },
+        {
+          "time": "2026-09-04 00:00:00",
+          "value": 52142.844725374074
+        },
+        {
+          "time": "2026-09-03 00:00:00",
+          "value": 52990.953616582854
+        },
+        {
+          "time": "2026-09-02 00:00:00",
+          "value": 52900.51305587705
+        },
+        {
+          "time": "2026-09-01 00:00:00",
+          "value": 52658.53915001458
+        },
+        {
+          "time": "2026-08-31 00:00:00",
+          "value": 53417.85032771926
+        },
+        {
+          "time": "2026-08-30 00:00:00",
+          "value": 53726.036653944684
+        },
+        {
+          "time": "2026-08-29 00:00:00",
+          "value": 53699.82051058854
+        },
+        {
+          "time": "2026-08-28 00:00:00",
+          "value": 55520.58529532133
+        },
+        {
+          "time": "2026-08-27 00:00:00",
+          "value": 54836.40441345508
+        },
         {
           "time": "2026-08-26 00:00:00",
           "value": 54105.739902883804
@@ -16687,7 +17283,10 @@
           "value": 30.753163578776974
         }
       ],
-      "prices": {},
+      "prices": {
+        "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609": "0.423131843176126262000000000000000000",
+        "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3": "0.432516215988920215604389301114578700"
+      },
       "alloy": {
         "asset": {
           "description": "An alloy of XRP asset variants on Osmosis.",
@@ -16754,7 +17353,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "0.388774494255491942"
+          "amount": "0.440740868012849748"
         }
       },
       "limiters": {},
@@ -16777,10 +17376,10 @@
             "unstable": true,
             "unstableReason": "ibc_client",
             "disabled": false,
-            "haltDeposits": true,
-            "haltWithdrawals": true,
-            "depositHaltReason": "bridge_down",
-            "withdrawalHaltReason": "bridge_down",
+            "haltDeposits": false,
+            "haltWithdrawals": false,
+            "depositHaltReason": null,
+            "withdrawalHaltReason": null,
             "tooltipMessage": null,
             "lastDowntimeDate": "2026-05-22T09:57:52.115Z"
           },
@@ -16892,7 +17491,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "350758693658"
+            "amount": "350758899003"
           }
         },
         {
@@ -16977,7 +17576,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "206342"
+            "amount": "997"
           }
         }
       ],
@@ -17014,7 +17613,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "330108.000000000000000000"
+        "amount": "350760.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17035,7 +17634,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "30023.424316482127000000"
+        "amount": "146063.324073685920000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -17056,7 +17655,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "608849.476595087400000000"
+        "amount": "296762.295149928000000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -17200,7 +17799,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "311280777608"
+            "amount": "294079277579"
           }
         }
       ],
@@ -17237,7 +17836,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "304308.000000000000000000"
+        "amount": "333414.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17258,7 +17857,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "571.968351654854600000"
+        "amount": "172.189472757798200000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -17279,211 +17878,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4315.036945485327000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "2242",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo10pk4crey8fpdyqd62rsau0y02e3rk055w5u005ah6ly7k849k5tsf72x40",
-      "reserveCoins": [
-        {
-          "asset": {
-            "denom_units": [
-              {
-                "denom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-                "exponent": 0,
-                "aliases": [
-                  "cbdoge-satoshi"
-                ]
-              },
-              {
-                "denom": "cbdoge",
-                "exponent": 8
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-            "name": "Coinbase Wrapped DOGE",
-            "display": "cbdoge",
-            "symbol": "axl-cbDOGE",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "cbdoge-satoshi",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/cbdoge-satoshi"
-                }
-              }
-            ],
-            "denom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-            "decimal": 8
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "cbDOGE.axl",
-              "coinName": "Coinbase Wrapped DOGE (Axelar)",
-              "coinMinimalDenom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-              "coinDecimals": 8,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/cbdoge.axl.png",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo10pk4crey8fpdyqd62rsau0y02e3rk055w5u005ah6ly7k849k5tsf72x40/alloyed/allDOGE",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 8,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "132072078887537"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "111216.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "1414.744587851834700000"
+        "amount": "25861.612758588075000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -17623,7 +18018,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "9176710241009538487278"
+            "amount": "9114499303342761328245"
           }
         }
       ],
@@ -17660,7 +18055,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "103341.000000000000000000"
+        "amount": "111461.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17681,7 +18076,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.000000000000000000"
+        "amount": "11.932415311759081000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -17702,7 +18097,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "10078.687595660520000000"
+        "amount": "1054.527416550013400000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -17848,7 +18243,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "15788456869011689155577525511"
+            "amount": "15690400304772135848391695244"
           }
         }
       ],
@@ -17885,7 +18280,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "62632.000000000000000000"
+        "amount": "72547.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18069,7 +18464,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "246292969494204273940021"
+            "amount": "247352658478317978032558"
           }
         }
       ],
@@ -18106,7 +18501,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "41266.000000000000000000"
+        "amount": "50020.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18127,7 +18522,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "420.163524194417500000"
+        "amount": "305.390616616026360000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18148,7 +18543,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2227.586803001787800000"
+        "amount": "3432.132537447080300000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18329,7 +18724,229 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "32778.000000000000000000"
+        "amount": "35974.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "prices": {},
+      "liquidityChart": [],
+      "assets": null,
+      "alloy": {
+        "asset": null,
+        "price": null
+      },
+      "limiters": null,
+      "status": null
+    },
+    {
+      "id": "1972",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo1p7x454ex08s4f9ztmm7wfv7lvtgdkfztj2u7v7fezfcauy85q35qmqrdpk",
+      "reserveCoins": [
+        {
+          "asset": {
+            "description": "Native token of Arbitrum",
+            "denom_units": [
+              {
+                "denom": "ibc/10E5E5B06D78FFBB61FD9F89209DEE5FD4446ED0550CBB8E3747DA79E10D9DC6",
+                "exponent": 0,
+                "aliases": [
+                  "arb-wei"
+                ]
+              },
+              {
+                "denom": "arb",
+                "exponent": 18
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/10E5E5B06D78FFBB61FD9F89209DEE5FD4446ED0550CBB8E3747DA79E10D9DC6",
+            "name": "Arbitrum",
+            "display": "arb",
+            "symbol": "ARB",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "axelar",
+                  "base_denom": "arb-wei",
+                  "channel_id": "channel-3"
+                },
+                "chain": {
+                  "channel_id": "channel-208",
+                  "path": "transfer/channel-208/arb-wei"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/arbitrum/images/arb.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/arbitrum/images/arb.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "axelar",
+                  "base_denom": "arb-wei"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/arbitrum/images/arb.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/arbitrum/images/arb.svg"
+              }
+            ],
+            "denom": "ibc/10E5E5B06D78FFBB61FD9F89209DEE5FD4446ED0550CBB8E3747DA79E10D9DC6",
+            "decimal": 18
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "ARB.axl",
+              "coinName": "Arbitrum (Axelar)",
+              "coinMinimalDenom": "ibc/10E5E5B06D78FFBB61FD9F89209DEE5FD4446ED0550CBB8E3747DA79E10D9DC6",
+              "coinDecimals": 18,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/arb.axl.svg",
+              "isUnstable": true,
+              "unstableReason": "market",
+              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
+              "areTransfersDisabled": false,
+              "areDepositsHalted": true,
+              "depositHaltReason": "extended_unstable_market",
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1p7x454ex08s4f9ztmm7wfv7lvtgdkfztj2u7v7fezfcauy85q35qmqrdpk/alloyed/allARB",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 18,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "117405815937065026802457"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "25772.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18513,7 +19130,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "229252134443045"
+            "amount": "228576968269154"
           }
         },
         {
@@ -18601,7 +19218,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "120760210756955"
+            "amount": "121435376930846"
           }
         }
       ],
@@ -18638,7 +19255,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "18364.000000000000000000"
+        "amount": "20268.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18659,7 +19276,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "98.993547621035030000"
+        "amount": "71.983538942206400000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18680,7 +19297,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "850.542781016853600000"
+        "amount": "601.468952408270200000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18828,7 +19445,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "154971339547621405249560"
+            "amount": "154040220998278555248438"
           }
         }
       ],
@@ -18865,7 +19482,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "17433.000000000000000000"
+        "amount": "19823.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18886,7 +19503,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "14.996628899122559000"
+        "amount": "186.280514982735600000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18907,7 +19524,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "174.494440030914000000"
+        "amount": "614.301990897800800000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18962,83 +19579,85 @@
       "status": null
     },
     {
-      "id": "2674",
+      "id": "1969",
       "type": "cosmwasm-alloyed",
       "codeId": "996",
-      "contractAddress": "osmo1nqu7rc5mj5p2cgyfp7gl3lw7kw99cltple3xtzl2cs5fyw0r2tasr7xv48",
+      "contractAddress": "osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x",
       "reserveCoins": [
         {
           "asset": {
-            "description": "Sui’s native asset is called SUI.",
+            "description": "TRONIX is the mainnet native token of the TRON Protocol issued by TRON DAO, known as TRX.",
             "denom_units": [
               {
-                "denom": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
-                "exponent": 0,
-                "aliases": [
-                  "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh"
-                ]
+                "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+                "exponent": 0
               },
               {
-                "denom": "wormhole/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh/8",
-                "exponent": 8,
-                "aliases": []
+                "denom": "trx",
+                "exponent": 6
               }
             ],
-            "type_asset": "ics20",
-            "base": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
-            "name": "Sui (Wormhole)",
-            "display": "wormhole/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh/8",
-            "symbol": "SUI",
+            "type_asset": "sdk.coin",
+            "address": "osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9",
+            "base": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+            "name": "Tron (Router)",
+            "display": "trx",
+            "symbol": "TRX.rt",
             "traces": [
               {
-                "type": "ibc",
+                "type": "bridge",
                 "counterparty": {
-                  "chain_name": "gateway",
-                  "base_denom": "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh",
-                  "channel_id": "channel-3"
+                  "chain_name": "tron",
+                  "base_denom": "sun"
                 },
-                "chain": {
-                  "channel_id": "channel-2186",
-                  "path": "transfer/channel-2186/factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh"
-                }
+                "provider": "Router"
               }
             ],
             "logo_URIs": {
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/sui/images/sui.svg"
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg"
             },
             "images": [
               {
                 "image_sync": {
-                  "chain_name": "gateway",
-                  "base_denom": "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh"
+                  "chain_name": "tron",
+                  "base_denom": "sun"
                 },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/sui/images/sui.svg"
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg",
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
+                "theme": {
+                  "circle": true
+                }
               }
             ],
-            "denom": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
-            "decimal": 8
+            "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+            "decimal": 6
           },
           "currency": {
             "currency": {
-              "coinDenom": "SUI.wh",
-              "coinName": "Sui (Wormhole)",
-              "coinMinimalDenom": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
-              "coinDecimals": 8,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/sui.wh.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": true,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1nqu7rc5mj5p2cgyfp7gl3lw7kw99cltple3xtzl2cs5fyw0r2tasr7xv48/alloyed/allSUI",
-              "isAlloyed": false
+              "coinDenom": "TRX.rt",
+              "coinName": "Tron (Router)",
+              "coinMinimalDenom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+              "coinDecimals": 6,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/trx.rt.svg",
+              "isUnstable": true,
+              "unstableReason": "source_chain_killed",
+              "areTransfersDisabled": false,
+              "areDepositsHalted": true,
+              "depositHaltReason": "source_chain_killed",
+              "areWithdrawalsHalted": true,
+              "withdrawalHaltReason": "source_chain_killed",
+              "isVerified": false,
+              "variantGroupKey": "factory/osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x/alloyed/allTRX",
+              "isAlloyed": false,
+              "tooltipMessage": "This asset reached Osmosis through the Router bridge, which has been permanently sunset following a passed governance proposal. The bridge path is no longer available, so deposits and withdrawals are disabled. For more information see: https://routerprotocol.medium.com/proposal-to-sunset-router-chain-55ea9fd0e799"
             },
             "options": {
               "separator": " ",
               "upperCase": false,
               "lowerCase": false,
               "hideDenom": false,
-              "maxDecimals": 8,
+              "maxDecimals": 6,
               "trim": false,
               "shrink": false,
               "ready": true,
@@ -19046,7 +19665,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1381133362022"
+            "amount": "10663580871"
           }
         }
       ],
@@ -19083,7 +19702,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "10402.000000000000000000"
+        "amount": "5981.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19273,7 +19892,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "6777298420916790463"
+            "amount": "6735978125832341432"
           }
         }
       ],
@@ -19310,7 +19929,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4928.000000000000000000"
+        "amount": "5083.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19331,7 +19950,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "217.011238489039210000"
+        "amount": "25.047819776335704000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -19352,7 +19971,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1227.199486132432900000"
+        "amount": "567.818473839965800000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -19499,7 +20118,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "8660004277176"
+            "amount": "8654526869906"
           }
         },
         {
@@ -19587,7 +20206,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1669995722824"
+            "amount": "1675473130094"
           }
         }
       ],
@@ -19624,227 +20243,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4607.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "1969",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x",
-      "reserveCoins": [
-        {
-          "asset": {
-            "description": "TRONIX is the mainnet native token of the TRON Protocol issued by TRON DAO, known as TRX.",
-            "denom_units": [
-              {
-                "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-                "exponent": 0
-              },
-              {
-                "denom": "trx",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "sdk.coin",
-            "address": "osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9",
-            "base": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-            "name": "Tron (Router)",
-            "display": "trx",
-            "symbol": "TRX.rt",
-            "traces": [
-              {
-                "type": "bridge",
-                "counterparty": {
-                  "chain_name": "tron",
-                  "base_denom": "sun"
-                },
-                "provider": "Router"
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "tron",
-                  "base_denom": "sun"
-                },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-            "decimal": 6
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "TRX.rt",
-              "coinName": "Tron (Router)",
-              "coinMinimalDenom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-              "coinDecimals": 6,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/trx.rt.svg",
-              "isUnstable": true,
-              "unstableReason": "source_chain_killed",
-              "areTransfersDisabled": false,
-              "areDepositsHalted": true,
-              "depositHaltReason": "source_chain_killed",
-              "areWithdrawalsHalted": true,
-              "withdrawalHaltReason": "source_chain_killed",
-              "isVerified": false,
-              "variantGroupKey": "factory/osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x/alloyed/allTRX",
-              "isAlloyed": false,
-              "tooltipMessage": "This asset reached Osmosis through the Router bridge, which has been permanently sunset following a passed governance proposal. The bridge path is no longer available, so deposits and withdrawals are disabled. For more information see: https://routerprotocol.medium.com/proposal-to-sunset-router-chain-55ea9fd0e799"
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "10663580871"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "3988.000000000000000000"
+        "amount": "4702.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20070,7 +20469,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3491.000000000000000000"
+        "amount": "3802.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20252,7 +20651,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "27483818560457"
+            "amount": "27513667172238"
           }
         }
       ],
@@ -20289,7 +20688,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2922.000000000000000000"
+        "amount": "2954.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20310,7 +20709,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.063779169243690060"
+        "amount": "0.000000000000000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -20331,7 +20730,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4.447525983465931000"
+        "amount": "3.072127151712394700"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -20475,7 +20874,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "145707657049585822165562"
+            "amount": "138637257289413679886961"
           }
         }
       ],
@@ -20512,7 +20911,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2139.000000000000000000"
+        "amount": "2488.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20533,7 +20932,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.000000000000000000"
+        "amount": "58.963754085151470000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -20554,7 +20953,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.000000000000000000"
+        "amount": "135.992415277251980000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -20699,7 +21098,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "421416397"
+            "amount": "41172010"
           }
         },
         {
@@ -20787,7 +21186,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1579593603"
+            "amount": "1959837990"
           }
         }
       ],
@@ -20824,7 +21223,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1984.000000000000000000"
+        "amount": "2002.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20845,7 +21244,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "221.962445362547900000"
+        "amount": "372.022868713260900000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -20866,7 +21265,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "11883.331431979997000000"
+        "amount": "4245.549301747998500000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21014,7 +21413,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "18877020945464064401192"
+            "amount": "18867157707543731077572"
           }
         }
       ],
@@ -21051,7 +21450,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1766.000000000000000000"
+        "amount": "1912.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21072,7 +21471,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.000000000000000000"
+        "amount": "1.598376880399983800"
       },
       "volume7dUsd": {
         "fiat": {
@@ -21093,7 +21492,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "65.367830370658340000"
+        "amount": "2.221144823777918000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21234,7 +21633,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "9683830655136006595442906"
+            "amount": "18242044219679960579020125"
           }
         }
       ],
@@ -21271,7 +21670,235 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "891.000000000000000000"
+        "amount": "1386.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "551.884495996818900000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "prices": {},
+      "liquidityChart": [],
+      "assets": null,
+      "alloy": {
+        "asset": null,
+        "price": null
+      },
+      "limiters": null,
+      "status": null
+    },
+    {
+      "id": "2711",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo17ceugf0nnkk228k2sulemn0s9pl3yg554462eexxs3pgq8p629us98gqae",
+      "reserveCoins": [
+        {
+          "asset": {
+            "description": "The native staking and governance token of the AIOZ Network.",
+            "denom_units": [
+              {
+                "denom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
+                "exponent": 0,
+                "aliases": [
+                  "attoaioz"
+                ]
+              },
+              {
+                "denom": "nanoaioz",
+                "exponent": 9
+              },
+              {
+                "denom": "aioz",
+                "exponent": 18
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
+            "name": "AIOZ",
+            "display": "aioz",
+            "symbol": "AIOZ",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "aioz",
+                  "base_denom": "attoaioz",
+                  "channel_id": "channel-1"
+                },
+                "chain": {
+                  "channel_id": "channel-779",
+                  "path": "transfer/channel-779/attoaioz"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "aioz",
+                  "base_denom": "attoaioz"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.svg"
+              }
+            ],
+            "coingecko_id": "aioz-network",
+            "denom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
+            "decimal": 18
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "AIOZ.aioz",
+              "coinName": "AIOZ Network (AIOZ Network)",
+              "coinMinimalDenom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
+              "coinDecimals": 18,
+              "coinGeckoId": "aioz-network",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/aioz.aioz.svg",
+              "isUnstable": true,
+              "unstableReason": "market",
+              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
+              "areTransfersDisabled": false,
+              "areDepositsHalted": true,
+              "depositHaltReason": "extended_unstable_market",
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo17ceugf0nnkk228k2sulemn0s9pl3yg554462eexxs3pgq8p629us98gqae/alloyed/allAIOZ",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 18,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "11685814356546494986960"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "1199.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21901,7 +22528,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "3459770292767"
+            "amount": "3240083610514"
           }
         },
         {
@@ -21986,7 +22613,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "16815260717233"
+            "amount": "17034947399486"
           }
         }
       ],
@@ -22023,457 +22650,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "574.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "2711",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo17ceugf0nnkk228k2sulemn0s9pl3yg554462eexxs3pgq8p629us98gqae",
-      "reserveCoins": [
-        {
-          "asset": {
-            "description": "The native staking and governance token of the AIOZ Network.",
-            "denom_units": [
-              {
-                "denom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
-                "exponent": 0,
-                "aliases": [
-                  "attoaioz"
-                ]
-              },
-              {
-                "denom": "nanoaioz",
-                "exponent": 9
-              },
-              {
-                "denom": "aioz",
-                "exponent": 18
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
-            "name": "AIOZ",
-            "display": "aioz",
-            "symbol": "AIOZ",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "aioz",
-                  "base_denom": "attoaioz",
-                  "channel_id": "channel-1"
-                },
-                "chain": {
-                  "channel_id": "channel-779",
-                  "path": "transfer/channel-779/attoaioz"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "aioz",
-                  "base_denom": "attoaioz"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/aioz/images/aioz.svg"
-              }
-            ],
-            "coingecko_id": "aioz-network",
-            "denom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
-            "decimal": 18
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "AIOZ.aioz",
-              "coinName": "AIOZ Network (AIOZ Network)",
-              "coinMinimalDenom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
-              "coinDecimals": 18,
-              "coinGeckoId": "aioz-network",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/aioz.aioz.svg",
-              "isUnstable": true,
-              "unstableReason": "market",
-              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
-              "areTransfersDisabled": false,
-              "areDepositsHalted": true,
-              "depositHaltReason": "extended_unstable_market",
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo17ceugf0nnkk228k2sulemn0s9pl3yg554462eexxs3pgq8p629us98gqae/alloyed/allAIOZ",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 18,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "11685814356546487676165"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "527.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "1974",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo1nufyzqlm8qhu2w7lm0l4rrax0ec8rsk69mga4tel8eare7c7ljaqpk2lyg",
-      "reserveCoins": [
-        {
-          "asset": {
-            "denom_units": [
-              {
-                "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-                "exponent": 0,
-                "aliases": [
-                  "0x4200000000000000000000000000000000000042",
-                  "op-wei"
-                ]
-              },
-              {
-                "denom": "op",
-                "exponent": 18
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-            "name": "Optimism",
-            "display": "op",
-            "symbol": "OP",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "op-wei",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/op-wei"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "axelar",
-                  "base_denom": "op-wei"
-                },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png"
-              }
-            ],
-            "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-            "decimal": 18
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "OP.axl",
-              "coinName": "Optimism (Axelar)",
-              "coinMinimalDenom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-              "coinDecimals": 18,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/op.axl.svg",
-              "isUnstable": true,
-              "unstableReason": "market",
-              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
-              "areTransfersDisabled": false,
-              "areDepositsHalted": true,
-              "depositHaltReason": "extended_unstable_market",
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1nufyzqlm8qhu2w7lm0l4rrax0ec8rsk69mga4tel8eare7c7ljaqpk2lyg/alloyed/allOP",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 18,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "82944156748178740446996"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "388.000000000000000000"
+        "amount": "559.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -22695,7 +22872,229 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "385.000000000000000000"
+        "amount": "439.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "prices": {},
+      "liquidityChart": [],
+      "assets": null,
+      "alloy": {
+        "asset": null,
+        "price": null
+      },
+      "limiters": null,
+      "status": null
+    },
+    {
+      "id": "1974",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo1nufyzqlm8qhu2w7lm0l4rrax0ec8rsk69mga4tel8eare7c7ljaqpk2lyg",
+      "reserveCoins": [
+        {
+          "asset": {
+            "denom_units": [
+              {
+                "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
+                "exponent": 0,
+                "aliases": [
+                  "0x4200000000000000000000000000000000000042",
+                  "op-wei"
+                ]
+              },
+              {
+                "denom": "op",
+                "exponent": 18
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
+            "name": "Optimism",
+            "display": "op",
+            "symbol": "OP",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "axelar",
+                  "base_denom": "op-wei",
+                  "channel_id": "channel-3"
+                },
+                "chain": {
+                  "channel_id": "channel-208",
+                  "path": "transfer/channel-208/op-wei"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "axelar",
+                  "base_denom": "op-wei"
+                },
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.svg",
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png"
+              }
+            ],
+            "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
+            "decimal": 18
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "OP.axl",
+              "coinName": "Optimism (Axelar)",
+              "coinMinimalDenom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
+              "coinDecimals": 18,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/op.axl.svg",
+              "isUnstable": true,
+              "unstableReason": "market",
+              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
+              "areTransfersDisabled": false,
+              "areDepositsHalted": true,
+              "depositHaltReason": "extended_unstable_market",
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1nufyzqlm8qhu2w7lm0l4rrax0ec8rsk69mga4tel8eare7c7ljaqpk2lyg/alloyed/allOP",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 18,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "82944156748178740446996"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "425.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
