@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 }
 
 export const revalidate = 3600 // 1 hour
+// Above Vercel's 15s default; see src/app/page.tsx.
+export const maxDuration = 60
 
 export default async function Home() {
   const [{ pools, unsupportedPools }, assetList] = await Promise.all([
