@@ -566,6 +566,11 @@ const calculdateAlloyAssetDenom = (
   return `factory/${contractAddress}/alloyed/${decoded.alloyed_asset_subdenom}`
 }
 
+// The activity chart covers the last 24h but only fetches this many of the
+// most recent swaps: each 100-swap LCD page is ~3MB and 10-20s, so busy pools
+// are truncated to their latest few hours. The chart copy states this cap.
+export const ACTIVITY_MAX_SWAPS = 1000
+
 export const getPoolInOutTxs = cache(async (poolId: string) => {
   // Determine the block height ~24h ago from the LCD's latest block.
   // (The previous AllesLabs GraphQL block-height lookup was removed: that host
@@ -616,7 +621,7 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
     const total = Number(totalData.total)
 
     const limit = 100
-    const pages = Math.min(Math.ceil(total / limit), 10)
+    const pages = Math.min(Math.ceil(total / limit), ACTIVITY_MAX_SWAPS / limit)
     const txs = await Promise.all(
       _.range(1, pages + 1).map(async (page) => {
         try {

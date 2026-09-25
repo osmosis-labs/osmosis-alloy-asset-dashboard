@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getPoolInOutAssets } from "@/services/pool"
+import { ACTIVITY_MAX_SWAPS, getPoolInOutAssets } from "@/services/pool"
 import { Loader2 } from "lucide-react"
 
 import { PoolOverview } from "@/types/pool"
@@ -20,7 +20,9 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>Pool Asset Activity</CardTitle>
           <CardDescription>
-            Asset inflow, outflow, and interaction count
+            Asset inflow, outflow, and interaction count over the last 24 hours,
+            up to the {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} most recent
+            swaps
           </CardDescription>
         </div>
       </CardHeader>
