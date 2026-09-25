@@ -9,7 +9,6 @@ import {
   CartesianGrid,
   Cell,
   ComposedChart,
-  Line,
   ReferenceLine,
   XAxis,
   YAxis,
@@ -44,50 +43,31 @@ const ActivityChartContent = ({
   pool: PoolOverview
   className?: string
 }) => {
-  // One net-flow series per asset: positive when more of it entered the pool
-  // than left in the bucket, negative when it drained. A transmuter swap moves
-  // one variant in and another out, so the signed net per variant shows which
-  // way the pool is being rebalanced. Variants are labelled with the frontend
-  // symbol and colored like their source in the Asset Sources chart; the
-  // alloy's own series (mint/burn) is neutral.
+  // One net-flow series per variant: positive when more of it entered the
+  // pool than left in the bucket, negative when it drained, i.e. the change in
+  // the pool's reserve of that variant. A transmuter swap moves one variant in
+  // and another out, so this shows which way the pool is being rebalanced.
+  // The alloy token is not a reserve (the transmuter mints it on the way out
+  // and burns it on the way in), so it has no series here. Variants are
+  // labelled with the frontend symbol and colored like their source in the
+  // Asset Sources chart.
   const config = useMemo(() => {
     const variantStyles = getVariantStyles(pool)
-    const variants = pool.reserveCoins.map((coin) => {
-      const denom = variantDenom(coin) ?? ""
-      return [
-        `net.${denom}`,
-        {
-          label: variantStyles[denom]?.symbol ?? variantSymbol(coin),
-          symbol: variantStyles[denom]?.symbol ?? variantSymbol(coin),
-          color: variantStyles[denom]?.color ?? "hsl(var(--chart-1))",
-          stackId: "net",
-        },
-      ]
-    })
-    const alloy = pool.alloy.asset
-      ? [
-          [
-            `net.${pool.alloy.asset.base}`,
-            {
-              label: pool.alloy.asset.display,
-              symbol: pool.alloy.asset.display,
-              color: "hsl(var(--muted-foreground))",
-              stackId: "net",
-            },
-          ],
+    return _.fromPairs(
+      pool.reserveCoins.map((coin) => {
+        const denom = variantDenom(coin) ?? ""
+        return [
+          `net.${denom}`,
+          {
+            label: variantStyles[denom]?.symbol ?? variantSymbol(coin),
+            symbol: variantStyles[denom]?.symbol ?? variantSymbol(coin),
+            color: variantStyles[denom]?.color ?? "hsl(var(--chart-1))",
+            stackId: "net",
+          },
         ]
-      : []
-    return _.fromPairs([...variants, ...alloy]) as ChartConfig
+      })
+    ) as ChartConfig
   }, [pool])
-
-  const configWithCount = useMemo(() => {
-    return _.merge({}, config, {
-      count: {
-        label: "Swaps",
-        color: "hsl(var(--primary))",
-      },
-    })
-  }, [config])
 
   const poolAssetDecimals = useMemo(() => {
     return _.chain(pool.reserveCoins)
@@ -146,7 +126,7 @@ const ActivityChartContent = ({
   return (
     <ChartContainer
       className={cn("aspect-auto w-full", className)}
-      config={configWithCount}
+      config={config}
     >
       <ComposedChart data={data} stackOffset="sign" accessibilityLayer>
         <CartesianGrid vertical={false} />
@@ -159,12 +139,12 @@ const ActivityChartContent = ({
                 const indicatorColor = item.payload.fill || item.color
                 const key = `${item.name || item.dataKey || "value"}`
                 const itemConfig = getPayloadConfigFromPayload(
-                  configWithCount,
+                  config,
                   item,
                   key
                 )
                 const suffix = itemConfig?.symbol
-                // Keys are "net.<denom>" or "count"; only the first dot splits.
+                // Keys are "net.<denom>"; only the first dot splits (denoms contain none).
                 const dot = key.indexOf(".")
                 const series = dot === -1 ? key : key.slice(0, dot)
                 const denom = dot === -1 ? undefined : key.slice(dot + 1)
@@ -247,15 +227,6 @@ const ActivityChartContent = ({
           yAxisId="1"
           tickFormatter={(v) => NumberFormatter.formatCompact(v)}
         />
-        <YAxis
-          tickLine={false}
-          axisLine={false}
-          width={40}
-          yAxisId="2"
-          orientation="right"
-          allowDecimals={false}
-          tickFormatter={(v) => NumberFormatter.formatCompact(v)}
-        />
         <ReferenceLine y={0} yAxisId="1" stroke="hsl(var(--border))" />
         {_.chain(config)
           .map((v, k) => (
@@ -273,14 +244,6 @@ const ActivityChartContent = ({
             </Bar>
           ))
           .value()}
-        <Line
-          yAxisId="2"
-          type="monotone"
-          dataKey="count"
-          stroke="hsl(var(--primary))"
-          strokeWidth={2}
-          dot={false}
-        />
       </ComposedChart>
     </ChartContainer>
   )

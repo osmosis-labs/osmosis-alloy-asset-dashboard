@@ -20,8 +20,8 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>Pool Asset Activity</CardTitle>
           <CardDescription>
-            Net flow per asset (above zero: more entered the pool than left) and
-            swap count, over the last 24 hours, up to the{" "}
+            Net change in each variant&apos;s reserve (above zero: more entered
+            the pool than left) over the last 24 hours, up to the{" "}
             {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} most recent swaps
           </CardDescription>
         </div>
