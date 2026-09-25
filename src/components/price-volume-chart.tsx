@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { DecimalSpan } from "@/components/decimal-span"
 
 import { PriceVolume, Timeframe, TIMEFRAMES } from "../lib/timeframe"
 import { getPriceVolumeChart } from "./query"
@@ -157,7 +158,19 @@ const PriceVolumeChartContent = ({
           className="flex-wrap gap-y-1"
         />
         <ChartTooltip
-          content={<ChartTooltipContent isDollar />}
+          content={
+            <ChartTooltipContent
+              isDollar
+              // The default toLocaleString() rounds to 3 decimals, so a
+              // stablecoin's 0.9998 high and 0.9981 low both read "1". Keep 4
+              // decimals below $1,000 and cents above.
+              valueFormatter={(v: number) => (
+                <DecimalSpan mantissa={Math.abs(v) >= 1000 ? 2 : 4}>
+                  {v}
+                </DecimalSpan>
+              )}
+            />
+          }
           labelFormatter={(_, pl) => {
             if (!pl[0]?.payload?.time) return ""
             return dayjs(pl[0]?.payload?.time * 1000).format("ddd D, HH:mm")
