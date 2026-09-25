@@ -92,26 +92,58 @@ export const chainTip = async (hosts = ARCHIVE_HOSTS): Promise<ChainTip> => {
   return { height, time: (await blockTime(height, hosts)).getTime() }
 }
 
-// Block height at (approximately, within a few blocks) `target`. Estimates
-// from the tip at ~1.2s per block, then corrects against measured block times.
+// Block height at `target` (the block at or just before it, or one within a
+// minute of it). Block times have varied a lot over Osmosis' history, so a
+// constant-rate estimate can be months off years back. This brackets the
+// target between a block before and a block after it, then narrows the
+// bracket by interpolation, alternating with midpoint steps so it cannot
+// stall. The returned time is always measured at the returned height.
 // Pass `tip` when resolving many dates to avoid re-fetching it each time.
 export const heightAtTime = async (
   target: Date,
   { hosts = ARCHIVE_HOSTS, tip }: { hosts?: string[]; tip?: ChainTip } = {}
 ): Promise<{ height: number; time: Date }> => {
-  const { height: tipHeight, time: tipTime } = tip ?? (await chainTip(hosts))
-  let height = correctHeight(tipHeight, tipTime, target.getTime(), 1200)
-  let time = tipTime
-  for (let i = 0; i < 3; i++) {
-    time = (await blockTime(height, hosts)).getTime()
-    if (Math.abs(time - target.getTime()) < 60_000) break
-    const msPerBlock = (tipTime - time) / (tipHeight - height) || 1200
-    height = Math.min(
-      correctHeight(height, time, target.getTime(), msPerBlock),
-      tipHeight
-    )
+  const goal = target.getTime()
+  const top = tip ?? (await chainTip(hosts))
+  if (goal >= top.time) return { height: top.height, time: new Date(top.time) }
+  const timeAt = async (height: number) =>
+    (await blockTime(height, hosts)).getTime()
+
+  // Bracket: `hi` after the target (starting at the tip), `lo` at or before
+  // it, found by stepping back with a doubling stride.
+  let hi = { height: top.height, time: top.time }
+  let lo: { height: number; time: number } | null = null
+  let stride = Math.max(
+    top.height - correctHeight(top.height, top.time, goal, 1200),
+    1
+  )
+  for (let i = 0; i < 20 && !lo; i++) {
+    const height = Math.max(hi.height - stride, 1)
+    const time = await timeAt(height)
+    if (time <= goal || height === 1) lo = { height, time }
+    else {
+      hi = { height, time }
+      stride *= 2
+    }
   }
-  return { height, time: new Date(time) }
+  if (!lo) throw new Error(`no block found before ${target.toISOString()}`)
+
+  for (let i = 0; i < 40 && hi.height - lo.height > 1; i++) {
+    const guess =
+      i % 2 === 0
+        ? lo.height +
+          ((goal - lo.time) / (hi.time - lo.time)) * (hi.height - lo.height)
+        : (lo.height + hi.height) / 2
+    const height = Math.min(
+      Math.max(Math.round(guess), lo.height + 1),
+      hi.height - 1
+    )
+    const time = await timeAt(height)
+    if (Math.abs(time - goal) < 60_000) return { height, time: new Date(time) }
+    if (time <= goal) lo = { height, time }
+    else hi = { height, time }
+  }
+  return { height: lo.height, time: new Date(lo.time) }
 }
 
 export const writeSnapshot = async (

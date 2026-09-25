@@ -21,7 +21,9 @@ const { values: args } = parseArgs({
     days: { type: "string", default: "30" },
     pool: { type: "string", multiple: true },
     host: { type: "string", multiple: true },
-    slice: { type: "string", default: "3600" },
+    // ~5h of blocks: early history is quieter, so larger slices mean fewer
+    // requests; a busy slice just takes more pages.
+    slice: { type: "string", default: "14400" },
   },
 })
 if (args.env) {
@@ -41,6 +43,9 @@ const {
   writeEvents,
 } = await import(
   pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
+)
+const { heightAtTime, poolContractAddress, poolLiquidityAt } = await import(
+  pathToFileURL(path.resolve("src/services/reserves.ts")).href
 )
 
 if (!isDatabaseEnabled()) {
@@ -80,19 +85,44 @@ const poolIds: string[] = args.pool?.length
       .then((r) => r.json())
       .then((pools: { id: string }[]) => pools.map((p) => p.id))
 
-// Height at roughly `days` ago: estimate from the block rate, then correct
-// once against the measured rate between that block and the tip.
 const tip = await latestHeight(hosts)
 const tipTime = await blockTime(tip, hosts)
-const target = tipTime.getTime() - days * 86_400_000
-let start = tip - days * BLOCKS_PER_DAY
-const estimateTime = (await blockTime(start, hosts)).getTime()
-const msPerBlock = (tipTime.getTime() - estimateTime) / (tip - start)
-start = Math.round(start + (target - estimateTime) / msPerBlock)
+const chain = { height: tip, time: tipTime.getTime() }
+
+// Height at `days` ago. Block times have varied a lot over Osmosis' history,
+// so this uses the bracketed heightAtTime rather than one step at a constant
+// rate, which lands months off that far back.
+const target = new Date(tipTime.getTime() - days * 86_400_000)
+const { height: start } = await heightAtTime(target, { tip: chain })
 const startTime = await blockTime(start, hosts)
 console.log(
   `tip ${tip} (${tipTime.toISOString()}); ${days}d back = ${start} (${startTime.toISOString()}); pools ${poolIds.join(", ")}`
 )
+
+// Swap rows are only kept this long (the cron prunes the rest); older rows
+// exist just to build their 15-minute rollups, so the backfill prunes them as
+// it goes instead of holding a whole history in the table at once.
+const RETENTION_MS = 31 * 86_400_000
+// Rows this far behind the newest processed swap are kept: the next slice
+// may recompute the 15-minute bucket that straddles the slice boundary from
+// the rows still in the table.
+const PRUNE_TAIL_MS = 30 * 60_000
+
+// First height at which the pool's contract exists (bisection on the
+// archive), so a long backfill does not walk empty blocks before the pool.
+const creationHeight = async (poolId: string, hi: number) => {
+  const address = await poolContractAddress(poolId)
+  let lo = 1
+  while (hi - lo > 2000) {
+    const mid = Math.floor((lo + hi) / 2)
+    const liquidity = await withBackoff(`pool ${poolId} exists @${mid}`, () =>
+      poolLiquidityAt(address, mid)
+    )
+    if (liquidity === null) lo = mid
+    else hi = mid
+  }
+  return lo
+}
 
 for (const poolId of poolIds) {
   let cursor = await db.activityCursor.findUnique({ where: { poolId } })
@@ -103,28 +133,35 @@ for (const poolId of poolIds) {
       data: { poolId, height: BigInt(tip), coveredFrom: tipTime },
     })
   }
-  const end = Number(cursor.height)
   if (cursor.coveredFrom <= startTime) {
     console.log(
       `pool ${poolId}: already covered from ${cursor.coveredFrom.toISOString()}`
     )
     continue
   }
+  // Stop where existing coverage begins (an earlier, shorter backfill), with a
+  // small overlap; inserts are idempotent.
+  const coverageStart = await heightAtTime(cursor.coveredFrom, { tip: chain })
+  const end = Math.min(Number(cursor.height), coverageStart.height + 1000)
+  const poolStart = Math.max(start, await creationHeight(poolId, end))
+
   // Resume a previous run over the same (or a wider) range.
   let from =
     cursor.backfillFrom !== null &&
     cursor.backfillTo !== null &&
-    Number(cursor.backfillFrom) <= start
-      ? Number(cursor.backfillTo)
-      : start
-  if (cursor.backfillFrom === null || Number(cursor.backfillFrom) > start) {
+    Number(cursor.backfillFrom) <= poolStart
+      ? Math.max(Number(cursor.backfillTo), poolStart)
+      : poolStart
+  if (cursor.backfillFrom === null || Number(cursor.backfillFrom) > poolStart) {
     await db.activityCursor.update({
       where: { poolId },
-      data: { backfillFrom: BigInt(start), backfillTo: BigInt(start) },
+      data: { backfillFrom: BigInt(poolStart), backfillTo: BigInt(poolStart) },
     })
   }
+  console.log(`pool ${poolId}: ${from} -> ${end}`)
 
   let rows = 0
+  let pruned = 0
   while (from < end) {
     const to = Math.min(from + slice, end)
     const { events, coveredTo } = await withBackoff(
@@ -142,8 +179,21 @@ for (const poolId of poolIds) {
       })
       return added
     }, TX_OPTIONS)
-    const pct = (((coveredTo - start) / (end - start)) * 100).toFixed(1)
-    console.log(`pool ${poolId}: ${coveredTo}/${end} (${pct}%), ${rows} rows`)
+    if (events.length > 0) {
+      const newest = Math.max(
+        ...events.map((e: any) => new Date(e.timestamp).getTime())
+      )
+      const cutoff = Math.min(Date.now() - RETENTION_MS, newest - PRUNE_TAIL_MS)
+      pruned += (
+        await db.poolSwap.deleteMany({
+          where: { poolId, ts: { lt: new Date(cutoff) } },
+        })
+      ).count
+    }
+    const pct = (((coveredTo - poolStart) / (end - poolStart)) * 100).toFixed(1)
+    console.log(
+      `pool ${poolId}: ${coveredTo}/${end} (${pct}%), ${rows} rows, ${pruned} pruned`
+    )
     from = coveredTo
   }
 
