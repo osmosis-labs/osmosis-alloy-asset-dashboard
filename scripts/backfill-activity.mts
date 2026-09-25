@@ -65,7 +65,10 @@ const withBackoff = async <T,>(
     try {
       return await fn()
     } catch (e) {
-      if (attempt >= delays.length) throw e
+      // Oversized responses fail the same way every time (see fetchSlice).
+      if (attempt >= delays.length || String(e).includes("larger than max")) {
+        throw e
+      }
       console.warn(`${label}: ${e}; retrying in ${delays[attempt] / 1000}s`)
       await new Promise((r) => setTimeout(r, delays[attempt]))
     }
@@ -128,6 +131,28 @@ const creationHeight = async (poolId: string, hi: number) => {
   return lo
 }
 
+// A page of large txs can exceed the archive's 10MB gRPC cap (reported as a
+// 429 "received message larger than max"); retrying the same page never
+// succeeds, so halve the page size for that slice instead.
+const fetchSlice = async (poolId: string, from: number, to: number) => {
+  for (
+    let pageLimit = 100;
+    ;
+    pageLimit = Math.max(1, Math.floor(pageLimit / 2))
+  ) {
+    try {
+      return await withBackoff(`pool ${poolId} @${from}`, () =>
+        fetchSwapEvents({ poolId, from, to, maxPages: 50, hosts, pageLimit })
+      )
+    } catch (e) {
+      if (!String(e).includes("larger than max") || pageLimit === 1) throw e
+      console.warn(
+        `pool ${poolId} @${from}: page too large, trying ${Math.floor(pageLimit / 2)} per page`
+      )
+    }
+  }
+}
+
 for (const poolId of poolIds) {
   let cursor = await db.activityCursor.findUnique({ where: { poolId } })
   if (!cursor) {
@@ -170,10 +195,7 @@ for (const poolId of poolIds) {
   let pruned = 0
   while (from < end) {
     const to = Math.min(from + slice, end)
-    const { events, coveredTo } = await withBackoff(
-      `pool ${poolId} @${from}`,
-      () => fetchSwapEvents({ poolId, from, to, maxPages: 50, hosts })
-    )
+    const { events, coveredTo } = await fetchSlice(poolId, from, to)
     if (coveredTo <= from) {
       throw new Error(`pool ${poolId}: no progress at ${from}; lower --slice`)
     }

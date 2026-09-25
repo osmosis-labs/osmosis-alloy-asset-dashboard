@@ -26,7 +26,14 @@ const lcdJson = async (hosts: string[], path: string, timeoutMs = 30000) => {
     try {
       const res = await fetchLcd(`${host}${path}`, { timeoutMs })
       if (res.ok) return await res.json()
-      lastError = new Error(`${host} returned ${res.status}`)
+      // Keep the gRPC message: the archive reports an oversized response
+      // ("received message larger than max") as a 429, which callers need to
+      // tell apart from rate limiting.
+      const detail = await res
+        .json()
+        .then((b) => (b?.message ? `: ${b.message}` : ""))
+        .catch(() => "")
+      lastError = new Error(`${host} returned ${res.status}${detail}`)
     } catch (e) {
       lastError = e
     }
@@ -56,23 +63,27 @@ export const blockTime = async (height: number, hosts = DEFAULT_LCD_HOSTS) => {
 // `maxPages` pages. Returns the events of every *complete* height and the last
 // height they cover: if the page cap cut the range short, the final height
 // may be split across pages, so it is dropped and left for the next call.
+// `pageLimit` lowers the page size for ranges whose txs are so large that a
+// full page exceeds the LCD's 10MB gRPC message cap.
 export const fetchSwapEvents = async ({
   poolId,
   from,
   to,
   maxPages,
   hosts = DEFAULT_LCD_HOSTS,
+  pageLimit = PAGE_LIMIT,
 }: {
   poolId: string
   from: number // exclusive
   to: number // inclusive
   maxPages: number
   hosts?: string[]
+  pageLimit?: number
 }): Promise<{ events: SwapEvent[]; coveredTo: number }> => {
   const query = encodeURIComponent(
     `token_swapped.pool_id=${poolId} AND tx.height>${from} AND tx.height<=${to}`
   )
-  const base = `/cosmos/tx/v1beta1/txs?query=${query}&order_by=1&limit=${PAGE_LIMIT}`
+  const base = `/cosmos/tx/v1beta1/txs?query=${query}&order_by=1&limit=${pageLimit}`
 
   const events: SwapEvent[] = []
   let exhausted = false
@@ -81,9 +92,9 @@ export const fetchSwapEvents = async ({
     const txs: any[] = data.tx_responses ?? []
     for (const tx of txs) events.push(...swapEventsFromTx(tx, poolId))
     // Stop on `total`, not just a short page: when the range holds an exact
-    // multiple of PAGE_LIMIT txs the last page is full, and asking for the next
+    // multiple of the page size the last page is full, and asking for the next
     // one is an error (500 "page should be within [1, n] range").
-    if (isLastPage(page, txs.length, Number(data.total))) {
+    if (isLastPage(page, txs.length, Number(data.total), pageLimit)) {
       exhausted = true
       break
     }
@@ -92,9 +103,13 @@ export const fetchSwapEvents = async ({
 }
 
 // Pure: whether `page` (1-based) is the last page of the result set.
-export const isLastPage = (page: number, pageSize: number, total: number) =>
-  pageSize < PAGE_LIMIT ||
-  (Number.isFinite(total) && page * PAGE_LIMIT >= total)
+export const isLastPage = (
+  page: number,
+  pageSize: number,
+  total: number,
+  pageLimit = PAGE_LIMIT
+) =>
+  pageSize < pageLimit || (Number.isFinite(total) && page * pageLimit >= total)
 
 // Pure: which events to keep and how far the range is covered. Exported for
 // tests.
