@@ -2,10 +2,13 @@ import numbro from "numbro"
 
 export const NumberFormatter = {
   // Used for USD/SUI values
+  // Two decimals whenever decimals are shown (1,837,332.50, not .5); whole
+  // numbers stay whole (1,837,332).
   VALUE: {
     mantissa: 2,
     thousandSeparated: true,
-    trimMantissa: true,
+    trimMantissa: false,
+    optionalMantissa: true,
   } as numbro.Format,
 
   formatValue: (value?: any, format?: numbro.Format) => {

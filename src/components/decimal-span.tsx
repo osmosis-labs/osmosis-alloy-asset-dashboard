@@ -38,11 +38,18 @@ const DecimalSpan = ({
     noDecimal = true
   }
 
-  const formattedAfterZeroes =
+  // Trim trailing zeros past the second decimal, but always keep two
+  // (12.50, not 12.5), matching NumberFormatter.VALUE.
+  const trimmedAfterZeroes =
     NumberFormatter.formatValue(`0.${afterZeroes}`, {
       mantissa,
       optionalMantissa,
+      trimMantissa: true,
     }).split(".")[1] || _.repeat("9", mantissa)
+  const formattedAfterZeroes =
+    retracedZeroes > 0
+      ? trimmedAfterZeroes
+      : trimmedAfterZeroes.padEnd(Math.min(2, mantissa), "0")
 
   return (
     <span className={className}>
