@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { Loader2 } from "lucide-react"
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import useSWR from "swr"
@@ -24,19 +24,29 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  DateRange,
+  DateRangeSelect,
+  useDateRange,
+} from "@/components/date-range"
 import { DecimalSpan } from "@/components/decimal-span"
 
-import { PriceVolume, Timeframe, TIMEFRAMES } from "../lib/timeframe"
+import { PriceVolume, Timeframe } from "../lib/timeframe"
 import { getPriceVolumeChart } from "./query"
 
+// The shared page range mapped to this chart's candle timeframes; "All" uses
+// the longest one the price API offers.
+const TIMEFRAME_BY_RANGE: Record<DateRange, Timeframe> = {
+  "24h": "1 Day",
+  "7d": "7 Days",
+  "30d": "1 Month",
+  "90d": "3 Months",
+  "1y": "1 Year",
+  all: "1 Year",
+}
+
 const PriceVolumeChart = ({ denom }: { denom: string }) => {
-  const [timeframe, setTimeframe] = useState<Timeframe>("7 Days")
+  const { range, setRange } = useDateRange()
+  const timeframe = TIMEFRAME_BY_RANGE[range]
   // Client-fetched, so AutoRefresh's router.refresh() does not reach it:
   // poll on the same 5-minute cadence. The server action is cached for an
   // hour, so this adds no upstream load.
@@ -59,24 +69,7 @@ const PriceVolumeChart = ({ denom }: { denom: string }) => {
             Alloy asset volume in $USD and price over time
           </CardDescription>
         </div>
-        <Select
-          value={timeframe}
-          onValueChange={(tf) => setTimeframe(tf as Timeframe)}
-        >
-          <SelectTrigger
-            className="w-[160px] rounded-lg sm:ml-auto"
-            aria-label="Select a value"
-          >
-            <SelectValue>{timeframe}</SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            {TIMEFRAMES.map((v) => (
-              <SelectItem key={v} value={v} className="rounded-lg">
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <DateRangeSelect range={range} setRange={setRange} />
       </CardHeader>
       <CardContent className="relative h-[300px] w-full">
         {data.isValidating ? (

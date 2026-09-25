@@ -19,9 +19,8 @@ const TransactionTable = ({ pool }: { pool: PoolOverview }) => {
       <CardHeader className="text-center md:text-start">
         <CardTitle>Recent Swaps</CardTitle>
         <CardDescription>
-          Swaps through this pool over the last 24 hours, up to the{" "}
-          {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} most recent, with the
-          amounts that entered and left the pool.
+          The latest {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} swaps through
+          this pool, with the amounts that entered and left it
         </CardDescription>
       </CardHeader>
       <CardContent>

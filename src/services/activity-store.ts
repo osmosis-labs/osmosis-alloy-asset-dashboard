@@ -31,6 +31,24 @@ export const isStoreReady = async (
   }
 }
 
+// The store's coverage for a pool when it is fresh, else null.
+export const getStoreCoverage = async (
+  poolId: string
+): Promise<{ coveredFrom: Date } | null> => {
+  if (!isDatabaseEnabled()) return null
+  try {
+    const cursor = await getPrisma().activityCursor.findUnique({
+      where: { poolId },
+    })
+    if (!cursor) return null
+    if (Date.now() - cursor.updatedAt.getTime() > MAX_STALENESS_MS) return null
+    return { coveredFrom: cursor.coveredFrom }
+  } catch (e) {
+    console.error(`[activity-store] cursor read failed for ${poolId}: ${e}`)
+    return null
+  }
+}
+
 export const readFlowPoints = async (
   poolId: string,
   from: Date

@@ -13,10 +13,20 @@ import {
   RawPoolOverview,
 } from "@/types/pool"
 import { PoolSwap } from "@/types/tx"
+import {
+  ACTIVITY_MAX_SWAPS,
+  ACTIVITY_RANGE_DAYS,
+  PoolActivitySource,
+} from "@/lib/activity"
 import dayjs from "@/lib/dayjs"
 import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
-import { isStoreReady, readFlowPoints, readSwaps } from "./activity-store"
+import {
+  getStoreCoverage,
+  isStoreReady,
+  readFlowPoints,
+  readSwaps,
+} from "./activity-store"
 import {
   getAssetMap,
   getAssetPrice,
@@ -602,10 +612,7 @@ const calculdateAlloyAssetDenom = (
   return `factory/${contractAddress}/alloyed/${decoded.alloyed_asset_subdenom}`
 }
 
-// The activity chart covers the last 24h but only fetches this many of the
-// most recent swaps: each 100-swap LCD page is ~3MB and 10-20s, so busy pools
-// are truncated to their latest few hours. The chart copy states this cap.
-export const ACTIVITY_MAX_SWAPS = 1000
+export { ACTIVITY_MAX_SWAPS }
 
 export const getPoolInOutTxs = cache(async (poolId: string) => {
   // Determine the block height ~24h ago from the LCD's latest block.
@@ -697,29 +704,38 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   }
 })
 
-// The activity window, and the source of the data that filled it: "store" is
-// the Postgres activity store (complete window), "live" the LCD fallback
-// (latest ACTIVITY_MAX_SWAPS swaps only).
-const ACTIVITY_WINDOW_MS = 24 * 60 * 60 * 1000
+// Activity for a date range, and where it came from: "store" is the Postgres
+// activity store (used once it is fresh and covers at least the last 24h; a
+// longer range returns what has been collected, from `coveredFrom`), "live"
+// the LCD fallback (latest ACTIVITY_MAX_SWAPS swaps only, whatever the range).
+const DAY_MS = 24 * 60 * 60 * 1000
 export type PoolActivity = {
-  source: "store" | "live"
+  source: PoolActivitySource
   activities: PoolInOutAssets[]
+  coveredFrom?: string
 }
 
-// Cache key bumped with the return shape: the Vercel data cache is shared
-// across deployments, and an entry in the old shape must not be read here.
+// Cache key bumped with the return shape and the range argument: the Vercel
+// data cache is shared across deployments, and an old-shape entry must not be
+// read here.
 export const getPoolInOutAssets = unstable_cache(
-  async (poolId: string): Promise<PoolActivity> => {
-    const windowStart = new Date(Date.now() - ACTIVITY_WINDOW_MS)
-    if (await isStoreReady(poolId, windowStart)) {
+  async (poolId: string, range: string = "24h"): Promise<PoolActivity> => {
+    const coverage = await getStoreCoverage(poolId)
+    if (coverage && coverage.coveredFrom.getTime() <= Date.now() - DAY_MS) {
       try {
-        const points = await readFlowPoints(poolId, windowStart)
+        // null means "all" (from coveredFrom); `??` would turn it into 1 day.
+        const days =
+          range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+        const requested =
+          days === null
+            ? coverage.coveredFrom.getTime()
+            : Date.now() - days * DAY_MS
+        const from = Math.max(requested, coverage.coveredFrom.getTime())
+        const points = await readFlowPoints(poolId, new Date(from))
         return {
           source: "store",
-          activities: bucketFlows(points, {
-            minBucketMinutes: 15,
-            from: windowStart.getTime(),
-          }),
+          activities: bucketFlows(points, { minBucketMinutes: 15, from }),
+          coveredFrom: coverage.coveredFrom.toISOString(),
         }
       } catch (e) {
         console.error(`[getPoolInOutAssets] store read failed: ${e}`)
@@ -733,7 +749,7 @@ export const getPoolInOutAssets = unstable_cache(
       activities: bucketFlows(flowPointsFromSwaps(swaps)),
     }
   },
-  ["pool-in-out-assets-v2"],
+  ["pool-in-out-assets-v3"],
   {
     revalidate: 1800,
   }
@@ -749,7 +765,7 @@ const toPoolSwap = ({ msgIndex, eventIndex, ...swap }: SwapEvent): PoolSwap =>
 // rows are cached here instead, on the same schedule.
 export const getPoolSwaps = unstable_cache(
   async (poolId: string): Promise<PoolSwap[]> => {
-    const windowStart = new Date(Date.now() - ACTIVITY_WINDOW_MS)
+    const windowStart = new Date(Date.now() - DAY_MS)
     if (await isStoreReady(poolId, windowStart)) {
       try {
         return await readSwaps(poolId, ACTIVITY_MAX_SWAPS)

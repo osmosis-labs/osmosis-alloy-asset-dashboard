@@ -193,9 +193,9 @@ test("bucketFlows respects the minimum bucket and the window start", () => {
     [{ time: t, denom: "a", amountIn: "1", amountOut: "0", swaps: 1 }],
     { minBucketMinutes: 15, from }
   )
-  // ~24h window -> 60-minute buckets (<= 24 columns), starting at `from`.
+  // Data up to 11:50 from a 12:00 start -> 24 hourly buckets.
   assert.equal(buckets[0].timestamp, "2026-09-24T12:00:00.000Z")
-  assert.ok(buckets.length <= 24)
+  assert.equal(buckets.length, 24)
 })
 
 test("flowPointsFromSwaps emits one in and one out point per swap", () => {
@@ -230,4 +230,24 @@ test("height correction moves towards the target at the measured block rate", ()
   // 1,000 blocks at 1.2s is 20 minutes: a block 20 min late should step back 1,000.
   assert.equal(correctHeight(5000, 1_200_000, 0, 1200), 4000)
   assert.equal(correctHeight(5000, 0, 600_000, 1200), 5500)
+})
+
+test("long ranges get coarse buckets within the column cap", () => {
+  const day = 86_400_000
+  const end = Date.parse("2026-09-25T00:00:00Z")
+  for (const [days, minutes] of [
+    [7, 360],
+    [30, 1440],
+    [90, 4320],
+    [365, 20160],
+  ]) {
+    const buckets = bucketFlows(
+      [{ time: end, denom: "a", amountIn: "1", amountOut: "0", swaps: 1 }],
+      { minBucketMinutes: 15, from: end - days * day }
+    )
+    assert.ok(buckets.length <= 32, `${days}d -> ${buckets.length} columns`)
+    const step =
+      Date.parse(buckets[1].timestamp) - Date.parse(buckets[0].timestamp)
+    assert.equal(step, minutes * 60_000, `${days}d bucket size`)
+  }
 })

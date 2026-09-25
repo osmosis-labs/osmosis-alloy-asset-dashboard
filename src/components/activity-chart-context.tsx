@@ -123,6 +123,13 @@ const ActivityChartContent = ({
       .value()
   }, [activities, poolAssetDecimals])
 
+  // Daily or coarser buckets (long ranges) need no time of day.
+  const bucketMs =
+    data.length > 1
+      ? data[1].timestamp.getTime() - data[0].timestamp.getTime()
+      : 0
+  const labelFormat = bucketMs >= 86_400_000 ? "MMM D" : "MMM D, HH:mm"
+
   return (
     <ChartContainer
       className={cn("aspect-auto w-full", className)}
@@ -203,7 +210,7 @@ const ActivityChartContent = ({
           labelFormatter={(v, p) => {
             const timestamp = p[0]?.payload?.timestamp
             if (!timestamp) return v
-            return dayjs(timestamp).format("ddd D, HH:mm")
+            return dayjs(timestamp).format(labelFormat)
           }}
         />
         <ChartLegend
@@ -217,7 +224,7 @@ const ActivityChartContent = ({
           tickMargin={8}
           minTickGap={32}
           tickFormatter={(value) => {
-            return dayjs(value).format("ddd D, HH:mm")
+            return dayjs(value).format(labelFormat)
           }}
         />
         <YAxis

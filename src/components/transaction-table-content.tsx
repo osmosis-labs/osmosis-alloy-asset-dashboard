@@ -23,7 +23,7 @@ import {
 
 import { PoolOverview } from "@/types/pool"
 import { PoolSwap } from "@/types/tx"
-import { BlockExplorer } from "@/lib/block-explorer"
+import { BlockExplorer, chainNameForAddress } from "@/lib/block-explorer"
 import dayjs from "@/lib/dayjs"
 import { variantDenom, variantSymbol } from "@/lib/pool-sources"
 import { cn, getAssetImageUrl } from "@/lib/utils"
@@ -98,7 +98,32 @@ const AssetAmountWithTooltip = ({
   )
 }
 
-const LIMITS = ["10", "20", "30"] as const
+const LIMITS = ["20", "50", "100"] as const
+
+type SwapKind = "Mint" | "Burn" | "Rebalance"
+// Alloy out of the pool = minted by the transmuter, alloy in = burned,
+// variant to variant = a rebalance of the backing.
+const swapKind = (swap: PoolSwap, alloyDenom?: string): SwapKind =>
+  swap.out.denom === alloyDenom
+    ? "Mint"
+    : swap.in.denom === alloyDenom
+      ? "Burn"
+      : "Rebalance"
+const KIND_CLASS: Record<SwapKind, string> = {
+  Mint: "border-green-500/50 text-green-600 dark:text-green-400",
+  Burn: "border-orange-500/50 text-orange-600 dark:text-orange-400",
+  Rebalance: "",
+}
+
+// How the swap reached the pool, from the message that emitted it.
+const swapRoute = (swap: PoolSwap) => {
+  if (swap.action === "RecvPacket") {
+    return `IBC · ${chainNameForAddress(swap.sender)}`
+  }
+  if (swap.action === "ExecuteContract") return "Contract"
+  if (/^(SwapExact|SplitRoute)/.test(swap.action)) return "Direct"
+  return swap.action
+}
 const TransactionTableContent = ({
   pool,
   swaps,
@@ -106,7 +131,7 @@ const TransactionTableContent = ({
   pool: PoolOverview
   swaps: PoolSwap[]
 }) => {
-  const [limit, setLimit] = useState<(typeof LIMITS)[number]>("10")
+  const [limit, setLimit] = useState<(typeof LIMITS)[number]>("20")
   const [page, setPage] = useState(1)
 
   // Symbols and decimals for the pool's variants (frontend symbols) and the
@@ -133,6 +158,16 @@ const TransactionTableContent = ({
     return meta
   }, [pool])
 
+  // USD price by denom: variants from the pool's price map, the alloy from its
+  // own price. A swap's value is its input amount at the input's price.
+  const priceOf = useMemo(() => {
+    const prices: Record<string, number> = { ...pool.prices }
+    if (pool.alloy.asset && pool.alloy.price?.amount) {
+      prices[pool.alloy.asset.base] = Number(pool.alloy.price.amount)
+    }
+    return (denom: string) => prices[denom]
+  }, [pool])
+
   const columns: ColumnDef<PoolSwap>[] = useMemo(() => {
     return [
       {
@@ -156,18 +191,31 @@ const TransactionTableContent = ({
 
       {
         id: "timestamp",
-        header: "Timestamp",
+        header: "Time",
         accessorKey: "timestamp",
         cell: ({ getValue }) => {
           const timestamp = dayjs.utc(getValue() as string)
+          // One line; the exact local time is on hover.
           return (
-            <div className="text-sm">
-              <span className="font-medium">{timestamp.fromNow()}</span>
-              <br />
-              <span className="text-xs text-muted-foreground">
-                {timestamp.local().format("YYYY/MM/DD HH:mm:ss")}
-              </span>
-            </div>
+            <span
+              className="whitespace-nowrap font-medium"
+              title={timestamp.local().format("YYYY/MM/DD HH:mm:ss")}
+            >
+              {timestamp.fromNow()}
+            </span>
+          )
+        },
+      },
+
+      {
+        id: "type",
+        header: "Type",
+        cell: ({ row }) => {
+          const kind = swapKind(row.original, pool.alloy.asset?.base)
+          return (
+            <Badge size="xs" variant="outline" className={KIND_CLASS[kind]}>
+              {kind}
+            </Badge>
           )
         },
       },
@@ -178,7 +226,7 @@ const TransactionTableContent = ({
         cell: ({ row }) => {
           const swap = row.original
           return (
-            <div className="flex flex-wrap items-center justify-center gap-x-1">
+            <div className="flex items-center justify-center gap-x-1 whitespace-nowrap">
               <AssetAmountWithTooltip
                 amount={swap.in.amount}
                 denom={swap.in.denom}
@@ -196,13 +244,37 @@ const TransactionTableContent = ({
       },
 
       {
-        id: "action",
-        header: "Action",
+        id: "value",
+        header: "Value",
+        cell: ({ row }) => {
+          const { in: input } = row.original
+          const meta = denomMeta[input.denom]
+          const price = priceOf(input.denom)
+          if (!meta || price === undefined) {
+            return <span className="text-muted-foreground">-</span>
+          }
+          const usd =
+            new BigNumber(input.amount).shiftedBy(-meta.decimals).toNumber() *
+            price
+          return (
+            <DecimalSpan mantissa={2} dollar className="font-mono">
+              {usd}
+            </DecimalSpan>
+          )
+        },
+      },
+
+      {
+        id: "route",
+        header: "Route",
         accessorKey: "action",
-        cell: ({ getValue }) => (
-          <Badge size="sm" variant="outline">
-            {getValue() as string}
-          </Badge>
+        cell: ({ row }) => (
+          <span
+            className="whitespace-nowrap text-muted-foreground"
+            title={row.original.action}
+          >
+            {swapRoute(row.original)}
+          </span>
         ),
       },
 
@@ -229,7 +301,7 @@ const TransactionTableContent = ({
         },
       },
     ]
-  }, [denomMeta])
+  }, [denomMeta, priceOf, pool.alloy.asset?.base])
 
   const totalPage = Math.max(Math.ceil(swaps.length / Number(limit)), 1)
   const pageRows = useMemo(
@@ -320,7 +392,7 @@ const TransactionTableContent = ({
                   {hg.headers.map((h, i) => (
                     <TableHead
                       key={h.id}
-                      className={cn(i !== 0 && "text-center")}
+                      className={cn("h-9", i !== 0 && "text-center")}
                     >
                       {h.isPlaceholder
                         ? null
@@ -335,7 +407,7 @@ const TransactionTableContent = ({
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className="py-1.5">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()

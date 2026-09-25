@@ -34,6 +34,11 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  dateRangeDays,
+  DateRangeSelect,
+  useDateRange,
+} from "@/components/date-range"
 import { DecimalSpan } from "@/components/decimal-span"
 
 type Scale = "share" | "amount"
@@ -52,6 +57,7 @@ const CompositionChart = ({
 }) => {
   const [grouping, setGrouping] = useState<SourceGrouping>("issuer")
   const [scale, setScale] = useState<Scale>("share")
+  const { range, setRange } = useDateRange()
 
   const { data, config, keys } = useMemo(() => {
     const byDenom = _.keyBy(composition.denoms, "denom")
@@ -85,7 +91,9 @@ const CompositionChart = ({
         ])
       ),
     }
-    const points = [...composition.points, now]
+    const days = dateRangeDays(range)
+    const from = days === null ? -Infinity : Date.now() - days * 86_400_000
+    const points = [...composition.points.filter((p) => p.time >= from), now]
 
     const rows = points.map((p) => {
       const row: Record<string, number> = { time: p.time }
@@ -124,7 +132,7 @@ const CompositionChart = ({
       ...r,
     }))
     return { data, config, keys }
-  }, [composition, pool, grouping])
+  }, [composition, pool, grouping, range])
 
   return (
     <Card className={cn("w-full", className)}>
@@ -142,6 +150,7 @@ const CompositionChart = ({
           </CardDescription>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
+          <DateRangeSelect range={range} setRange={setRange} />
           <Tabs value={scale} onValueChange={(v) => setScale(v as Scale)}>
             <TabsList className="h-8">
               <TabsTrigger value="share" className="text-xs">

@@ -95,10 +95,13 @@ export const swapEventsFromTx = (tx: any, poolId: string): SwapEvent[] =>
   })
 
 // Bucket sizes the activity chart can use. The data spans anything from ~5h
-// (a busy pool's latest live swaps) to the full window, so the bucket is chosen
-// from the actual span to keep roughly MAX_ACTIVITY_BUCKETS columns.
-const ACTIVITY_BUCKET_MINUTES = [5, 10, 15, 30, 60, 120]
-const MAX_ACTIVITY_BUCKETS = 24
+// (a busy pool's latest live swaps) to a year of stored history, so the bucket
+// is chosen from the actual span to keep at most MAX_ACTIVITY_BUCKETS columns.
+const ACTIVITY_BUCKET_MINUTES = [
+  5, 10, 15, 30, 60, 120, 240, 360, 720, 1440, 2880, 4320, 10080, 20160,
+]
+// 24H -> hourly, 7D -> 6-hourly, 30D -> daily, 90D -> 3-daily, 1Y -> 2-weekly.
+const MAX_ACTIVITY_BUCKETS = 32
 
 export const pickActivityBucketMinutes = (spanMinutes: number) =>
   ACTIVITY_BUCKET_MINUTES.find(

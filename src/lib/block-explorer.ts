@@ -21,6 +21,33 @@ const MINTSCAN_CHAIN_BY_PREFIX: Record<string, string> = {
   terra: "terra",
 }
 
+const CHAIN_NAME_BY_PREFIX: Record<string, string> = {
+  osmo: "Osmosis",
+  inj: "Injective",
+  noble: "Noble",
+  cosmos: "Cosmos Hub",
+  axelar: "Axelar",
+  neutron: "Neutron",
+  celestia: "Celestia",
+  stride: "Stride",
+  dydx: "dYdX",
+  akash: "Akash",
+  kava: "Kava",
+  juno: "Juno",
+  stars: "Stargaze",
+  secret: "Secret",
+  dym: "Dymension",
+  init: "Initia",
+  terra: "Terra",
+  nolus: "Nolus",
+}
+
+// Human chain name for a bech32 address, or its prefix when unknown.
+export const chainNameForAddress = (address: string) => {
+  const prefix = address.slice(0, address.lastIndexOf("1"))
+  return CHAIN_NAME_BY_PREFIX[prefix] ?? prefix
+}
+
 export const BlockExplorer = {
   BASE_URL: "https://celatone.osmosis.zone",
   CHAIN_ID: "osmosis-1",

@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DateRangeProvider } from "@/components/date-range"
 import { DecimalSpan, SmallDecimals } from "@/components/decimal-span"
 import { OverviewChart } from "@/components/overview-chart"
 import { PoolAssetCard, valueFormatter } from "@/components/pool-card"
@@ -200,115 +201,117 @@ export default async function Home({
           </div>
         </div>
 
-        <div className="grid w-full gap-6 md:grid-cols-10">
-          <OverviewChart
-            pools={[pool]}
-            description="Historical liquidity in $USD for the pool"
-            className="md:col-span-7"
-          />
-          <SourceChart pool={pool} className="md:col-span-3" />
-        </div>
+        <DateRangeProvider>
+          <div className="grid w-full gap-6 md:grid-cols-10">
+            <OverviewChart
+              pools={[pool]}
+              description="Historical liquidity in $USD for the pool"
+              className="md:col-span-7"
+            />
+            <SourceChart pool={pool} className="md:col-span-3" />
+          </div>
 
-        {composition && (
-          <CompositionChart pool={pool} composition={composition} />
-        )}
-
-        <ActivityChart pool={pool} />
-
-        <PriceVolumeChart denom={pool.alloy.asset.denom} />
-
-        <Tabs defaultValue="variant" className="w-full">
-          <Card>
-            <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
-              <div className="grid flex-1 gap-1 text-center sm:text-left">
-                <CardTitle>Underlying Assets</CardTitle>
-                <CardDescription>
-                  Underlying assets in the pool with their amounts, by variant,
-                  by provider, or by origin chain.
-                </CardDescription>
-              </div>
-              <TabsList>
-                {SOURCE_GROUPINGS.map((g) => (
-                  <TabsTrigger key={g.value} value={g.value}>
-                    {g.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="variant">
-                <div className="grid gap-2 md:grid-cols-2">
-                  {pool.reserveCoins?.map((a) => (
-                    <PoolAssetCard
-                      key={a.asset.denom}
-                      asset={a}
-                      price={pool.prices[a.asset.base]}
-                      totalAmount={totalAmount}
-                      limiter={pool.limiters[a.asset.base]}
-                      status={pool.status?.reserves?.[a.asset.base]}
-                      corrupted={pool.status?.corruptedDenoms?.includes(
-                        a.asset.base
-                      )}
-                    />
-                  ))}
+          <Tabs defaultValue="variant" className="w-full">
+            <Card>
+              <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
+                <div className="grid flex-1 gap-1 text-center sm:text-left">
+                  <CardTitle>Underlying Assets</CardTitle>
+                  <CardDescription>
+                    Underlying assets in the pool with their amounts, by
+                    variant, by provider, or by origin chain.
+                  </CardDescription>
                 </div>
-              </TabsContent>
-              {(["issuer", "origin"] as const).map((grouping) => (
-                <TabsContent
-                  key={grouping}
-                  value={grouping}
-                  className="space-y-4"
-                >
-                  {groupedSources[grouping].map((v, i) => (
-                    <div key={i} className="flex flex-col gap-2">
-                      <div className="flex items-center text-start">
-                        <h2 className="text-lg font-semibold md:text-xl">
-                          {v.label}
-                        </h2>
-                        <div className="ml-auto text-end">
-                          <DecimalSpan
-                            className="font-semibold"
-                            mantissa={2}
-                            percent
-                          >
-                            {(v.totalAmount / totalAmount) * 100}
-                          </DecimalSpan>
-                          <p className="text-sm font-medium text-muted-foreground">
-                            <SmallDecimals>
-                              {pool.alloy.price?.amount
-                                ? `$${NumberFormatter.formatValue(
-                                    v.totalAmount *
-                                      Number(pool.alloy.price?.amount)
-                                  )}`
-                                : "-"}
-                            </SmallDecimals>
-                          </p>
+                <TabsList>
+                  {SOURCE_GROUPINGS.map((g) => (
+                    <TabsTrigger key={g.value} value={g.value}>
+                      {g.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </CardHeader>
+              <CardContent>
+                <TabsContent value="variant">
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {pool.reserveCoins?.map((a) => (
+                      <PoolAssetCard
+                        key={a.asset.denom}
+                        asset={a}
+                        price={pool.prices[a.asset.base]}
+                        totalAmount={totalAmount}
+                        limiter={pool.limiters[a.asset.base]}
+                        status={pool.status?.reserves?.[a.asset.base]}
+                        corrupted={pool.status?.corruptedDenoms?.includes(
+                          a.asset.base
+                        )}
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
+                {(["issuer", "origin"] as const).map((grouping) => (
+                  <TabsContent
+                    key={grouping}
+                    value={grouping}
+                    className="space-y-4"
+                  >
+                    {groupedSources[grouping].map((v, i) => (
+                      <div key={i} className="flex flex-col gap-2">
+                        <div className="flex items-center text-start">
+                          <h2 className="text-lg font-semibold md:text-xl">
+                            {v.label}
+                          </h2>
+                          <div className="ml-auto text-end">
+                            <DecimalSpan
+                              className="font-semibold"
+                              mantissa={2}
+                              percent
+                            >
+                              {(v.totalAmount / totalAmount) * 100}
+                            </DecimalSpan>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              <SmallDecimals>
+                                {pool.alloy.price?.amount
+                                  ? `$${NumberFormatter.formatValue(
+                                      v.totalAmount *
+                                        Number(pool.alloy.price?.amount)
+                                    )}`
+                                  : "-"}
+                              </SmallDecimals>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-2">
+                          {v.assets.map((a) => (
+                            <PoolAssetCard
+                              key={a.asset.denom}
+                              asset={a}
+                              price={pool.prices[a.asset.base]}
+                              totalAmount={totalAmount}
+                              limiter={pool.limiters[a.asset.base]}
+                              status={pool.status?.reserves?.[a.asset.base]}
+                              corrupted={pool.status?.corruptedDenoms?.includes(
+                                a.asset.base
+                              )}
+                            />
+                          ))}
                         </div>
                       </div>
-                      <div className="grid gap-2 md:grid-cols-2">
-                        {v.assets.map((a) => (
-                          <PoolAssetCard
-                            key={a.asset.denom}
-                            asset={a}
-                            price={pool.prices[a.asset.base]}
-                            totalAmount={totalAmount}
-                            limiter={pool.limiters[a.asset.base]}
-                            status={pool.status?.reserves?.[a.asset.base]}
-                            corrupted={pool.status?.corruptedDenoms?.includes(
-                              a.asset.base
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </TabsContent>
-              ))}
-            </CardContent>
-          </Card>
-        </Tabs>
+                    ))}
+                  </TabsContent>
+                ))}
+              </CardContent>
+            </Card>
+          </Tabs>
 
-        <TransactionTable pool={pool} />
+          <ActivityChart pool={pool} />
+
+          {composition && (
+            <CompositionChart pool={pool} composition={composition} />
+          )}
+
+          <PriceVolumeChart denom={pool.alloy.asset.denom} />
+
+          <TransactionTable pool={pool} />
+        </DateRangeProvider>
       </div>
     </main>
   )
