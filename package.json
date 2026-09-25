@@ -16,7 +16,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "activity:backfill": "tsx --tsconfig tsconfig.json scripts/backfill-activity.mts",
-    "test:activity": "tsx --tsconfig tsconfig.json --test scripts/test-activity.mts"
+    "test:activity": "tsx --tsconfig tsconfig.json --test scripts/test-activity.mts",
+    "reserves:backfill": "tsx --tsconfig tsconfig.json scripts/backfill-reserves.mts"
   },
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.32.4",

@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Link from "next/link"
+import { getPoolComposition } from "@/services/composition"
 import { getPoolOverview, getPoolsOverview } from "@/services/pool"
 import _ from "lodash"
 import { ExternalLink, Frown } from "lucide-react"
@@ -24,6 +25,7 @@ import { PoolAssetCard, valueFormatter } from "@/components/pool-card"
 import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
 
 import { ActivityChart } from "../../../components/activity-chart"
+import { CompositionChart } from "../../../components/composition-chart"
 import { CopyDenom } from "../../../components/copy-denom"
 import { PriceVolumeChart } from "../../../components/price-volume-chart"
 import { SourceChart } from "../../../components/source-chart"
@@ -90,6 +92,9 @@ export default async function Home({
       (acc, a) => acc + valueFormatter(a.currency),
       0
     ) || 0
+  // Reserve history for Backing Over Time; null (chart hidden) until the
+  // activity store has at least two snapshots for this pool.
+  const composition = await getPoolComposition(pool.id)
   const groupedSources = {
     issuer: getPoolSources(pool, "issuer"),
     origin: getPoolSources(pool, "origin"),
@@ -203,6 +208,10 @@ export default async function Home({
           />
           <SourceChart pool={pool} className="md:col-span-3" />
         </div>
+
+        {composition && (
+          <CompositionChart pool={pool} composition={composition} />
+        )}
 
         <ActivityChart pool={pool} />
 

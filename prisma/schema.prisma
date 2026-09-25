@@ -64,3 +64,18 @@ model PoolFlow15m {
   @@id([poolId, bucket, denom])
   @@map("pool_flow_15m")
 }
+
+// A pool's accounted reserves per denom at a block height, from the
+// transmuter's get_total_pool_liquidity query (archive LCD, historical
+// height). Daily snapshots from the backfill, plus one per day from the cron.
+model PoolReserveSnapshot {
+  poolId String   @map("pool_id")
+  height BigInt
+  ts     DateTime
+  denom  String
+  amount Decimal  @db.Decimal(78, 0)
+
+  @@id([poolId, height, denom])
+  @@index([poolId, ts])
+  @@map("pool_reserve_snapshot")
+}

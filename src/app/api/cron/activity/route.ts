@@ -6,13 +6,15 @@ import {
   pruneSwaps,
 } from "@/services/activity-ingest"
 import { getPoolsOverview } from "@/services/pool"
+import { snapshotPoolIfDue } from "@/services/reserves"
 
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
 // Activity store ingest. Triggered by Vercel Cron (see vercel.json) every 15
 // minutes: for each supported pool, reads token_swapped events from its cursor
 // up to the current tip and writes them to Postgres (rows, 15-minute rollups,
-// then the cursor, in one transaction per pool), then prunes old swap rows.
+// then the cursor, in one transaction per pool), takes the pool's daily
+// reserve snapshot when due, then prunes old swap rows.
 // The pool page reads the store once a pool's history is fresh and covers the
 // window; until then it keeps using live LCD queries.
 //
@@ -46,12 +48,30 @@ export async function GET(request: Request) {
 
   const results = []
   for (const pool of pools) {
+    let ingest: object
     try {
-      results.push(await ingestPool({ db, poolId: pool.id, upTo, upToTime }))
+      ingest = await ingestPool({ db, poolId: pool.id, upTo, upToTime })
     } catch (e) {
-      console.error(`[cron/activity] pool ${pool.id} failed: ${e}`)
-      results.push({ poolId: pool.id, error: String(e) })
+      console.error(`[cron/activity] pool ${pool.id} ingest failed: ${e}`)
+      ingest = { error: String(e) }
     }
+    // Daily reserve snapshot for the Backing Over Time chart (archive LCD).
+    let snapshot: unknown
+    try {
+      snapshot = (
+        await snapshotPoolIfDue({
+          db,
+          poolId: pool.id,
+          contractAddress: pool.contractAddress,
+          height: upTo,
+          ts: upToTime,
+        })
+      ).snapshot
+    } catch (e) {
+      console.error(`[cron/activity] pool ${pool.id} snapshot failed: ${e}`)
+      snapshot = { error: String(e) }
+    }
+    results.push({ poolId: pool.id, ...ingest, snapshot })
   }
 
   let pruned = 0
