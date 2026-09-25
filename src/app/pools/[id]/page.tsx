@@ -4,7 +4,7 @@ import { getPoolOverview, getPoolsOverview } from "@/services/pool"
 import _ from "lodash"
 import { ExternalLink, Frown } from "lucide-react"
 
-import { BlockExplorer } from "@/lib/block-explorer"
+import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
 import { getPoolSources } from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
@@ -127,7 +127,7 @@ export default async function Home({
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Link
-                href={BlockExplorer.pool(pool.id)}
+                href={OsmosisApp.pool(pool.id)}
                 target="_blank"
                 rel="noopener noreferrer"
               >

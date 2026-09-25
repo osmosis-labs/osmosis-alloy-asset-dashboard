@@ -8,9 +8,9 @@ import { ChevronRight, ExternalLink, Info } from "lucide-react"
 import { Asset, AssetStatus, CurrencyAmount } from "@/types/asset"
 import { Limiter } from "@/types/limiter"
 import { PoolOverview } from "@/types/pool"
-import { BlockExplorer } from "@/lib/block-explorer"
+import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { variantSymbol } from "@/lib/pool-sources"
+import { variantDenom, variantSymbol } from "@/lib/pool-sources"
 import { cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -61,7 +61,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
             <Badge size="sm">{pool.alloy.asset.symbol}</Badge>
             <PoolStatusBadges pool={pool} />
             <Link
-              href={BlockExplorer.pool(pool.id)}
+              href={OsmosisApp.pool(pool.id)}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -221,6 +221,18 @@ const PoolAssetCard = ({
             <Badge size="xs" variant="secondary">
               {counterparty}
             </Badge>
+            {variantDenom(c) && (
+              <Link
+                href={OsmosisApp.asset(variantDenom(c)!)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${variantSymbol(c)} on Osmosis`}
+              >
+                <Badge size="xs" variant="secondary">
+                  Asset <ExternalLink className="ml-1 size-3" />
+                </Badge>
+              </Link>
+            )}
             <AssetStatusBadges status={status} corrupted={corrupted} />
           </div>
           <p className="line-clamp-2 whitespace-pre-wrap break-all text-xs text-muted-foreground">

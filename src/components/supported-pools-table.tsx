@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner"
 
 import { PoolOverview } from "@/types/pool"
-import { BlockExplorer } from "@/lib/block-explorer"
+import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
 import { variantSymbol } from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
@@ -232,7 +232,7 @@ const columns: ColumnDef<PoolOverview>[] = [
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   onClick={() => {
-                    window.open(BlockExplorer.pool(row.original.id), "_blank")
+                    window.open(OsmosisApp.pool(row.original.id), "_blank")
                   }}
                 >
                   <ExternalLink className="mr-2 size-4" />
