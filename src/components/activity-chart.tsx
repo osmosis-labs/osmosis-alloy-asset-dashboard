@@ -1,6 +1,10 @@
 import { Suspense } from "react"
 import { POOL_STATUS } from "@/constants/status"
-import { ACTIVITY_MAX_SWAPS, getPoolInOutAssets } from "@/services/pool"
+import {
+  ACTIVITY_MAX_SWAPS,
+  getPoolInOutAssets,
+  PoolActivity,
+} from "@/services/pool"
 import { Loader2, Snowflake } from "lucide-react"
 
 import { PoolOverview } from "@/types/pool"
@@ -25,8 +29,7 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
           <CardTitle>Pool Asset Activity</CardTitle>
           <CardDescription>
             Net change in each variant&apos;s reserve (above zero: more entered
-            the pool than left) over the last 24 hours, up to the{" "}
-            {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} most recent swaps
+            the pool than left) over the last 24 hours
           </CardDescription>
         </div>
       </CardHeader>
@@ -66,10 +69,10 @@ const SuspensedActivityChart = async ({
   pool: PoolOverview
   className?: string
 }) => {
-  let activities: Awaited<ReturnType<typeof getPoolInOutAssets>> = []
+  let activity: PoolActivity
 
   try {
-    activities = await getPoolInOutAssets(pool.id)
+    activity = await getPoolInOutAssets(pool.id)
   } catch (error) {
     console.error(`Failed to fetch activities for pool ${pool.id}:`, error)
     // No chart is rendered on error, so the message needs its own height
@@ -81,6 +84,7 @@ const SuspensedActivityChart = async ({
     )
   }
 
+  const { activities, source } = activity
   return (
     <>
       {activities.length === 0 && (
@@ -93,6 +97,14 @@ const SuspensedActivityChart = async ({
         className={className}
         pool={pool}
       />
+      {source === "live" && activities.length > 0 && (
+        // Without the activity store only the latest swaps are fetched, so a
+        // busy pool's chart covers just its last few hours.
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Showing the {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} most recent
+          swaps
+        </p>
+      )}
     </>
   )
 }

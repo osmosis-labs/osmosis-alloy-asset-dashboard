@@ -1,0 +1,66 @@
+// Pool activity history for alloyed.osmosis.zone. Filled by the activity cron
+// (src/app/api/cron/activity) and the backfill script; read by the pool page's
+// activity chart and swap table, which fall back to live LCD queries when the
+// store is not configured or not caught up.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URLs live in prisma.config.ts (datasource.url) as Prisma 7
+  // requires; the runtime client connects through @prisma/adapter-pg.
+}
+
+// Per-pool ingest progress.
+model ActivityCursor {
+  poolId       String    @id @map("pool_id")
+  // Last fully processed block height (live ingest).
+  height       BigInt
+  // Earliest time the store has complete data for, lowered by the backfill.
+  // Reads only use the store for windows starting at or after this.
+  coveredFrom  DateTime  @map("covered_from")
+  // Backfill progress: the height it started from and the last height done.
+  backfillFrom BigInt?   @map("backfill_from")
+  backfillTo   BigInt?   @map("backfill_to")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("activity_cursor")
+}
+
+// One row per token_swapped event on a pool. Amounts are base units.
+model PoolSwap {
+  poolId     String   @map("pool_id")
+  height     BigInt
+  txHash     String   @map("tx_hash")
+  msgIndex   Int      @map("msg_index")
+  eventIndex Int      @map("event_index")
+  ts         DateTime
+  // The account behind the swap (see swapAccount in src/services/swap-rows.ts).
+  sender     String
+  action     String
+  denomIn    String   @map("denom_in")
+  amountIn   Decimal  @map("amount_in") @db.Decimal(78, 0)
+  denomOut   String   @map("denom_out")
+  amountOut  Decimal  @map("amount_out") @db.Decimal(78, 0)
+
+  @@id([poolId, txHash, msgIndex, eventIndex])
+  @@index([poolId, ts(sort: Desc)])
+  @@map("pool_swap")
+}
+
+// 15-minute per-denom rollups, recomputed from pool_swap for touched buckets.
+// Kept after old pool_swap rows are pruned, so history outlives the rows.
+model PoolFlow15m {
+  poolId    String   @map("pool_id")
+  bucket    DateTime
+  denom     String
+  amountIn  Decimal  @default(0) @map("amount_in") @db.Decimal(78, 0)
+  amountOut Decimal  @default(0) @map("amount_out") @db.Decimal(78, 0)
+  // Swap events touching this denom (as input or output) in the bucket.
+  swaps     Int      @default(0)
+
+  @@id([poolId, bucket, denom])
+  @@map("pool_flow_15m")
+}
