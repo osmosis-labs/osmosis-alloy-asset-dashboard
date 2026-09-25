@@ -85,16 +85,18 @@ const poolIds: string[] = args.pool?.length
       .then((r) => r.json())
       .then((pools: { id: string }[]) => pools.map((p) => p.id))
 
-const tip = await latestHeight(hosts)
-const tipTime = await blockTime(tip, hosts)
+const tip = await withBackoff("tip", () => latestHeight(hosts))
+const tipTime = await withBackoff("tip time", () => blockTime(tip, hosts))
 const chain = { height: tip, time: tipTime.getTime() }
 
 // Height at `days` ago. Block times have varied a lot over Osmosis' history,
 // so this uses the bracketed heightAtTime rather than one step at a constant
 // rate, which lands months off that far back.
 const target = new Date(tipTime.getTime() - days * 86_400_000)
-const { height: start } = await heightAtTime(target, { tip: chain })
-const startTime = await blockTime(start, hosts)
+const { height: start } = await withBackoff("start height", () =>
+  heightAtTime(target, { tip: chain })
+)
+const startTime = await withBackoff("start time", () => blockTime(start, hosts))
 console.log(
   `tip ${tip} (${tipTime.toISOString()}); ${days}d back = ${start} (${startTime.toISOString()}); pools ${poolIds.join(", ")}`
 )
@@ -111,7 +113,9 @@ const PRUNE_TAIL_MS = 30 * 60_000
 // First height at which the pool's contract exists (bisection on the
 // archive), so a long backfill does not walk empty blocks before the pool.
 const creationHeight = async (poolId: string, hi: number) => {
-  const address = await poolContractAddress(poolId)
+  const address = await withBackoff(`pool ${poolId} contract`, () =>
+    poolContractAddress(poolId)
+  )
   let lo = 1
   while (hi - lo > 2000) {
     const mid = Math.floor((lo + hi) / 2)
@@ -141,7 +145,9 @@ for (const poolId of poolIds) {
   }
   // Stop where existing coverage begins (an earlier, shorter backfill), with a
   // small overlap; inserts are idempotent.
-  const coverageStart = await heightAtTime(cursor.coveredFrom, { tip: chain })
+  const coverageStart = await withBackoff(`pool ${poolId} coverage start`, () =>
+    heightAtTime(cursor.coveredFrom, { tip: chain })
+  )
   const end = Math.min(Number(cursor.height), coverageStart.height + 1000)
   const poolStart = Math.max(start, await creationHeight(poolId, end))
 
