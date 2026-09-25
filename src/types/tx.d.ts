@@ -5,8 +5,9 @@ export type PoolSwap = {
   height: number
   timestamp: string
   success: boolean
-  // The swap's `sender` attribute: the account or contract that executed it
-  // (an IBC-hooks or router contract for routed swaps), not the fee payer.
+  // The account behind the swap (see swapAccount): the wallet, the authz
+  // granter, the wallet calling a router contract, or for IBC-hooks swaps the
+  // source-chain sender (e.g. an inj1... address). Not the executing contract.
   sender: string
   // Short type of the message that emitted the event, e.g. "SwapExactAmountIn",
   // "RecvPacket", "ExecuteContract".

@@ -208,19 +208,22 @@ const TransactionTableContent = ({
 
       {
         id: "sender",
-        header: "Sender",
+        header: "Account",
         accessorKey: "sender",
         cell: ({ getValue }) => {
           const address = getValue() as string
           if (!address) return <span className="text-muted-foreground">-</span>
+          const href = BlockExplorer.account(address)
+          const short = `${address.slice(0, 8)}..${address.slice(-4)}`
+          if (!href) return <span className="font-medium">{short}</span>
           return (
             <Link
-              href={BlockExplorer.account(address)}
+              href={href}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-accent-foreground hover:underline"
             >
-              {address.slice(0, 8)}..{address.slice(-4)}
+              {short}
             </Link>
           )
         },

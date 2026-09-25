@@ -792,6 +792,35 @@ const shortMessageType = (message: any): string => {
   return type.replace(/^Msg/, "") || "Unknown"
 }
 
+// The account behind a swap. The token_swapped `sender` attribute is whoever
+// executed the swap, which for routed swaps is a contract (e.g. Skip's swap
+// adapter executes every Skip router call and IBC-hooks swap), so unrelated
+// users collapse onto one address. Resolve from the message instead:
+//   - authz MsgExec: the inner message's sender (the granter, whose funds move)
+//   - MsgRecvPacket (IBC hooks): the packet's source-chain sender; the Osmosis
+//     signer is only the relayer
+//   - anything else with a sender (direct swaps, MsgExecuteContract): it
+//   - otherwise: the event attribute
+const swapAccount = (message: any, eventSender: string | undefined) => {
+  const type = message?.["@type"]
+  if (type === "/cosmos.authz.v1beta1.MsgExec") {
+    const inner = _.find(message.msgs as any[], (m) => m?.sender)
+    if (inner?.sender) return inner.sender as string
+  }
+  if (type === "/ibc.core.channel.v1.MsgRecvPacket") {
+    try {
+      const data = JSON.parse(atob(message.packet?.data ?? ""))
+      if (typeof data?.sender === "string" && data.sender) return data.sender
+    } catch {
+      // Not an ICS-20 packet; fall through to the event sender.
+    }
+  }
+  if (type !== "/ibc.core.channel.v1.MsgRecvPacket" && message?.sender) {
+    return message.sender as string
+  }
+  return eventSender ?? ""
+}
+
 // Swap rows for the pool's transaction table, from the same LCD fetch as the
 // activity chart (React cache() dedupes it within a render), so the table adds
 // no LCD requests. The raw tx pages (~3MB each) are too large for the data
@@ -826,7 +855,7 @@ export const getPoolSwaps = unstable_cache(
             height: Number(tx.height),
             timestamp: tx.timestamp,
             success: tx.code === 0,
-            sender: attr("sender") ?? "",
+            sender: swapAccount(message, attr("sender")),
             action: shortMessageType(message),
             in: { amount: amountIn ?? "0", denom: denomIn ?? "" },
             out: { amount: amountOut ?? "0", denom: denomOut ?? "" },
