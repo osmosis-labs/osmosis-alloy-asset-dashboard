@@ -8,6 +8,7 @@ import NextTopLoader from "nextjs-toploader"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/sonner"
+import { AutoRefresh } from "@/components/auto-refresh"
 import { Nav } from "@/components/nav"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
           <Toaster closeButton />
+          <AutoRefresh />
           <NextTopLoader
             color="hsl(var(--primary))"
             height={2}

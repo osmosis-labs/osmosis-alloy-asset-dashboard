@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
-import useSWRImmutable from "swr/immutable"
+import useSWR from "swr"
 
 import dayjs from "@/lib/dayjs"
 import { NumberFormatter } from "@/lib/number"
@@ -37,9 +37,17 @@ import { getPriceVolumeChart } from "./query"
 
 const PriceVolumeChart = ({ denom }: { denom: string }) => {
   const [timeframe, setTimeframe] = useState<Timeframe>("7 Days")
-  const data = useSWRImmutable(
+  // Client-fetched, so AutoRefresh's router.refresh() does not reach it:
+  // poll on the same 5-minute cadence. The server action is cached for an
+  // hour, so this adds no upstream load.
+  const data = useSWR(
     ["price-volume", denom, timeframe],
-    async ([, denom, timeframe]) => getPriceVolumeChart(denom, timeframe)
+    async ([, denom, timeframe]) => getPriceVolumeChart(denom, timeframe),
+    {
+      refreshInterval: 5 * 60 * 1000,
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    }
   )
 
   return (
