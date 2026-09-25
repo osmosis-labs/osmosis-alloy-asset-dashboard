@@ -10,7 +10,12 @@ import { Limiter } from "@/types/limiter"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { variantDenom, variantSymbol } from "@/lib/pool-sources"
+import {
+  variantDenom,
+  variantIssuer,
+  variantOrigin,
+  variantSymbol,
+} from "@/lib/pool-sources"
 import { cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -186,6 +191,7 @@ const PoolAssetCard = ({
   asset: {
     asset: Asset
     currency: CurrencyAmount
+    provenance?: { origin: string | null; issuer: string | null } | null
   }
   totalAmount: number
   className?: string
@@ -198,9 +204,8 @@ const PoolAssetCard = ({
 }) => {
   const thisAmount = valueFormatter(c.currency)
   const percentage = thisAmount / totalAmount
-  const counterparty = _.startCase(
-    _.last(c.asset.traces)?.counterparty.chain_name
-  )
+  const issuer = variantIssuer(c)
+  const origin = variantOrigin(c)
 
   return (
     <div
@@ -218,9 +223,14 @@ const PoolAssetCard = ({
           <div className="inline-flex flex-wrap items-center gap-2 font-semibold leading-none">
             <span>{c.asset.name}</span>
             <Badge size="xs">{variantSymbol(c)}</Badge>
-            <Badge size="xs" variant="secondary">
-              {counterparty}
+            <Badge size="xs" variant="secondary" title="Bridge / Issuer">
+              {issuer}
             </Badge>
+            {origin !== "Unknown" && (
+              <Badge size="xs" variant="outline" title="Origin chain">
+                {origin}
+              </Badge>
+            )}
             {variantDenom(c) && (
               <Link
                 href={OsmosisApp.asset(variantDenom(c)!)}

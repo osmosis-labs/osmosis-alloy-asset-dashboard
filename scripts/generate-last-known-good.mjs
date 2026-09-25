@@ -245,6 +245,75 @@ const mean = (arr) => {
   return nums.reduce((a, b) => a + b, 0) / nums.length
 }
 
+// Mirror of src/services/provenance.ts: follow `ibc` hops through upstream
+// cosmos/chain-registry until the first non-IBC trace; its counterparty chain
+// is the origin and its provider the issuer. Filled in main() before pools are
+// mapped. Non-fatal: missing entries fall back to the last-hop label in the UI.
+const CHAIN_REGISTRY =
+  "https://raw.githubusercontent.com/cosmos/chain-registry/master"
+const TRANSFER_TRACES = new Set(["ibc", "ibc-cw20"])
+const ISSUER_LABELS = { "BitGo, Kyber, and Ren": "WBTC" }
+const ORIGIN_LABELS = {
+  xrpl: "XRPL",
+  bnbsmartchain: "BNB Smart Chain",
+  cosmoshub: "Cosmos Hub",
+}
+const startCase = (s) =>
+  s
+    .replace(/([a-z])([A-Z0-9])/g, "$1 $2")
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ")
+const originLabel = (chain) => ORIGIN_LABELS[chain] ?? startCase(chain)
+const issuerLabel = (provider) => ISSUER_LABELS[provider] ?? provider
+const provenanceByDenom = {}
+
+const resolveProvenance = async (denoms, assetMap) => {
+  const chains = new Map()
+  const loadChain = (chain) => {
+    if (!chains.has(chain)) {
+      chains.set(
+        chain,
+        fetchJson(`${CHAIN_REGISTRY}/${chain}/assetlist.json`).then((d) =>
+          Object.fromEntries((d.assets ?? []).map((a) => [a.base, a]))
+        )
+      )
+    }
+    return chains.get(chain)
+  }
+  for (const denom of denoms) {
+    try {
+      let traces = assetMap[denom]?.traces
+      let chain = null
+      let result = { origin: null, issuer: null }
+      for (let hop = 0; hop < 6; hop++) {
+        const trace = traces?.[0]
+        if (!trace) {
+          result = { origin: chain && originLabel(chain), issuer: null }
+          break
+        }
+        const cp = trace.counterparty
+        if (!TRANSFER_TRACES.has(trace.type ?? "")) {
+          result = {
+            origin: cp?.chain_name ? originLabel(cp.chain_name) : null,
+            issuer: trace.provider ? issuerLabel(trace.provider) : null,
+          }
+          break
+        }
+        if (!cp?.chain_name || !cp.base_denom) break
+        chain = cp.chain_name
+        const next = (await loadChain(chain))[cp.base_denom]
+        if (!next) break
+        traces = next.traces
+      }
+      provenanceByDenom[denom] = result
+    } catch (e) {
+      console.warn(`  provenance unavailable for ${denom}: ${e}`)
+    }
+  }
+}
+
 const mapReserveCoins = (pool, assetMap) =>
   pool.reserveCoins.map((coin) => {
     const c = JSON.parse(coin)
@@ -252,6 +321,7 @@ const mapReserveCoins = (pool, assetMap) =>
     const frontendName = frontendNames[c.currency.coinMinimalDenom]
     return {
       asset: asset && frontendName ? { ...asset, name: frontendName } : asset,
+      provenance: provenanceByDenom[c.currency.coinMinimalDenom] ?? null,
       currency: {
         ...c,
         currency: {
@@ -382,6 +452,17 @@ const main = async () => {
   const ALLOYED_POOL_TYPES = ["cosmwasm-alloyed", "cosmwasm-transmuter"]
   const data = allPools.filter((p) => ALLOYED_POOL_TYPES.includes(p.type))
   console.log(`  ${data.length} alloyed/transmuter pools to classify`)
+
+  await resolveProvenance(
+    [
+      ...new Set(
+        data.flatMap((p) =>
+          p.reserveCoins.map((c) => JSON.parse(c).currency.coinMinimalDenom)
+        )
+      ),
+    ],
+    assetMap
+  )
 
   const built = await Promise.all(
     data.map((p) => fillPoolOverview(p, assetMap, statusMap))

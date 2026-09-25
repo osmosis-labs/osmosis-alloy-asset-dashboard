@@ -24,6 +24,7 @@ import {
 } from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
+import { getVariantProvenanceSafe, Provenance } from "./provenance"
 import { getPoolContractStatus } from "./transmuter"
 
 const MIN_LIQUIDITY = 10
@@ -105,7 +106,8 @@ const fillPoolOverview = async (
   pool: RawPoolOverview,
   assetMap?: _.Dictionary<AssetWithDecimal>,
   statusMap: Record<string, AssetStatus> = {},
-  frontendNames: Record<string, string> = {}
+  frontendNames: Record<string, string> = {},
+  provenance: Record<string, Provenance> = {}
 ) => {
   if (!assetMap) {
     assetMap = await getAssetMap()
@@ -149,6 +151,7 @@ const fillPoolOverview = async (
             assetMap[c.currency.coinMinimalDenom],
             frontendNames[c.currency.coinMinimalDenom]
           ),
+          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
           currency: {
             ...c,
             currency: {
@@ -291,6 +294,7 @@ const fillPoolOverview = async (
           assetMap[c.currency.coinMinimalDenom],
           frontendNames[c.currency.coinMinimalDenom]
         ),
+        provenance: provenance[c.currency.coinMinimalDenom] ?? null,
         currency: {
           ...c,
           currency: {
@@ -412,6 +416,13 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
     getAssetStatusMapSafe(),
     getFrontendAssetNamesSafe(),
   ])
+  const provenance = await getVariantProvenanceSafe(
+    data.flatMap((p) =>
+      p.reserveCoins.map(
+        (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
+      )
+    )
+  )
 
   // The asset map gates every supported/unsupported decision. If it is empty
   // (assetlist upstream failed), EVERY pool would be misclassified as
@@ -424,7 +435,9 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   }
 
   const pools = await Promise.all(
-    data.map((p) => fillPoolOverview(p, assetMap, statusMap, frontendNames))
+    data.map((p) =>
+      fillPoolOverview(p, assetMap, statusMap, frontendNames, provenance)
+    )
   )
 
   return {
