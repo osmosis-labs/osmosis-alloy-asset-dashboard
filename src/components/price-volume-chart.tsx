@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import useSWRImmutable from "swr/immutable"
@@ -104,6 +104,35 @@ const config = {
   },
 } as ChartConfig
 
+// Fit the price axis to the data's own range. Padding by a share of the price
+// (the old +-5%) flattened a stablecoin trading 0.998-1.001 into a line on a
+// 0.95-1.05 axis. Pad by 10% of the range instead, with a small floor so a
+// flat series still gets an axis, and give labels enough decimals to tell
+// adjacent ticks apart (0.999 vs 1.000).
+const getPriceAxis = (data: PriceVolume[]) => {
+  const values = data
+    .flatMap((d) => [d.highLow[0], d.highLow[1], d.average])
+    .filter((v) => Number.isFinite(v))
+  if (values.length === 0) {
+    return {
+      priceDomain: ["auto", "auto"] as [string, string],
+      priceDecimals: 2,
+    }
+  }
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const pad = Math.max((max - min) * 0.1, Math.abs(max) * 0.0005)
+  const lower = Math.max(min - pad, 0)
+  const upper = max + pad
+  // Recharts draws ~5 ticks; decimals follow the tick step, clamped to 0-8.
+  const step = (upper - lower) / 4
+  const priceDecimals = Math.min(Math.max(Math.ceil(-Math.log10(step)), 0), 8)
+  return {
+    priceDomain: [lower, upper] as [number, number],
+    priceDecimals,
+  }
+}
+
 const PriceVolumeChartContent = ({
   data,
   className,
@@ -111,6 +140,11 @@ const PriceVolumeChartContent = ({
   data: PriceVolume[]
   className?: string
 }) => {
+  const { priceDomain, priceDecimals } = useMemo(
+    () => getPriceAxis(data),
+    [data]
+  )
+
   return (
     <ChartContainer
       className={cn("aspect-auto w-full", className)}
@@ -151,9 +185,15 @@ const PriceVolumeChartContent = ({
           yAxisId={2}
           tickLine={false}
           axisLine={false}
-          width={56}
-          domain={[(d: number) => d * 0.95, (d: number) => d * 1.05]}
-          tickFormatter={(v) => `$${NumberFormatter.formatAxisPrice(v)}`}
+          width={64}
+          domain={priceDomain}
+          allowDataOverflow
+          tickFormatter={(v: number) =>
+            `$${v.toLocaleString("en-US", {
+              minimumFractionDigits: priceDecimals,
+              maximumFractionDigits: priceDecimals,
+            })}`
+          }
         />
         <Bar
           type="monotone"
