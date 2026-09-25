@@ -24,7 +24,7 @@ export const DATE_RANGES = [
 ] as const
 
 export type DateRange = (typeof DATE_RANGES)[number]["value"]
-export const DEFAULT_DATE_RANGE: DateRange = "30d"
+export const DEFAULT_DATE_RANGE: DateRange = "90d"
 
 export const dateRangeDays = (range: DateRange): number | null =>
   DATE_RANGES.find((r) => r.value === range)?.days ?? null
