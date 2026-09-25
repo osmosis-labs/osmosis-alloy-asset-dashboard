@@ -167,8 +167,10 @@ export const writeSnapshot = async (
   return count
 }
 
-// Cron step: one snapshot per pool per day, at the run's tip.
-const SNAPSHOT_INTERVAL_MS = 24 * 60 * 60 * 1000
+// Cron step: one snapshot per pool per hour, at the run's tip. The cron runs
+// every 15 minutes, so a slightly short interval keeps snapshots on the hour
+// instead of drifting to every 75 minutes.
+const SNAPSHOT_INTERVAL_MS = 55 * 60 * 1000
 
 export const snapshotPoolIfDue = async ({
   db,
@@ -196,4 +198,26 @@ export const snapshotPoolIfDue = async ({
     ? await writeSnapshot(db, poolId, height, ts, liquidity)
     : 0
   return { poolId, snapshot: rows }
+}
+
+// Snapshots older than `days` are thinned to one per UTC day, so recent
+// history stays hourly while the table grows by one snapshot per pool per
+// day. Timestamps are stored as UTC. Days are bucketed 30 minutes early
+// because a "00:00" snapshot is taken at the last block before midnight
+// (heightAtTime lands at or before its target), which would otherwise count
+// towards the previous day.
+export const pruneReserveSnapshots = async (
+  db: PrismaClient,
+  days: number
+): Promise<number> => {
+  const cutoff = new Date(Date.now() - days * 86_400_000)
+  return db.$executeRaw`
+    DELETE FROM pool_reserve_snapshot s
+    WHERE s.ts < ${cutoff}
+      AND s.height NOT IN (
+        SELECT DISTINCT ON (pool_id, date_trunc('day', ts + interval '30 minutes')) height
+        FROM pool_reserve_snapshot
+        WHERE pool_id = s.pool_id
+        ORDER BY pool_id, date_trunc('day', ts + interval '30 minutes'), ts
+      )`
 }

@@ -7,8 +7,8 @@ import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 import { getAssetMap, getFrontendAssetSymbolsSafe } from "./asset"
 import { getVariantProvenanceSafe } from "./provenance"
 
-// Reserve history for the Backing Over Time chart, from the daily
-// pool_reserve_snapshot rows. Amounts are converted to display units here so
+// Reserve history for the Backing Over Time chart, from the
+// pool_reserve_snapshot rows (hourly for the last week, daily before that). Amounts are converted to display units here so
 // the client can stack variants that share an underlying unit.
 
 export type CompositionDenom = {
@@ -69,11 +69,12 @@ const fetchPoolComposition = async (
   }
 }
 
-// Snapshots are daily, so an hourly cache is plenty.
+// Snapshots are hourly, so a 15-minute cache keeps the newest one visible
+// soon after it lands.
 const getCachedPoolComposition = unstable_cache(
   fetchPoolComposition,
   ["pool-composition-v1"],
-  { revalidate: 3600 }
+  { revalidate: 900 }
 )
 
 // Non-throwing: the chart is simply hidden when history is unavailable.

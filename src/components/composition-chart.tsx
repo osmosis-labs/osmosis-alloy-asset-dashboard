@@ -194,7 +194,9 @@ const CompositionChart = ({
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={(v) => dayjs(v).format("MMM D")}
+              tickFormatter={(v) =>
+                dayjs(v).format(dateRangeDays(range) === 1 ? "HH:mm" : "MMM D")
+              }
             />
             <YAxis
               tickLine={false}
@@ -211,7 +213,14 @@ const CompositionChart = ({
                 <ChartTooltipContent
                   labelFormatter={(_label, payload) => {
                     const time = payload?.[0]?.payload?.time
-                    return time ? dayjs(time).format("MMM D, YYYY") : ""
+                    // Hourly snapshots cover the last week, so short ranges
+                    // show the time too.
+                    const days = dateRangeDays(range)
+                    const format =
+                      days !== null && days <= 7
+                        ? "MMM D, YYYY HH:mm"
+                        : "MMM D, YYYY"
+                    return time ? dayjs(time).format(format) : ""
                   }}
                   valueFormatter={(v: number) => (
                     <DecimalSpan mantissa={2}>{v}</DecimalSpan>

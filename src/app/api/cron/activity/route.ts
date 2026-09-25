@@ -6,15 +6,16 @@ import {
   pruneSwaps,
 } from "@/services/activity-ingest"
 import { getPoolsOverview } from "@/services/pool"
-import { snapshotPoolIfDue } from "@/services/reserves"
+import { pruneReserveSnapshots, snapshotPoolIfDue } from "@/services/reserves"
 
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
 // Activity store ingest. Triggered by Vercel Cron (see vercel.json) every 15
 // minutes: for each supported pool, reads token_swapped events from its cursor
 // up to the current tip and writes them to Postgres (rows, 15-minute rollups,
-// then the cursor, in one transaction per pool), takes the pool's daily
-// reserve snapshot when due, then prunes old swap rows.
+// then the cursor, in one transaction per pool), takes the pool's hourly
+// reserve snapshot when due, then prunes old swap rows and thins reserve
+// snapshots older than a week to daily.
 // The pool page reads the store once a pool's history is fresh and covers the
 // window; until then it keeps using live LCD queries.
 //
@@ -26,6 +27,8 @@ export const maxDuration = 300
 
 // Swap rows are kept this long; their 15-minute rollups are kept for good.
 const SWAP_RETENTION_DAYS = 31
+// Reserve snapshots stay hourly this long, then one per day is kept.
+const HOURLY_SNAPSHOT_DAYS = 7
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
@@ -55,7 +58,7 @@ export async function GET(request: Request) {
       console.error(`[cron/activity] pool ${pool.id} ingest failed: ${e}`)
       ingest = { error: String(e) }
     }
-    // Daily reserve snapshot for the Backing Over Time chart (archive LCD).
+    // Hourly reserve snapshot for the Backing Over Time chart (archive LCD).
     let snapshot: unknown
     try {
       snapshot = (
@@ -80,10 +83,16 @@ export async function GET(request: Request) {
   } catch (e) {
     console.error(`[cron/activity] prune failed: ${e}`)
   }
+  let thinned = 0
+  try {
+    thinned = await pruneReserveSnapshots(db, HOURLY_SNAPSHOT_DAYS)
+  } catch (e) {
+    console.error(`[cron/activity] snapshot thinning failed: ${e}`)
+  }
 
   const failed = results.filter((r) => "error" in r).length
   return NextResponse.json(
-    { upTo, results, pruned },
+    { upTo, results, pruned, thinned },
     { status: failed === results.length && failed > 0 ? 502 : 200 }
   )
 }
