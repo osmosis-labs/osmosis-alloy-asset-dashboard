@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import _ from "lodash"
 import { Pie, PieChart } from "recharts"
 
+import { sourceColor } from "@/lib/pool-sources"
 import { cn } from "@/lib/utils"
 import {
   Card,
@@ -35,28 +36,22 @@ const SourceChart = ({
 }) => {
   const { data, config } = useMemo(() => {
     const config = _.chain(counterparties)
-      .map((c, i) => {
-        const idx = _.range(1, 6)[i % 5]
-        return [
-          c.counterparty,
-          {
-            label: _.startCase(c.counterparty),
-            color: `hsl(var(--chart-${idx})`,
-          },
-        ]
-      })
+      .map((c, i) => [
+        c.counterparty,
+        {
+          label: _.startCase(c.counterparty),
+          color: sourceColor(i),
+        },
+      ])
       .fromPairs()
       .value() satisfies ChartConfig
 
     const data = _.chain(counterparties)
-      .map((c, i) => {
-        const idx = _.range(1, 6)[i % 5]
-        return {
-          ty: c.counterparty,
-          pct: (c.totalAmount / totalAmount) * 100,
-          fill: `hsl(var(--chart-${idx})`,
-        }
-      })
+      .map((c, i) => ({
+        ty: c.counterparty,
+        pct: (c.totalAmount / totalAmount) * 100,
+        fill: sourceColor(i),
+      }))
       .value()
 
     return {

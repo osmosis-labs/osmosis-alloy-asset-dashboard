@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
+import { variantSymbol } from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -44,6 +45,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { SmallDecimals } from "@/components/decimal-span"
 
 import { valueFormatter } from "./pool-card"
 import {
@@ -107,7 +109,7 @@ const columns: ColumnDef<PoolOverview>[] = [
               >
                 <AvatarImage
                   src={getAssetImageUrl(asset.asset)}
-                  alt={asset.asset.symbol}
+                  alt={variantSymbol(asset)}
                 />
                 <AvatarFallback>{capitalName(asset.asset.name)}</AvatarFallback>
               </Avatar>
@@ -117,7 +119,7 @@ const columns: ColumnDef<PoolOverview>[] = [
                 <TooltipTrigger asChild>{Image}</TooltipTrigger>
                 <TooltipContent className="max-w-[350px] space-y-1 text-start">
                   <div className="flex items-center gap-2 font-mono">
-                    {Image} {asset.asset.symbol}
+                    {Image} {variantSymbol(asset)}
                   </div>
                   {corrupted && (
                     <p className="text-xs font-semibold text-destructive">
@@ -143,9 +145,11 @@ const columns: ColumnDef<PoolOverview>[] = [
       const alloy = row.getValue() as PoolOverview["alloy"]
       return (
         <h3>
-          {alloy.price?.amount
-            ? NumberFormatter.formatValue(alloy.price?.amount)
-            : "-"}
+          <SmallDecimals>
+            {alloy.price?.amount
+              ? NumberFormatter.formatValue(alloy.price?.amount)
+              : "-"}
+          </SmallDecimals>
         </h3>
       )
     },
@@ -167,9 +171,11 @@ const columns: ColumnDef<PoolOverview>[] = [
       }
       return (
         <h3>
-          {price
-            ? NumberFormatter.formatValue(Number(price) * totalAmount)
-            : "-"}
+          <SmallDecimals>
+            {price
+              ? NumberFormatter.formatValue(Number(price) * totalAmount)
+              : "-"}
+          </SmallDecimals>
         </h3>
       )
     },

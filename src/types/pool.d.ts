@@ -115,6 +115,7 @@ export type MinimalPoolStatus = Pick<PoolStatus, "isActive" | "corruptedDenoms">
 export type MinimalPool = {
   id: string
   assets: string[]
+  assetSymbols?: Record<string, string>
   alloy: {
     asset: string
     price: string

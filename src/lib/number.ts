@@ -12,6 +12,20 @@ export const NumberFormatter = {
     return numbro(value).format({ ...NumberFormatter.VALUE, ...format })
   },
 
+  // Price axis labels: compact from 1,000 up, otherwise 4 significant digits
+  // so a stablecoin's 0.9998 does not collapse to "1".
+  formatAxisPrice: (value: number) =>
+    Math.abs(value) >= 1000
+      ? NumberFormatter.formatCompact(value)
+      : String(Number(value.toPrecision(4))),
+
+  // Short axis labels: 1.2K, 3.4M, -250.
+  formatCompact: (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value),
+
   formatValueDecimal: (
     value: string | number,
     decimals: number,

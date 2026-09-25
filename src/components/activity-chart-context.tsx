@@ -7,6 +7,7 @@ import { LogIn, LogOut } from "lucide-react"
 import {
   Bar,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Line,
   ReferenceLine,
@@ -16,8 +17,15 @@ import {
 
 import { PoolInOutAssets, PoolOverview } from "@/types/pool"
 import dayjs from "@/lib/dayjs"
+import { NumberFormatter } from "@/lib/number"
+import {
+  getVariantStyles,
+  variantDenom,
+  variantSymbol,
+} from "@/lib/pool-sources"
 import { cn } from "@/lib/utils"
 import {
+  ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
@@ -36,35 +44,46 @@ const ActivityChartContent = ({
   pool: PoolOverview
   className?: string
 }) => {
+  // One net-flow series per asset: positive when more of it entered the pool
+  // than left in the bucket, negative when it drained. A transmuter swap moves
+  // one variant in and another out, so the signed net per variant shows which
+  // way the pool is being rebalanced. Variants are labelled with the frontend
+  // symbol and colored like their source in the Asset Sources chart; the
+  // alloy's own series (mint/burn) is neutral.
   const config = useMemo(() => {
-    return _.chain(pool.reserveCoins)
-      .map((p) => p.asset)
-      .concat(pool.alloy.asset)
-      .map((asset, i) => {
-        const denom = asset.denom_units[0].denom
-        const idx = (i % 5) + 1
-        // One net-flow series per asset: positive when more of it entered the
-        // pool than left in the bucket, negative when it drained. A transmuter
-        // swap moves one variant in and another out, so the signed net per
-        // variant is what shows which way the pool is being rebalanced.
-        return [
-          `net.${denom}`,
-          {
-            asset,
-            label: asset.name,
-            color: `hsl(var(--chart-${idx})`,
-            stackId: "net",
-          },
+    const variantStyles = getVariantStyles(pool)
+    const variants = pool.reserveCoins.map((coin) => {
+      const denom = variantDenom(coin) ?? ""
+      return [
+        `net.${denom}`,
+        {
+          label: variantStyles[denom]?.symbol ?? variantSymbol(coin),
+          symbol: variantStyles[denom]?.symbol ?? variantSymbol(coin),
+          color: variantStyles[denom]?.color ?? "hsl(var(--chart-1))",
+          stackId: "net",
+        },
+      ]
+    })
+    const alloy = pool.alloy.asset
+      ? [
+          [
+            `net.${pool.alloy.asset.base}`,
+            {
+              label: pool.alloy.asset.display,
+              symbol: pool.alloy.asset.display,
+              color: "hsl(var(--muted-foreground))",
+              stackId: "net",
+            },
+          ],
         ]
-      })
-      .fromPairs()
-      .value()
+      : []
+    return _.fromPairs([...variants, ...alloy]) as ChartConfig
   }, [pool])
 
   const configWithCount = useMemo(() => {
     return _.merge({}, config, {
       count: {
-        label: "Interaction Count",
+        label: "Swaps",
         color: "hsl(var(--primary))",
       },
     })
@@ -144,7 +163,7 @@ const ActivityChartContent = ({
                   item,
                   key
                 )
-                const suffix = itemConfig?.asset?.symbol
+                const suffix = itemConfig?.symbol
                 // Keys are "net.<denom>" or "count"; only the first dot splits.
                 const dot = key.indexOf(".")
                 const series = dot === -1 ? key : key.slice(0, dot)
@@ -224,16 +243,18 @@ const ActivityChartContent = ({
         <YAxis
           tickLine={false}
           axisLine={false}
-          width={0}
-          tick={false}
+          width={48}
           yAxisId="1"
+          tickFormatter={(v) => NumberFormatter.formatCompact(v)}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          width={0}
+          width={40}
           yAxisId="2"
           orientation="right"
+          allowDecimals={false}
+          tickFormatter={(v) => NumberFormatter.formatCompact(v)}
         />
         <ReferenceLine y={0} yAxisId="1" stroke="hsl(var(--border))" />
         {_.chain(config)
@@ -244,7 +265,12 @@ const ActivityChartContent = ({
               stackId={v.stackId}
               fill={v.color}
               yAxisId="1"
-            />
+            >
+              {/* Same color per symbol; net outflow is the lighter shade. */}
+              {data.map((d, i) => (
+                <Cell key={i} fillOpacity={(_.get(d, k) ?? 0) < 0 ? 0.45 : 1} />
+              ))}
+            </Bar>
           ))
           .value()}
         <Line

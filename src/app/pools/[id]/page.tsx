@@ -6,6 +6,7 @@ import { ExternalLink, Frown } from "lucide-react"
 
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
+import { getPoolSources } from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DecimalSpan } from "@/components/decimal-span"
+import { DecimalSpan, SmallDecimals } from "@/components/decimal-span"
 import { OverviewChart } from "@/components/overview-chart"
 import { PoolAssetCard, valueFormatter } from "@/components/pool-card"
 import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
@@ -26,7 +27,6 @@ import { ActivityChart } from "../../../components/activity-chart"
 import { CopyDenom } from "../../../components/copy-denom"
 import { PriceVolumeChart } from "../../../components/price-volume-chart"
 import { SourceChart } from "../../../components/source-chart"
-import { TransactionTable } from "../../../components/transaction-table"
 
 export const revalidate = 3600 // 1 hour
 // Above Vercel's 15s default; see src/app/page.tsx.
@@ -89,22 +89,7 @@ export default async function Home({
       (acc, a) => acc + valueFormatter(a.currency),
       0
     ) || 0
-  const counterparties = _.chain(pool.reserveCoins)
-    .map((a) => ({
-      ...a,
-      formattedAmount: valueFormatter(a.currency),
-      counterparty: _.last(a.asset.traces)?.counterparty.chain_name,
-    }))
-    .groupBy("counterparty")
-    .mapValues((v, k) => {
-      return {
-        assets: v,
-        totalAmount: _.sumBy(v, "formattedAmount"),
-        counterparty: k,
-      }
-    })
-    .sortBy((v) => -v.totalAmount)
-    .value()
+  const counterparties = getPoolSources(pool)
 
   return (
     <main className="flex items-center justify-center">
@@ -166,15 +151,19 @@ export default async function Home({
           <div className="rounded-md border p-2">
             <p className="text-sm text-muted-foreground">Price</p>
             <h2 className="font-semibold md:text-lg">
-              {pool.alloy.price
-                ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
-                : "-"}
+              <SmallDecimals>
+                {pool.alloy.price
+                  ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
+                  : "-"}
+              </SmallDecimals>
             </h2>
           </div>
           <div className="rounded-md border p-2">
             <p className="text-sm text-muted-foreground">Total Asset Amount</p>
             <h2 className="font-semibold md:text-lg">
-              {NumberFormatter.formatValue(totalAmount)}{" "}
+              <SmallDecimals>
+                {NumberFormatter.formatValue(totalAmount)}
+              </SmallDecimals>{" "}
               <span className="font-mono text-xs font-medium">
                 {pool.alloy.asset.symbol}
               </span>
@@ -183,17 +172,21 @@ export default async function Home({
           <div className="rounded-md border p-2">
             <p className="text-sm text-muted-foreground">24h Trading Volume</p>
             <h2 className="line-clamp-1 font-semibold md:text-lg">
-              ${NumberFormatter.formatValue(pool.volume24hUsd.amount)}
+              <SmallDecimals>
+                {`$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`}
+              </SmallDecimals>
             </h2>
           </div>
           <div className="rounded-md border p-2">
             <p className="text-sm text-muted-foreground">Market Cap</p>
             <h2 className="line-clamp-1 font-semibold md:text-lg">
-              {pool.alloy.price
-                ? `$${NumberFormatter.formatValue(
-                    Number(pool.alloy.price.amount) * totalAmount
-                  )}`
-                : "-"}
+              <SmallDecimals>
+                {pool.alloy.price
+                  ? `$${NumberFormatter.formatValue(
+                      Number(pool.alloy.price.amount) * totalAmount
+                    )}`
+                  : "-"}
+              </SmallDecimals>
             </h2>
           </div>
         </div>
@@ -264,11 +257,14 @@ export default async function Home({
                           {(v.totalAmount / totalAmount) * 100}
                         </DecimalSpan>
                         <p className="text-sm font-medium text-muted-foreground">
-                          {pool.alloy.price?.amount
-                            ? `$${NumberFormatter.formatValue(
-                                v.totalAmount * Number(pool.alloy.price?.amount)
-                              )}`
-                            : "-"}
+                          <SmallDecimals>
+                            {pool.alloy.price?.amount
+                              ? `$${NumberFormatter.formatValue(
+                                  v.totalAmount *
+                                    Number(pool.alloy.price?.amount)
+                                )}`
+                              : "-"}
+                          </SmallDecimals>
                         </p>
                       </div>
                     </div>
@@ -294,7 +290,9 @@ export default async function Home({
           </Card>
         </Tabs>
 
-        <TransactionTable pool={pool} />
+        {/* The transaction table is hidden until it has a working data source:
+            its only upstream (the AllesLabs GraphQL indexer) was decommissioned.
+            The component is kept for when a replacement endpoint exists. */}
       </div>
     </main>
   )

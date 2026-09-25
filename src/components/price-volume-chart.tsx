@@ -6,6 +6,7 @@ import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
 import useSWRImmutable from "swr/immutable"
 
 import dayjs from "@/lib/dayjs"
+import { NumberFormatter } from "@/lib/number"
 import { cn } from "@/lib/utils"
 import {
   Card,
@@ -138,11 +139,21 @@ const PriceVolumeChartContent = ({
             return dayjs(value * 1000).format("ddd D, HH:mm")
           }}
         />
-        <YAxis yAxisId={1} width={0} />
+        <YAxis
+          yAxisId={1}
+          orientation="right"
+          tickLine={false}
+          axisLine={false}
+          width={48}
+          tickFormatter={(v) => `$${NumberFormatter.formatCompact(v)}`}
+        />
         <YAxis
           yAxisId={2}
-          width={0}
+          tickLine={false}
+          axisLine={false}
+          width={56}
           domain={[(d: number) => d * 0.95, (d: number) => d * 1.05]}
+          tickFormatter={(v) => `$${NumberFormatter.formatAxisPrice(v)}`}
         />
         <Bar
           type="monotone"

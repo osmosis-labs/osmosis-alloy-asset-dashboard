@@ -10,6 +10,7 @@ import { Limiter } from "@/types/limiter"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
+import { variantSymbol } from "@/lib/pool-sources"
 import { cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -22,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { DecimalSpan } from "@/components/decimal-span"
+import { DecimalSpan, SmallDecimals } from "@/components/decimal-span"
 import {
   AssetStatusBadges,
   assetTileClass,
@@ -99,9 +100,11 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   Price
                 </p>
                 <h2 className="font-semibold md:text-lg">
-                  {pool.alloy.price
-                    ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
-                    : "-"}
+                  <SmallDecimals>
+                    {pool.alloy.price
+                      ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
+                      : "-"}
+                  </SmallDecimals>
                 </h2>
               </div>
               <div className="rounded-md border p-2">
@@ -109,7 +112,9 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   Total Asset Amount
                 </p>
                 <h2 className="font-semibold md:text-lg">
-                  {NumberFormatter.formatValue(totalAmount)}{" "}
+                  <SmallDecimals>
+                    {NumberFormatter.formatValue(totalAmount)}
+                  </SmallDecimals>{" "}
                   <span className="hidden font-mono text-xs font-medium md:inline">
                     {pool.alloy.asset.symbol}
                   </span>
@@ -120,7 +125,9 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   24h Trading Volume
                 </p>
                 <h2 className="line-clamp-1 font-semibold md:text-lg">
-                  ${NumberFormatter.formatValue(pool.volume24hUsd.amount)}
+                  <SmallDecimals>
+                    {`$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`}
+                  </SmallDecimals>
                 </h2>
               </div>
               <div className="rounded-md border p-2">
@@ -128,11 +135,13 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   Market Cap
                 </p>
                 <h2 className="line-clamp-1 font-semibold md:text-lg">
-                  {pool.alloy.price
-                    ? `$${NumberFormatter.formatValue(
-                        Number(pool.alloy.price.amount) * totalAmount
-                      )}`
-                    : "-"}
+                  <SmallDecimals>
+                    {pool.alloy.price
+                      ? `$${NumberFormatter.formatValue(
+                          Number(pool.alloy.price.amount) * totalAmount
+                        )}`
+                      : "-"}
+                  </SmallDecimals>
                 </h2>
               </div>
             </div>
@@ -208,7 +217,7 @@ const PoolAssetCard = ({
         <div className="mr-2 flex flex-col space-y-0.5">
           <div className="inline-flex flex-wrap items-center gap-2 font-semibold leading-none">
             <span>{c.asset.name}</span>
-            <Badge size="xs">{c.asset.symbol}</Badge>
+            <Badge size="xs">{variantSymbol(c)}</Badge>
             <Badge size="xs" variant="secondary">
               {counterparty}
             </Badge>
@@ -220,7 +229,9 @@ const PoolAssetCard = ({
         </div>
         <div className="text-center md:ml-auto md:text-end">
           <h2 className="font-semibold">
-            {price ? `$${NumberFormatter.formatValue(price)}` : "-"}
+            <SmallDecimals>
+              {price ? `$${NumberFormatter.formatValue(price)}` : "-"}
+            </SmallDecimals>
           </h2>
           {
             //<p

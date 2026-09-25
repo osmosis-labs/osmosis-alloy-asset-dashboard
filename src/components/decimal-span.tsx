@@ -28,6 +28,7 @@ const DecimalSpan = ({
     typeof children === "string" ? !children.includes(".") : children % 1 === 0
   let [whole, fractional] = str.split(".")
   const formattedWhole = numbro(whole).format("0,0")
+  const isWholeUnit = Math.abs(Number(whole)) >= 1
   fractional = fractional || "0"
   const retracedZeroes = fractional.match(/^0(0+)/)?.at(1)?.length || 0
   const afterZeroes =
@@ -50,11 +51,16 @@ const DecimalSpan = ({
         formattedWhole
       ) : (
         <>
-          {formattedWhole}.
-          {retracedZeroes > 0 && (
-            <span className="text-[0.65rem]">0{retracedZeroes}</span>
-          )}
-          {formattedAfterZeroes}
+          {formattedWhole}
+          {/* From 1 up the decimals are detail: shrink them so the amount stays
+              exact but reads at a glance. Below 1 they are the value. */}
+          <span className={isWholeUnit ? "text-[0.7em]" : undefined}>
+            .
+            {retracedZeroes > 0 && (
+              <span className="text-[0.65rem]">0{retracedZeroes}</span>
+            )}
+            {formattedAfterZeroes}
+          </span>
         </>
       )}
       {percent && "%"}
@@ -63,4 +69,21 @@ const DecimalSpan = ({
 }
 DecimalSpan.displayName = "DecimalSpan"
 
-export { DecimalSpan }
+// Same treatment for an already-formatted string such as "$1,838,177.82":
+// decimals render smaller when the whole part is 1 or more.
+const SmallDecimals = ({ children }: { children: string }) => {
+  const match = children.match(/^(.*?\d)\.(\d+)(.*)$/)
+  if (!match) return <>{children}</>
+  const [, head, fractional, tail] = match
+  if (Number(head.replace(/[^\d]/g, "")) < 1) return <>{children}</>
+  return (
+    <>
+      {head}
+      <span className="text-[0.7em]">.{fractional}</span>
+      {tail}
+    </>
+  )
+}
+SmallDecimals.displayName = "SmallDecimals"
+
+export { DecimalSpan, SmallDecimals }

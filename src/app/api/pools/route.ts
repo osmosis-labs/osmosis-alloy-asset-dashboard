@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 import { getPoolsOverview } from "@/services/pool"
+import _ from "lodash"
+
+import { variantDenom, variantSymbol } from "@/lib/pool-sources"
 
 export const revalidate = 3600
 // Above Vercel's 15s default; see src/app/page.tsx.
@@ -13,6 +16,14 @@ export async function GET() {
       id: pool.id,
       assets: pool.reserveCoins?.map(
         (asset) => asset.currency.currency.coinMinimalDenom
+      ),
+      // Frontend symbols per variant (USDC.noble, not the chain-registry
+      // "USDC"), so clients can label variants the way the Osmosis app does.
+      assetSymbols: _.fromPairs(
+        pool.reserveCoins?.map((coin) => [
+          variantDenom(coin),
+          variantSymbol(coin),
+        ])
       ),
       alloy: {
         asset: pool.alloy.asset?.denom,
