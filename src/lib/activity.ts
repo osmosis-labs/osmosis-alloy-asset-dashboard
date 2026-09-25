@@ -13,6 +13,7 @@ export const ACTIVITY_RANGE_DAYS: Record<string, number | null> = {
   "7d": 7,
   "30d": 30,
   "90d": 90,
+  "180d": 180,
   "1y": 365,
   all: null,
 }

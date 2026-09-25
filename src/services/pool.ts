@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js"
 import _ from "lodash"
 
 import { env } from "@/env.mjs"
-import { AssetStatus, AssetWithDecimal } from "@/types/asset"
+import { AssetStatus, AssetWithDecimal, CurrencyAmount } from "@/types/asset"
 import {
   MinimalPool,
   NotSupportedPoolOverview,
@@ -19,6 +19,7 @@ import {
   PoolActivitySource,
 } from "@/lib/activity"
 import dayjs from "@/lib/dayjs"
+import { reserveAmount } from "@/lib/pool-sources"
 import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
 import {
@@ -114,6 +115,11 @@ const dropRedundantLiveSnapshot = (
 // Variants carry the frontend's display name ("USDC (Noble)"); the
 // chain-registry name is only the fallback. Only reserve coins are renamed:
 // the alloy keeps its registry name.
+// Variants ordered from most to least prevalent in the pool. The variants of
+// one alloy share a unit, so display amounts compare directly.
+const byPrevalence = <T extends { currency: CurrencyAmount }>(coins: T[]) =>
+  _.sortBy(coins, (c) => -reserveAmount(c.currency))
+
 const withFrontendName = (
   asset: AssetWithDecimal | undefined,
   frontendName: string | undefined
@@ -161,23 +167,25 @@ const fillPoolOverview = async (
       type: pool.type,
       codeId: pool.raw.code_id,
       contractAddress: pool.raw.contract_address,
-      reserveCoins: pool.reserveCoins.map((coin) => {
-        const c = JSON.parse(coin)
-        return {
-          asset: withFrontendName(
-            assetMap[c.currency.coinMinimalDenom],
-            frontendNames[c.currency.coinMinimalDenom]
-          ),
-          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
-          currency: {
-            ...c,
+      reserveCoins: byPrevalence(
+        pool.reserveCoins.map((coin) => {
+          const c = JSON.parse(coin)
+          return {
+            asset: withFrontendName(
+              assetMap[c.currency.coinMinimalDenom],
+              frontendNames[c.currency.coinMinimalDenom]
+            ),
+            provenance: provenance[c.currency.coinMinimalDenom] ?? null,
             currency: {
-              ...c.currency,
-              coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+              ...c,
+              currency: {
+                ...c.currency,
+                coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+              },
             },
-          },
-        }
-      }),
+          }
+        })
+      ),
       spreadFactor: JSON.parse(pool.spreadFactor),
       totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
       poolNameByDenom: pool.poolNameByDenom,
@@ -304,23 +312,25 @@ const fillPoolOverview = async (
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
-    reserveCoins: pool.reserveCoins.map((coin) => {
-      const c = JSON.parse(coin)
-      return {
-        asset: withFrontendName(
-          assetMap[c.currency.coinMinimalDenom],
-          frontendNames[c.currency.coinMinimalDenom]
-        ),
-        provenance: provenance[c.currency.coinMinimalDenom] ?? null,
-        currency: {
-          ...c,
+    reserveCoins: byPrevalence(
+      pool.reserveCoins.map((coin) => {
+        const c = JSON.parse(coin)
+        return {
+          asset: withFrontendName(
+            assetMap[c.currency.coinMinimalDenom],
+            frontendNames[c.currency.coinMinimalDenom]
+          ),
+          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
           currency: {
-            ...c.currency,
-            coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+            ...c,
+            currency: {
+              ...c.currency,
+              coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+            },
           },
-        },
-      }
-    }),
+        }
+      })
+    ),
     spreadFactor: JSON.parse(pool.spreadFactor),
     totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
     poolNameByDenom: pool.poolNameByDenom,

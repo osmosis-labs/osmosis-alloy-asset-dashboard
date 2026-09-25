@@ -40,6 +40,7 @@ const TIMEFRAME_BY_RANGE: Record<DateRange, Timeframe> = {
   "7d": "7 Days",
   "30d": "1 Month",
   "90d": "3 Months",
+  "180d": "6 Months",
   "1y": "1 Year",
   all: "1 Year",
 }
