@@ -28,8 +28,13 @@ export const metadata: Metadata = {
       name: siteConfig.author,
       url: siteConfig.url.author,
     },
+    {
+      name: siteConfig.maintainer,
+      url: siteConfig.url.maintainer,
+    },
   ],
   creator: siteConfig.author,
+  publisher: siteConfig.maintainer,
   openGraph: {
     type: "website",
     locale: "en_US",
