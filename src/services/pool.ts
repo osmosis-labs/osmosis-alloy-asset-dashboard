@@ -12,12 +12,19 @@ import {
   PoolOverview,
   RawPoolOverview,
 } from "@/types/pool"
+import { PoolSwap } from "@/types/tx"
 import dayjs from "@/lib/dayjs"
-import { fetchWithRetry } from "@/lib/utils"
+import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
-import { getAssetMap, getAssetPrice, getAssetStatusMapSafe } from "./asset"
+import {
+  getAssetMap,
+  getAssetPrice,
+  getAssetStatusMapSafe,
+  getFrontendAssetNamesSafe,
+} from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
+import { getVariantProvenanceSafe, Provenance } from "./provenance"
 import { getPoolContractStatus } from "./transmuter"
 
 const MIN_LIQUIDITY = 10
@@ -87,10 +94,20 @@ const dropRedundantLiveSnapshot = (
   return gapHours > LIVE_SNAPSHOT_KEEP_AFTER_HOURS ? points : daily
 }
 
+// Variants carry the frontend's display name ("USDC (Noble)"); the
+// chain-registry name is only the fallback. Only reserve coins are renamed:
+// the alloy keeps its registry name.
+const withFrontendName = (
+  asset: AssetWithDecimal | undefined,
+  frontendName: string | undefined
+) => (asset && frontendName ? { ...asset, name: frontendName } : asset)
+
 const fillPoolOverview = async (
   pool: RawPoolOverview,
   assetMap?: _.Dictionary<AssetWithDecimal>,
-  statusMap: Record<string, AssetStatus> = {}
+  statusMap: Record<string, AssetStatus> = {},
+  frontendNames: Record<string, string> = {},
+  provenance: Record<string, Provenance> = {}
 ) => {
   if (!assetMap) {
     assetMap = await getAssetMap()
@@ -130,7 +147,11 @@ const fillPoolOverview = async (
       reserveCoins: pool.reserveCoins.map((coin) => {
         const c = JSON.parse(coin)
         return {
-          asset: assetMap[c.currency.coinMinimalDenom],
+          asset: withFrontendName(
+            assetMap[c.currency.coinMinimalDenom],
+            frontendNames[c.currency.coinMinimalDenom]
+          ),
+          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
           currency: {
             ...c,
             currency: {
@@ -269,7 +290,11 @@ const fillPoolOverview = async (
     reserveCoins: pool.reserveCoins.map((coin) => {
       const c = JSON.parse(coin)
       return {
-        asset: assetMap[c.currency.coinMinimalDenom],
+        asset: withFrontendName(
+          assetMap[c.currency.coinMinimalDenom],
+          frontendNames[c.currency.coinMinimalDenom]
+        ),
+        provenance: provenance[c.currency.coinMinimalDenom] ?? null,
         currency: {
           ...c,
           currency: {
@@ -385,11 +410,19 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
 // Builds the overview from live upstream data. No caching here so the caller
 // controls when a rebuild happens and can decide whether to accept the result.
 const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
-  const [data, assetMap, statusMap] = await Promise.all([
+  const [data, assetMap, statusMap, frontendNames] = await Promise.all([
     getRawPoolsOverview(),
     getAssetMap(),
     getAssetStatusMapSafe(),
+    getFrontendAssetNamesSafe(),
   ])
+  const provenance = await getVariantProvenanceSafe(
+    data.flatMap((p) =>
+      p.reserveCoins.map(
+        (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
+      )
+    )
+  )
 
   // The asset map gates every supported/unsupported decision. If it is empty
   // (assetlist upstream failed), EVERY pool would be misclassified as
@@ -402,7 +435,9 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   }
 
   const pools = await Promise.all(
-    data.map((p) => fillPoolOverview(p, assetMap, statusMap))
+    data.map((p) =>
+      fillPoolOverview(p, assetMap, statusMap, frontendNames, provenance)
+    )
   )
 
   return {
@@ -566,6 +601,11 @@ const calculdateAlloyAssetDenom = (
   return `factory/${contractAddress}/alloyed/${decoded.alloyed_asset_subdenom}`
 }
 
+// The activity chart covers the last 24h but only fetches this many of the
+// most recent swaps: each 100-swap LCD page is ~3MB and 10-20s, so busy pools
+// are truncated to their latest few hours. The chart copy states this cap.
+export const ACTIVITY_MAX_SWAPS = 1000
+
 export const getPoolInOutTxs = cache(async (poolId: string) => {
   // Determine the block height ~24h ago from the LCD's latest block.
   // (The previous AllesLabs GraphQL block-height lookup was removed: that host
@@ -573,7 +613,7 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   const BLOCKS_PER_DAY = 72000
   let height: number
   try {
-    const heightResponse = await fetchWithRetry(
+    const heightResponse = await fetchLcd(
       "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
     )
 
@@ -593,46 +633,62 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   }
 
   try {
-    const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
-    const totalResponse = await fetchWithRetry(`${url}&limit=1`, {
+    // One `query` with AND. With two separate `query` params the LCD applies
+    // only one of them, so the height window was silently dropped: the count
+    // covered the pool's whole history and a frozen pool showed pre-freeze
+    // swaps as recent activity.
+    const query = encodeURIComponent(
+      `token_swapped.pool_id=${poolId} AND tx.height>=${height}`
+    )
+    const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=${query}&order_by=2`
+    const totalResponse = await fetchLcd(`${url}&limit=1`, {
       timeoutMs: 30000,
     })
 
+    // Throw rather than return empty: getPoolInOutAssets is wrapped in
+    // unstable_cache, which persists returned values but not thrown errors, so
+    // an empty result from a rate-limited or banned IP would be served as "no
+    // activity" for the whole revalidate window.
     if (!totalResponse.ok) {
-      console.error(
+      throw new Error(
         `Failed to fetch tx count: ${totalResponse.status} ${totalResponse.statusText}`
       )
-      return { total: 0, txs: [] }
     }
 
     const totalData = await totalResponse.json()
     const total = Number(totalData.total)
 
     const limit = 100
-    const pages = Math.min(Math.ceil(total / limit), 10)
+    const pages = Math.min(Math.ceil(total / limit), ACTIVITY_MAX_SWAPS / limit)
     const txs = await Promise.all(
       _.range(1, pages + 1).map(async (page) => {
         try {
-          const response = await fetchWithRetry(
+          const response = await fetchLcd(
             `${url}&limit=${limit}&page=${page}`,
             { timeoutMs: 30000 }
           )
           if (!response.ok) {
             console.warn(`Failed to fetch tx page ${page}: ${response.status}`)
-            return []
+            return null
           }
           const data = await response.json()
-          return data.tx_responses
+          return (data.tx_responses ?? []) as any[]
         } catch (e) {
           console.warn(`Error fetching tx page ${page}: ${e}`)
-          return []
+          return null
         }
       })
     )
 
+    // Partial pages still plot; every page failing is an outage, not "no
+    // activity", so it must not be cached (see the tx count above).
+    if (pages > 0 && txs.every((t) => t === null)) {
+      throw new Error(`All ${pages} tx pages failed for pool ${poolId}`)
+    }
+
     return {
       total,
-      txs: txs.flat(),
+      txs: txs.flatMap((t) => t ?? []),
     }
   } catch (e) {
     console.error(e)
@@ -641,58 +697,73 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
 })
 
 const ASSET_AMOUNT_REGEX = /([0-9]+)(.+)/
+// Bucket sizes the activity chart can use. The fetched swaps span anything
+// from ~5h (a busy pool's latest ACTIVITY_MAX_SWAPS) to the full 24h, so the
+// bucket is chosen from the actual span to keep roughly MAX_ACTIVITY_BUCKETS
+// columns instead of a fixed 2h that left busy pools with 3-4 columns.
+const ACTIVITY_BUCKET_MINUTES = [5, 10, 15, 30, 60, 120]
+const MAX_ACTIVITY_BUCKETS = 24
+
+const pickActivityBucketMinutes = (spanMinutes: number) =>
+  ACTIVITY_BUCKET_MINUTES.find(
+    (step) => Math.floor(spanMinutes / step) + 1 <= MAX_ACTIVITY_BUCKETS
+  ) ?? _.last(ACTIVITY_BUCKET_MINUTES)!
+
 export const getPoolInOutAssets = unstable_cache(
   async (poolId: string): Promise<PoolInOutAssets[]> => {
     const { txs } = await getPoolInOutTxs(poolId)
-    const groupped = _.chain(txs)
-      .flatMap((tx) =>
-        _.chain(tx?.events)
-          .filter(
-            (e: any) =>
-              e.type === "token_swapped" &&
-              _.some(
-                e.attributes,
-                (a: any) => a.key === "pool_id" && a.value === poolId
-              )
-          )
-          .map((e: any) => {
-            const [, amountIn, denomIn] = (
-              _.find(e.attributes, ["key", "tokens_in"]).value as string
-            ).match(ASSET_AMOUNT_REGEX)!
-
-            const [, amountOut, denomOut] = (
-              _.find(e.attributes, ["key", "tokens_out"]).value as string
-            ).match(ASSET_AMOUNT_REGEX)!
-
-            // truncate to every 2 hours
-            let truncatedToTwoHour = dayjs
-              .utc(tx.timestamp)
-              .set("minute", 0)
-              .set("second", 0)
-              .set("millisecond", 0)
-            truncatedToTwoHour = truncatedToTwoHour.set(
-              "hour",
-              _.floor(truncatedToTwoHour.hour() / 2) * 2
+    const swaps = _.flatMap(txs, (tx) =>
+      _.chain(tx?.events)
+        .filter(
+          (e: any) =>
+            e.type === "token_swapped" &&
+            _.some(
+              e.attributes,
+              (a: any) => a.key === "pool_id" && a.value === poolId
             )
+        )
+        .map((e: any) => {
+          const [, amountIn, denomIn] = (
+            _.find(e.attributes, ["key", "tokens_in"]).value as string
+          ).match(ASSET_AMOUNT_REGEX)!
 
-            return {
-              timestamp: truncatedToTwoHour,
-              in: {
-                amount: amountIn,
-                denom: denomIn,
-              },
-              out: {
-                amount: amountOut,
-                denom: denomOut,
-              },
-            }
-          })
-          .value()
-      )
-      .groupBy("timestamp")
-      .map((v, k) => {
+          const [, amountOut, denomOut] = (
+            _.find(e.attributes, ["key", "tokens_out"]).value as string
+          ).match(ASSET_AMOUNT_REGEX)!
+
+          return {
+            time: dayjs.utc(tx.timestamp).valueOf(),
+            in: {
+              amount: amountIn,
+              denom: denomIn,
+            },
+            out: {
+              amount: amountOut,
+              denom: denomOut,
+            },
+          }
+        })
+        .value()
+    )
+
+    if (swaps.length === 0) return []
+
+    const earliest = _.minBy(swaps, "time")!.time
+    const latest = _.maxBy(swaps, "time")!.time
+    const bucketMs =
+      pickActivityBucketMinutes((latest - earliest) / 60_000) * 60_000
+    const toBucket = (time: number) => Math.floor(time / bucketMs) * bucketMs
+
+    const byBucket = _.groupBy(swaps, (swap) => toBucket(swap.time))
+
+    // Every bucket between the first and last swap, including empty ones:
+    // the x-axis is categorical, so a missing bucket would silently squeeze
+    // time together.
+    return _.range(toBucket(earliest), toBucket(latest) + 1, bucketMs).map(
+      (bucket) => {
+        const v = byBucket[bucket] ?? []
         return {
-          timestamp: k,
+          timestamp: new Date(bucket).toISOString(),
           count: v.length,
           in: _.chain(v)
             .groupBy("in.denom")
@@ -715,13 +786,98 @@ export const getPoolInOutAssets = unstable_cache(
             )
             .value(),
         }
-      })
-      .reverse()
-      .value()
-
-    return groupped
+      }
+    )
   },
   ["pool-in-out-assets"],
+  {
+    revalidate: 1800,
+  }
+)
+
+// Short message type ("/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn" ->
+// "SwapExactAmountIn"), unwrapping authz MsgExec to the message it ran.
+const shortMessageType = (message: any): string => {
+  if (message?.["@type"] === "/cosmos.authz.v1beta1.MsgExec") {
+    return shortMessageType(_.last(message.msgs as any[]))
+  }
+  const type = String(_.last(String(message?.["@type"] ?? "").split(".")))
+  return type.replace(/^Msg/, "") || "Unknown"
+}
+
+// The account behind a swap. The token_swapped `sender` attribute is whoever
+// executed the swap, which for routed swaps is a contract (e.g. Skip's swap
+// adapter executes every Skip router call and IBC-hooks swap), so unrelated
+// users collapse onto one address. Resolve from the message instead:
+//   - authz MsgExec: the inner message's sender (the granter, whose funds move)
+//   - MsgRecvPacket (IBC hooks): the packet's source-chain sender; the Osmosis
+//     signer is only the relayer
+//   - anything else with a sender (direct swaps, MsgExecuteContract): it
+//   - otherwise: the event attribute
+const swapAccount = (message: any, eventSender: string | undefined) => {
+  const type = message?.["@type"]
+  if (type === "/cosmos.authz.v1beta1.MsgExec") {
+    const inner = _.find(message.msgs as any[], (m) => m?.sender)
+    if (inner?.sender) return inner.sender as string
+  }
+  if (type === "/ibc.core.channel.v1.MsgRecvPacket") {
+    try {
+      const data = JSON.parse(atob(message.packet?.data ?? ""))
+      if (typeof data?.sender === "string" && data.sender) return data.sender
+    } catch {
+      // Not an ICS-20 packet; fall through to the event sender.
+    }
+  }
+  if (type !== "/ibc.core.channel.v1.MsgRecvPacket" && message?.sender) {
+    return message.sender as string
+  }
+  return eventSender ?? ""
+}
+
+// Swap rows for the pool's transaction table, from the same LCD fetch as the
+// activity chart (React cache() dedupes it within a render), so the table adds
+// no LCD requests. The raw tx pages (~3MB each) are too large for the data
+// cache, so the compact rows are cached here instead, on the same schedule.
+export const getPoolSwaps = unstable_cache(
+  async (poolId: string): Promise<PoolSwap[]> => {
+    const { txs } = await getPoolInOutTxs(poolId)
+    return _.flatMap(txs, (tx) =>
+      _.chain(tx?.events)
+        .filter(
+          (e: any) =>
+            e.type === "token_swapped" &&
+            _.some(
+              e.attributes,
+              (a: any) => a.key === "pool_id" && a.value === poolId
+            )
+        )
+        .map((e: any) => {
+          const attr = (key: string) =>
+            _.find(e.attributes, ["key", key])?.value as string | undefined
+          const [, amountIn, denomIn] =
+            (attr("tokens_in") ?? "").match(ASSET_AMOUNT_REGEX) ?? []
+          const [, amountOut, denomOut] =
+            (attr("tokens_out") ?? "").match(ASSET_AMOUNT_REGEX) ?? []
+          const msgIndex = Number(attr("msg_index"))
+          const message = Number.isInteger(msgIndex)
+            ? tx.tx?.body?.messages?.[msgIndex]
+            : _.last(tx.tx?.body?.messages)
+
+          return {
+            hash: tx.txhash,
+            height: Number(tx.height),
+            timestamp: tx.timestamp,
+            success: tx.code === 0,
+            sender: swapAccount(message, attr("sender")),
+            action: shortMessageType(message),
+            in: { amount: amountIn ?? "0", denom: denomIn ?? "" },
+            out: { amount: amountOut ?? "0", denom: denomOut ?? "" },
+          }
+        })
+        .value()
+    )
+  },
+  ["pool-swaps"],
   {
     revalidate: 1800,
   }

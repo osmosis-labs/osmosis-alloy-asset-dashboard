@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react"
 import dayjs from "dayjs"
 import _ from "lodash"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { PoolOverview } from "@/types/pool"
+import { NumberFormatter } from "@/lib/number"
 import { cn } from "@/lib/utils"
 import {
   Card,
@@ -223,7 +224,14 @@ const OverviewChartContent = ({
             })
           }}
         />
-        <ChartLegend content={<ChartLegendContent />} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          width={56}
+          tickFormatter={(v) => `$${NumberFormatter.formatCompact(v)}`}
+        />
+        {/* A single pool (pool page, pool cards) needs no legend. */}
+        {pools.length > 1 && <ChartLegend content={<ChartLegendContent />} />}
       </AreaChart>
     </ChartContainer>
   )

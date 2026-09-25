@@ -61,6 +61,9 @@ export type PoolOverview = {
   reserveCoins: {
     currency: CurrencyAmount
     asset: AssetWithDecimal
+    // Origin chain and bridge/issuer, resolved through the chain registry.
+    // Absent on overviews built before this existed or when resolution failed.
+    provenance?: { origin: string | null; issuer: string | null } | null
   }[]
   spreadFactor: Rate
   totalFiatValueLocked: FiatAmount
@@ -115,6 +118,8 @@ export type MinimalPoolStatus = Pick<PoolStatus, "isActive" | "corruptedDenoms">
 export type MinimalPool = {
   id: string
   assets: string[]
+  assetSymbols?: Record<string, string>
+  assetNames?: Record<string, string>
   alloy: {
     asset: string
     price: string

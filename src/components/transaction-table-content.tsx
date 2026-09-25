@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
-import { getTxsByPoolIdPagination, getTxsCountByPoolId } from "@/services/tx"
 import { TooltipArrow } from "@radix-ui/react-tooltip"
 import {
   ColumnDef,
@@ -10,29 +9,23 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import _, { head } from "lodash"
+import BigNumber from "bignumber.js"
+import _ from "lodash"
 import {
-  ArrowRight,
-  Check,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   ChevronsUpDown,
-  Loader2,
   MoveRight,
-  RefreshCw,
   Settings2,
-  X,
 } from "lucide-react"
-import useSWR, { useSWRConfig } from "swr"
 
-import { Asset, AssetWithDecimal } from "@/types/asset"
 import { PoolOverview } from "@/types/pool"
-import { PoolTransaction } from "@/types/tx"
-import { actionFormatter } from "@/lib/action-formatter"
+import { PoolSwap } from "@/types/tx"
 import { BlockExplorer } from "@/lib/block-explorer"
 import dayjs from "@/lib/dayjs"
+import { variantDenom, variantSymbol } from "@/lib/pool-sources"
 import { cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -63,29 +56,43 @@ import {
 } from "@/components/ui/tooltip"
 import { DecimalSpan } from "@/components/decimal-span"
 
+type DenomMeta = { symbol: string; decimals: number; image?: string }
+
 const AssetAmountWithTooltip = ({
   amount,
-  asset,
+  denom,
+  meta,
 }: {
-  amount: number
-  asset: AssetWithDecimal
+  amount: string
+  denom: string
+  meta?: DenomMeta
 }) => {
+  // Unknown denoms (not a reserve or the alloy) show the raw base amount.
+  const value = meta
+    ? new BigNumber(amount).shiftedBy(-meta.decimals).toNumber()
+    : Number(amount)
+  const label = meta?.symbol ?? `${denom.slice(0, 10)}..`
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex items-center gap-1">
           <DecimalSpan mantissa={2} className="font-mono font-semibold">
-            {amount}
+            {value}
           </DecimalSpan>
-          <Avatar className="size-4">
-            <AvatarImage src={getAssetImageUrl(asset)} />
-          </Avatar>
+          {meta?.image ? (
+            <Avatar className="size-4">
+              <AvatarImage src={meta.image} />
+            </Avatar>
+          ) : null}
+          <span className="font-mono text-xs text-muted-foreground">
+            {label}
+          </span>
         </div>
       </TooltipTrigger>
       <TooltipContent className="font-mono">
         <TooltipArrow />
-        <DecimalSpan mantissa={4}>{amount}</DecimalSpan>{" "}
-        <span className="text-muted-foreground">{asset.symbol}</span>
+        <DecimalSpan mantissa={6}>{value}</DecimalSpan>{" "}
+        <span className="text-muted-foreground">{label}</span>
       </TooltipContent>
     </Tooltip>
   )
@@ -94,63 +101,44 @@ const AssetAmountWithTooltip = ({
 const LIMITS = ["10", "20", "30"] as const
 const TransactionTableContent = ({
   pool,
-  assets,
+  swaps,
 }: {
   pool: PoolOverview
-  assets: _.Dictionary<AssetWithDecimal>
+  swaps: PoolSwap[]
 }) => {
   const [limit, setLimit] = useState<(typeof LIMITS)[number]>("10")
   const [page, setPage] = useState(1)
 
-  const {
-    data,
-    error,
-    isValidating: isLoading,
-    mutate,
-  } = useSWR(
-    ["txs", pool.id, page, limit],
-    async ([, id, page, limit]) =>
-      getTxsByPoolIdPagination(id, page, Number(limit)),
-    {
-      keepPreviousData: true,
-      refreshInterval: 60000,
-      fallbackData: [],
+  // Symbols and decimals for the pool's variants (frontend symbols) and the
+  // alloy itself: the only denoms a swap through this pool can carry.
+  const denomMeta = useMemo(() => {
+    const meta: Record<string, DenomMeta> = {}
+    for (const coin of pool.reserveCoins ?? []) {
+      const denom = variantDenom(coin)
+      if (!denom) continue
+      meta[denom] = {
+        symbol: variantSymbol(coin) ?? denom,
+        decimals:
+          coin.currency?.currency?.coinDecimals ?? coin.asset?.decimal ?? 6,
+        image: coin.asset ? getAssetImageUrl(coin.asset) : undefined,
+      }
     }
-  )
-  const {
-    data: count,
-    isValidating: isLoadingCount,
-    mutate: mutateCount,
-  } = useSWR(
-    ["txs-count", pool.id],
-    async ([, id]) => getTxsCountByPoolId(id),
-    {
-      keepPreviousData: true,
-      refreshInterval: 60000,
-      fallbackData: 0,
+    if (pool.alloy.asset) {
+      meta[pool.alloy.asset.base] = {
+        symbol: pool.alloy.asset.display,
+        decimals: pool.alloy.asset.decimal,
+        image: getAssetImageUrl(pool.alloy.asset),
+      }
     }
-  )
+    return meta
+  }, [pool])
 
-  const columns: ColumnDef<PoolTransaction>[] = useMemo(() => {
+  const columns: ColumnDef<PoolSwap>[] = useMemo(() => {
     return [
-      {
-        id: "status",
-        header: "Status",
-        accessorKey: "transaction.success",
-        cell: ({ getValue }) => {
-          const success = getValue() as boolean
-          return success ? (
-            <Check className="size-4 text-green-500" />
-          ) : (
-            <X className="size-4 text-red-500" />
-          )
-        },
-      },
-
       {
         id: "hash",
         header: "Hash",
-        accessorKey: "transaction.hash",
+        accessorKey: "hash",
         cell: ({ getValue }) => {
           const hash = getValue() as string
           return (
@@ -169,7 +157,7 @@ const TransactionTableContent = ({
       {
         id: "timestamp",
         header: "Timestamp",
-        accessorKey: "block.timestamp",
+        accessorKey: "timestamp",
         cell: ({ getValue }) => {
           const timestamp = dayjs.utc(getValue() as string)
           return (
@@ -185,67 +173,75 @@ const TransactionTableContent = ({
       },
 
       {
-        id: "action",
-        header: "Action",
-        accessorKey: "transaction.messages",
-        cell: ({ getValue }) => {
-          const messages =
-            getValue() as PoolTransaction["transaction"]["messages"]
-          const action = actionFormatter(messages, assets)
-
-          if (action.type === "Swap" || action.type === "Split Swap") {
-            return (
-              <div className="flex flex-wrap items-center justify-center gap-x-1">
-                <Badge size="sm" variant="outline">
-                  {action.type}
-                </Badge>
-                <AssetAmountWithTooltip
-                  amount={action.amountIn}
-                  asset={action.assetIn}
-                />
-                <MoveRight className="size-4" />
-                <AssetAmountWithTooltip
-                  amount={action.minAmountOut}
-                  asset={action.assetOut}
-                />
-              </div>
-            )
-          }
-
-          return <div className="font-medium italic">{action.action}</div>
+        id: "swap",
+        header: "Swap",
+        cell: ({ row }) => {
+          const swap = row.original
+          return (
+            <div className="flex flex-wrap items-center justify-center gap-x-1">
+              <AssetAmountWithTooltip
+                amount={swap.in.amount}
+                denom={swap.in.denom}
+                meta={denomMeta[swap.in.denom]}
+              />
+              <MoveRight className="size-4" />
+              <AssetAmountWithTooltip
+                amount={swap.out.amount}
+                denom={swap.out.denom}
+                meta={denomMeta[swap.out.denom]}
+              />
+            </div>
+          )
         },
       },
 
       {
+        id: "action",
+        header: "Action",
+        accessorKey: "action",
+        cell: ({ getValue }) => (
+          <Badge size="sm" variant="outline">
+            {getValue() as string}
+          </Badge>
+        ),
+      },
+
+      {
         id: "sender",
-        header: "Sender",
-        accessorKey: "transaction.account.address",
+        header: "Account",
+        accessorKey: "sender",
         cell: ({ getValue }) => {
           const address = getValue() as string
+          if (!address) return <span className="text-muted-foreground">-</span>
+          const href = BlockExplorer.account(address)
+          const short = `${address.slice(0, 8)}..${address.slice(-4)}`
+          if (!href) return <span className="font-medium">{short}</span>
           return (
             <Link
-              href={BlockExplorer.account(address)}
+              href={href}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-accent-foreground hover:underline"
             >
-              {address.slice(0, 8)}..{address.slice(-4)}
+              {short}
             </Link>
           )
         },
       },
     ]
-  }, [assets])
+  }, [denomMeta])
 
-  const totalPage = useMemo(() => {
-    return Math.ceil((count || 0) / Number(limit))
-  }, [count, limit])
+  const totalPage = Math.max(Math.ceil(swaps.length / Number(limit)), 1)
+  const pageRows = useMemo(
+    () => swaps.slice((page - 1) * Number(limit), page * Number(limit)),
+    [swaps, page, limit]
+  )
 
   const [columnVisibility, setColumnVisibility] = useState<
     _.Dictionary<boolean>
   >({})
   const table = useReactTable({
-    data,
+    data: pageRows,
     columns,
     getCoreRowModel: getCoreRowModel(),
     state: {
@@ -258,18 +254,6 @@ const TransactionTableContent = ({
     <TooltipProvider delayDuration={200}>
       <div className="w-full space-y-2">
         <div className="flex items-center gap-2">
-          <Button size="icon-sm" variant="outline">
-            <RefreshCw
-              className={cn(
-                "size-4",
-                (isLoading || isLoadingCount) && "animate-spin"
-              )}
-              onClick={() => {
-                mutate()
-                mutateCount()
-              }}
-            />
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -349,10 +333,7 @@ const TransactionTableContent = ({
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
+                  <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(
@@ -369,7 +350,7 @@ const TransactionTableContent = ({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    No swaps in the last 24 hours.
                   </TableCell>
                 </TableRow>
               )}
@@ -378,7 +359,7 @@ const TransactionTableContent = ({
         </div>
 
         <div className="flex items-center gap-2 text-sm font-medium">
-          <div>Total {count} Transactions</div>
+          <div>{swaps.length.toLocaleString("en-US")} swaps</div>
 
           <div className="ml-4">Rows Per Page</div>
           <DropdownMenu>
@@ -393,7 +374,10 @@ const TransactionTableContent = ({
               <DropdownMenuSeparator />
               <DropdownMenuRadioGroup
                 value={limit}
-                onValueChange={(v) => setLimit(v as (typeof LIMITS)[number])}
+                onValueChange={(v) => {
+                  setLimit(v as (typeof LIMITS)[number])
+                  setPage(1)
+                }}
               >
                 {LIMITS.map((l) => (
                   <DropdownMenuRadioItem key={l} value={l}>

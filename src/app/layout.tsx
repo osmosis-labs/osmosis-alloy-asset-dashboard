@@ -8,6 +8,7 @@ import NextTopLoader from "nextjs-toploader"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/sonner"
+import { AutoRefresh } from "@/components/auto-refresh"
 import { Nav } from "@/components/nav"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -28,8 +29,13 @@ export const metadata: Metadata = {
       name: siteConfig.author,
       url: siteConfig.url.author,
     },
+    {
+      name: siteConfig.maintainer,
+      url: siteConfig.url.maintainer,
+    },
   ],
   creator: siteConfig.author,
+  publisher: siteConfig.maintainer,
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -83,6 +89,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
           <Toaster closeButton />
+          <AutoRefresh />
           <NextTopLoader
             color="hsl(var(--primary))"
             height={2}

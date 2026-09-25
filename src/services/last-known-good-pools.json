@@ -56,6 +56,10 @@
             "denom": "factory/osmo1z0qrq605sjgcqpylfl4aa6s90x738j7m58wyatt0tdzflg2ha26q67k743/wbtc",
             "decimal": 8
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "WBTC"
+          },
           "currency": {
             "currency": {
               "coinDenom": "WBTC",
@@ -106,7 +110,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
-            "name": "Coinbase Wrapped Bitcoin",
+            "name": "Coinbase Wrapped BTC (Axelar)",
             "display": "cbbtc",
             "symbol": "axl-cbBTC",
             "traces": [
@@ -142,6 +146,10 @@
             ],
             "denom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
             "decimal": 8
+          },
+          "provenance": {
+            "origin": "Base",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
@@ -226,6 +234,10 @@
             "denom": "ibc/75345531D87BD90BF108BE7240BD721CB2CB0A1F16D4EBA71B09EC3C43E15C8F",
             "decimal": 14
           },
+          "provenance": {
+            "origin": "Bitcoin",
+            "issuer": "Nomic"
+          },
           "currency": {
             "currency": {
               "coinDenom": "nBTC",
@@ -277,7 +289,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
-            "name": "Wrapped Bitcoin",
+            "name": "Wrapped Bitcoin (Ethereum via Eureka)",
             "display": "wbtc",
             "symbol": "WBTC",
             "traces": [
@@ -310,6 +322,10 @@
             ],
             "denom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
             "decimal": 8
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Eureka"
           },
           "currency": {
             "currency": {
@@ -360,7 +376,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F",
-            "name": "Wrapped Bitcoin",
+            "name": "Wrapped Bitcoin (Ethereum via Axelar)",
             "display": "wbtc",
             "symbol": "WBTC",
             "traces": [
@@ -401,6 +417,10 @@
             ],
             "denom": "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F",
             "decimal": 8
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
@@ -554,6 +574,10 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-25 00:00:00",
+          "value": 8891699.226073762
+        },
         {
           "time": "2026-09-24 00:00:00",
           "value": 8718495.514139561
@@ -4636,11 +4660,11 @@
         }
       ],
       "prices": {
-        "factory/osmo1z0qrq605sjgcqpylfl4aa6s90x738j7m58wyatt0tdzflg2ha26q67k743/wbtc": "72340.484956713250027800000000000000000000",
-        "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A": "73951.164902164303570300000000000000000000",
-        "ibc/75345531D87BD90BF108BE7240BD721CB2CB0A1F16D4EBA71B09EC3C43E15C8F": "72213.066051913244987200000000000000000000",
-        "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB": "71223.422860253000000000000000000000000000",
-        "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F": "72376.316335448536164000000000000000000000"
+        "factory/osmo1z0qrq605sjgcqpylfl4aa6s90x738j7m58wyatt0tdzflg2ha26q67k743/wbtc": "74059.547688911789353000000000000000000000",
+        "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A": "72660.647650662308219700000000000000000000",
+        "ibc/75345531D87BD90BF108BE7240BD721CB2CB0A1F16D4EBA71B09EC3C43E15C8F": "73955.905920889601009300000000000000000000",
+        "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB": "72660.647650662308219700000000000000000000",
+        "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F": "74006.838589279086727700000000000000000000"
       },
       "alloy": {
         "asset": {
@@ -4711,7 +4735,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "72376.316335448536164000"
+          "amount": "73823.540789326664596927"
         }
       },
       "limiters": {
@@ -4790,7 +4814,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-            "name": "USDC",
+            "name": "USDC (Noble)",
             "display": "usdc",
             "symbol": "USDC.n",
             "traces": [
@@ -4828,6 +4852,10 @@
             "denom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Circle"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDC.noble",
@@ -4857,7 +4885,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1549699348196"
+            "amount": "1705271647807"
           }
         },
         {
@@ -4875,7 +4903,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
-            "name": "USDC",
+            "name": "USDC (Injective)",
             "display": "usdc",
             "symbol": "USDC.inj",
             "traces": [
@@ -4913,6 +4941,10 @@
             "denom": "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Circle"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDC.inj",
@@ -4942,7 +4974,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "162964327761"
+            "amount": "134520942584"
           }
         },
         {
@@ -4963,7 +4995,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
-            "name": "USD Coin",
+            "name": "USDC (Ethereum via Axelar)",
             "display": "usdc",
             "symbol": "USDC",
             "traces": [
@@ -4998,6 +5030,10 @@
             "denom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDC.eth.axl",
@@ -5027,7 +5063,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1349"
+            "amount": "231473806"
           }
         }
       ],
@@ -5064,7 +5100,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1712666.000000000000000000"
+        "amount": "1840025.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -5085,7 +5121,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "909393.886050779500000000"
+        "amount": "613118.397461908400000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -5106,7 +5142,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3984272.609373826500000000"
+        "amount": "4009173.870104410700000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -5151,6 +5187,10 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-25 00:00:00",
+          "value": 1734831.4456904498
+        },
         {
           "time": "2026-09-24 00:00:00",
           "value": 1707850.8467087331
@@ -5303,7 +5343,7 @@
       "prices": {
         "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4": "1.000000000000000000000000000000000000",
         "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138": "1.000000000000000000000000000000000000",
-        "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858": "1.002467356234666548180773557920173700"
+        "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858": "1.000000000000000000000000000000000000"
       },
       "alloy": {
         "asset": {
@@ -5406,7 +5446,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
-            "name": "Ethereum",
+            "name": "Ethereum (Eureka)",
             "display": "eth",
             "symbol": "ETH",
             "traces": [
@@ -5440,6 +5480,10 @@
             "denom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Eureka"
+          },
           "currency": {
             "currency": {
               "coinDenom": "ETH.atom",
@@ -5468,7 +5512,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "117596746319754958"
+            "amount": "734625362482116439"
           }
         },
         {
@@ -5489,7 +5533,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5",
-            "name": "Wrapped Ether",
+            "name": "Ethereum (Axelar)",
             "display": "weth",
             "symbol": "WETH",
             "traces": [
@@ -5539,6 +5583,10 @@
             "denom": "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "ETH.axl",
@@ -5568,7 +5616,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "424472426306454511367"
+            "amount": "417242936371361838119"
           }
         }
       ],
@@ -5605,7 +5653,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1126051.000000000000000000"
+        "amount": "1121728.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -5626,7 +5674,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "57391.940402874250000000"
+        "amount": "15266.418813061435000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -5647,7 +5695,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "189024.752908384220000000"
+        "amount": "206388.623509520900000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -5692,6 +5740,10 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-25 00:00:00",
+          "value": 1133633.2784146643
+        },
         {
           "time": "2026-09-24 00:00:00",
           "value": 1137748.712487946
@@ -9774,8 +9826,8 @@
         }
       ],
       "prices": {
-        "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B": "2652.089090000000000000000000000000000000",
-        "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5": "2650.919718000000000000000000000000000000"
+        "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B": "2677.434202988798593018638996000000000000",
+        "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5": "2683.509101000000000000000000000000000000"
       },
       "alloy": {
         "asset": {
@@ -9843,7 +9895,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "2640.162658385007399088"
+          "amount": "2686.056929000000000000"
         }
       },
       "limiters": {
@@ -9883,7 +9935,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D",
-            "name": "Tether USDT",
+            "name": "Tether USD (Ethereum) (Injective)",
             "display": "usdt",
             "symbol": "USDT",
             "traces": [
@@ -9920,6 +9972,10 @@
             "denom": "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Peggy"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDT.eth.inj",
@@ -9948,7 +10004,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "440598352883"
+            "amount": "440792302842"
           }
         },
         {
@@ -9966,7 +10022,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
-            "name": "Tether USD",
+            "name": "Tether USD (Ethereum via Eureka)",
             "display": "usdt",
             "symbol": "USDT",
             "traces": [
@@ -10003,6 +10059,10 @@
             "denom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Eureka"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDT.eth.atom",
@@ -10031,7 +10091,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1203835"
+            "amount": "2700332"
           }
         },
         {
@@ -10052,7 +10112,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
-            "name": "Tether USD",
+            "name": "Tether USD (Ethereum via Axelar)",
             "display": "usdt",
             "symbol": "USDT",
             "traces": [
@@ -10090,6 +10150,10 @@
             "denom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDT.eth.axl",
@@ -10119,7 +10183,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "148758540338"
+            "amount": "148919752514"
           }
         }
       ],
@@ -10156,7 +10220,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "589163.000000000000000000"
+        "amount": "588724.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -10177,7 +10241,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5042.759312154700000000"
+        "amount": "2031.168819917892000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -10198,7 +10262,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "31089.558580355282000000"
+        "amount": "22108.440660669050000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -10243,6 +10307,10 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-25 00:00:00",
+          "value": 589276.2504665216
+        },
         {
           "time": "2026-09-24 00:00:00",
           "value": 591106.7387051291
@@ -14325,9 +14393,9 @@
         }
       ],
       "prices": {
-        "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D": "0.999665853363389008000000000000000000",
+        "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D": "0.998317952856515763000000000000000000",
         "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6": "0.840979782270606532000000000000000000",
-        "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4": "0.999665853363389008000000000000000000"
+        "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4": "0.998516652923430352439297603471233674"
       },
       "alloy": {
         "asset": {
@@ -14407,7 +14475,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "0.994955846721391413"
+          "amount": "0.998317952856515763"
         }
       },
       "limiters": {
@@ -14455,7 +14523,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
-            "name": "Ripple",
+            "name": "Ripple (XRPL EVM)",
             "display": "XRP",
             "symbol": "XRP",
             "traces": [
@@ -14490,6 +14558,10 @@
             "denom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "XRPL",
+            "issuer": "Ripple"
+          },
           "currency": {
             "currency": {
               "coinDenom": "XRP.xrplevm",
@@ -14498,10 +14570,7 @@
               "coinDecimals": 18,
               "coinGeckoId": "ripple",
               "coinImageUrl": "https://app.osmosis.zone/tokens/generated/xrp.xrplevm.svg",
-              "isUnstable": true,
-              "unstableReason": "ibc_client",
-              "lastDowntimeDate": "2026-05-22T09:57:52.115Z",
-              "lastRecoveryDate": "2026-09-21T15:15:27.818Z",
+              "isUnstable": false,
               "areTransfersDisabled": false,
               "areDepositsHalted": false,
               "areWithdrawalsHalted": false,
@@ -14577,6 +14646,10 @@
             ],
             "denom": "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3",
             "decimal": 6
+          },
+          "provenance": {
+            "origin": "XRPL",
+            "issuer": "Coreum"
           },
           "currency": {
             "currency": {
@@ -14734,6 +14807,10 @@
         "amount": "0.000000000000000000"
       },
       "liquidityChart": [
+        {
+          "time": "2026-09-25 00:00:00",
+          "value": 46960.19654441517
+        },
         {
           "time": "2026-09-24 00:00:00",
           "value": 44911.532588437134
@@ -17284,8 +17361,8 @@
         }
       ],
       "prices": {
-        "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609": "0.423131843176126262000000000000000000",
-        "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3": "0.432516215988920215604389301114578700"
+        "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609": "0.443950124220126106000000000000000000",
+        "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3": "0.443789886248359190098209368778611149"
       },
       "alloy": {
         "asset": {
@@ -17353,7 +17430,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "0.440740868012849748"
+          "amount": "0.457888845352651517"
         }
       },
       "limiters": {},
@@ -17372,17 +17449,6 @@
           "lastDowntimeDate": null
         },
         "reserves": {
-          "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609": {
-            "unstable": true,
-            "unstableReason": "ibc_client",
-            "disabled": false,
-            "haltDeposits": false,
-            "haltWithdrawals": false,
-            "depositHaltReason": null,
-            "withdrawalHaltReason": null,
-            "tooltipMessage": null,
-            "lastDowntimeDate": "2026-05-22T09:57:52.115Z"
-          },
           "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3": {
             "unstable": true,
             "unstableReason": "manual",
@@ -17424,7 +17490,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-            "name": "USDC",
+            "name": "USDC (Noble)",
             "display": "usdc",
             "symbol": "USDC.n",
             "traces": [
@@ -17462,6 +17528,10 @@
             "denom": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Circle"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDC.noble",
@@ -17491,7 +17561,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "350758899003"
+            "amount": "350756501002"
           }
         },
         {
@@ -17512,7 +17582,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
-            "name": "USD Coin",
+            "name": "USDC (Ethereum via Axelar)",
             "display": "usdc",
             "symbol": "USDC",
             "traces": [
@@ -17547,6 +17617,10 @@
             "denom": "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDC.eth.axl",
@@ -17576,7 +17650,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "997"
+            "amount": "2398998"
           }
         }
       ],
@@ -17613,7 +17687,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "350760.000000000000000000"
+        "amount": "349392.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17634,7 +17708,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "146063.324073685920000000"
+        "amount": "4247.511248317170000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -17655,7 +17729,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "296762.295149928000000000"
+        "amount": "296422.682887938460000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -17734,7 +17808,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/1E43D59E565D41FB4E54CA639B838FFD5BCFC20003D330A56CB1396231AA1CBA",
-            "name": "Wrapped SOL (Wormhole)",
+            "name": "Solana (Wormhole)",
             "display": "wormhole/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA/8",
             "symbol": "SOL",
             "traces": [
@@ -17771,6 +17845,10 @@
             "denom": "ibc/1E43D59E565D41FB4E54CA639B838FFD5BCFC20003D330A56CB1396231AA1CBA",
             "decimal": 8
           },
+          "provenance": {
+            "origin": "Solana",
+            "issuer": "Wormhole"
+          },
           "currency": {
             "currency": {
               "coinDenom": "SOL.wh",
@@ -17799,7 +17877,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "294079277579"
+            "amount": "292548825003"
           }
         }
       ],
@@ -17836,7 +17914,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "333414.000000000000000000"
+        "amount": "348226.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17857,7 +17935,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "172.189472757798200000"
+        "amount": "1758.647546177055300000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -17878,7 +17956,215 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "25861.612758588075000000"
+        "amount": "25965.774624484533000000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "prices": {},
+      "liquidityChart": [],
+      "assets": null,
+      "alloy": {
+        "asset": null,
+        "price": null
+      },
+      "limiters": null,
+      "status": null
+    },
+    {
+      "id": "2242",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo10pk4crey8fpdyqd62rsau0y02e3rk055w5u005ah6ly7k849k5tsf72x40",
+      "reserveCoins": [
+        {
+          "asset": {
+            "denom_units": [
+              {
+                "denom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
+                "exponent": 0,
+                "aliases": [
+                  "cbdoge-satoshi"
+                ]
+              },
+              {
+                "denom": "cbdoge",
+                "exponent": 8
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
+            "name": "Coinbase Wrapped DOGE (Axelar)",
+            "display": "cbdoge",
+            "symbol": "axl-cbDOGE",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "axelar",
+                  "base_denom": "cbdoge-satoshi",
+                  "channel_id": "channel-3"
+                },
+                "chain": {
+                  "channel_id": "channel-208",
+                  "path": "transfer/channel-208/cbdoge-satoshi"
+                }
+              }
+            ],
+            "denom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
+            "decimal": 8
+          },
+          "provenance": {
+            "origin": "Base",
+            "issuer": "Axelar"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "cbDOGE.axl",
+              "coinName": "Coinbase Wrapped DOGE (Axelar)",
+              "coinMinimalDenom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
+              "coinDecimals": 8,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/cbdoge.axl.png",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo10pk4crey8fpdyqd62rsau0y02e3rk055w5u005ah6ly7k849k5tsf72x40/alloyed/allDOGE",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 8,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "130646027827242"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "127072.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -17956,7 +18242,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/D3327A763C23F01EC43D1F0DB3CEFEC390C362569B6FD191F40A5192F8960049",
-            "name": "Chainlink",
+            "name": "Chainlink (Axelar)",
             "display": "link",
             "symbol": "LINK",
             "traces": [
@@ -17990,6 +18276,10 @@
             "denom": "ibc/D3327A763C23F01EC43D1F0DB3CEFEC390C362569B6FD191F40A5192F8960049",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "LINK.axl",
@@ -18018,7 +18308,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "9114499303342761328245"
+            "amount": "8682080324850644741898"
           }
         }
       ],
@@ -18055,7 +18345,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "111461.000000000000000000"
+        "amount": "121014.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18076,7 +18366,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "11.932415311759081000"
+        "amount": "5934.299014643568000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18097,7 +18387,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1054.527416550013400000"
+        "amount": "6984.707705043227000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18176,7 +18466,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/E47F4E97C534C95B942729E1B25DBDE111EA791411CFF100515050BEA0AC0C6B",
-            "name": "Pepe",
+            "name": "Pepe (Axelar)",
             "display": "pepe",
             "symbol": "PEPE",
             "traces": [
@@ -18213,6 +18503,10 @@
             "denom": "ibc/E47F4E97C534C95B942729E1B25DBDE111EA791411CFF100515050BEA0AC0C6B",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "PEPE.axl",
@@ -18243,7 +18537,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "15690400304772135848391695244"
+            "amount": "15699048136777829769829847769"
           }
         }
       ],
@@ -18280,7 +18574,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "72547.000000000000000000"
+        "amount": "73801.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18400,7 +18694,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/5D1F516200EE8C6B2354102143B78A2DEDA25EDE771AC0F8DC3C1837C8FD4447",
-            "name": "fetch-ai",
+            "name": "Fetch.ai (Fetch.ai)",
             "display": "fet",
             "symbol": "FET",
             "traces": [
@@ -18435,6 +18729,10 @@
             "denom": "ibc/5D1F516200EE8C6B2354102143B78A2DEDA25EDE771AC0F8DC3C1837C8FD4447",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Fetchhub",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "FET.fetch",
@@ -18464,7 +18762,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "247352658478317978032558"
+            "amount": "246340992341541775851697"
           }
         }
       ],
@@ -18501,7 +18799,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "50020.000000000000000000"
+        "amount": "63060.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18522,7 +18820,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "305.390616616026360000"
+        "amount": "450.811134425474850000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18543,7 +18841,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3432.132537447080300000"
+        "amount": "2708.020685827049400000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18621,7 +18919,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/19305E20681911F14D1FB275E538CDE524C3BF88CF9AE5D5F78F4D4DA05E85B2",
-            "name": "Shiba Inu",
+            "name": "Shiba Inu (Axelar)",
             "display": "shib",
             "symbol": "SHIB",
             "traces": [
@@ -18655,6 +18953,10 @@
             ],
             "denom": "ibc/19305E20681911F14D1FB275E538CDE524C3BF88CF9AE5D5F78F4D4DA05E85B2",
             "decimal": 18
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
@@ -18844,7 +19146,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/10E5E5B06D78FFBB61FD9F89209DEE5FD4446ED0550CBB8E3747DA79E10D9DC6",
-            "name": "Arbitrum",
+            "name": "Arbitrum (Axelar)",
             "display": "arb",
             "symbol": "ARB",
             "traces": [
@@ -18877,6 +19179,10 @@
             ],
             "denom": "ibc/10E5E5B06D78FFBB61FD9F89209DEE5FD4446ED0550CBB8E3747DA79E10D9DC6",
             "decimal": 18
+          },
+          "provenance": {
+            "origin": "Arbitrum",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
@@ -19101,6 +19407,10 @@
             "denom": "ibc/68BAF19F76BAC04C4CEA06325EF91D43E8637AE43EAC7887CE6211B4B99E1EC0",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Cosmos Hub",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "STARS",
@@ -19130,7 +19440,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "228576968269154"
+            "amount": "228384570659720"
           }
         },
         {
@@ -19185,6 +19495,10 @@
             "denom": "ibc/987C17B11ABC2B20019178ACE62929FE9840202CE79498E29FE8E5CB02B7C0A4",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Cosmos Hub",
+            "issuer": "Stargaze"
+          },
           "currency": {
             "currency": {
               "coinDenom": "STARS.og",
@@ -19218,7 +19532,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "121435376930846"
+            "amount": "121627774540280"
           }
         }
       ],
@@ -19255,7 +19569,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "20268.000000000000000000"
+        "amount": "20992.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19276,7 +19590,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "71.983538942206400000"
+        "amount": "57.357450848928170000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -19297,7 +19611,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "601.468952408270200000"
+        "amount": "620.535336889840000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -19376,7 +19690,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/831F0B1BBB1D08A2B75311892876D71565478C532967545476DF4C2D7492E48C",
-            "name": "dYdX",
+            "name": "dYdX Protocol (dYdX Protocol)",
             "display": "dydx",
             "symbol": "DYDX",
             "traces": [
@@ -19416,6 +19730,10 @@
             "denom": "ibc/831F0B1BBB1D08A2B75311892876D71565478C532967545476DF4C2D7492E48C",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Dydx",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "DYDX.dydx",
@@ -19445,7 +19763,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "154040220998278555248438"
+            "amount": "154035859810723528568784"
           }
         }
       ],
@@ -19482,7 +19800,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "19823.000000000000000000"
+        "amount": "20441.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19503,7 +19821,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "186.280514982735600000"
+        "amount": "5.229295005929599000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -19524,7 +19842,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "614.301990897800800000"
+        "amount": "629.465314170578300000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -19632,6 +19950,10 @@
             ],
             "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
             "decimal": 6
+          },
+          "provenance": {
+            "origin": "Tron",
+            "issuer": "Router"
           },
           "currency": {
             "currency": {
@@ -19822,7 +20144,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/F4A070A6D78496D53127EA85C094A9EC87DFC1F36071B8CCDDBD020F933D213D",
-            "name": "Wrapped BNB",
+            "name": "Binance Coin (Axelar)",
             "display": "wbnb",
             "symbol": "WBNB",
             "traces": [
@@ -19864,6 +20186,10 @@
             "denom": "ibc/F4A070A6D78496D53127EA85C094A9EC87DFC1F36071B8CCDDBD020F933D213D",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Binancesmartchain",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "BNB.axl",
@@ -19892,7 +20218,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "6735978125832341432"
+            "amount": "6729759582619436808"
           }
         }
       ],
@@ -19929,7 +20255,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5083.000000000000000000"
+        "amount": "5204.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19950,7 +20276,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "25.047819776335704000"
+        "amount": "7.303415246163976000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -19971,7 +20297,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "567.818473839965800000"
+        "amount": "533.068607309705800000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -20085,6 +20411,10 @@
             "denom": "ibc/3B95D63B520C283BCA86F8CD426D57584039463FD684A5CBA31D2780B86A1995",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Dungeon",
+            "issuer": "Dungeon Chain"
+          },
           "currency": {
             "currency": {
               "coinDenom": "DGN.old",
@@ -20118,7 +20448,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "8654526869906"
+            "amount": "8643879823073"
           }
         },
         {
@@ -20175,6 +20505,10 @@
             "denom": "ibc/CD6412358F33B372A355CF22786D8C19477C15092B56BD56188679EED8556964",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Dungeon",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "DGN",
@@ -20206,7 +20540,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1675473130094"
+            "amount": "1686120176927"
           }
         }
       ],
@@ -20243,7 +20577,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4702.000000000000000000"
+        "amount": "4823.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20363,7 +20697,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/905889A7F0B94F1CE1506D9BADF13AE9141E4CBDBCD565E1DFC7AE418B3E3E98",
-            "name": "Toncoin",
+            "name": "Toncoin (Oraichain Labs TON Bridge)",
             "display": "ton",
             "symbol": "TON",
             "traces": [
@@ -20399,6 +20733,10 @@
             ],
             "denom": "ibc/905889A7F0B94F1CE1506D9BADF13AE9141E4CBDBCD565E1DFC7AE418B3E3E98",
             "decimal": 9
+          },
+          "provenance": {
+            "origin": "Ton",
+            "issuer": "Oraichain Labs TON Bridge"
           },
           "currency": {
             "currency": {
@@ -20589,7 +20927,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/3FF92D26B407FD61AE95D975712A7C319CDE28DE4D80BDC9978D935932B991D7",
-            "name": "Wrapped Polkadot",
+            "name": "Polkadot (Moonbeam via Axelar)",
             "display": "dot",
             "symbol": "DOT",
             "traces": [
@@ -20623,6 +20961,10 @@
             "denom": "ibc/3FF92D26B407FD61AE95D975712A7C319CDE28DE4D80BDC9978D935932B991D7",
             "decimal": 10
           },
+          "provenance": {
+            "origin": "Moonbeam",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "DOT.glmr.axl",
@@ -20651,7 +20993,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "27513667172238"
+            "amount": "27511972947234"
           }
         }
       ],
@@ -20688,7 +21030,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2954.000000000000000000"
+        "amount": "3005.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20709,7 +21051,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.000000000000000000"
+        "amount": "0.186339096856371680"
       },
       "volume7dUsd": {
         "fiat": {
@@ -20730,7 +21072,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3.072127151712394700"
+        "amount": "3.258466248568766300"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -20808,7 +21150,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/9A76CDF0CBCEF37923F32518FA15E5DC92B9F56128292BC4D63C4AEA76CBB110",
-            "name": "Dymension",
+            "name": "Dymension Hub (Dymension Hub)",
             "display": "dym",
             "symbol": "DYM",
             "traces": [
@@ -20843,6 +21185,10 @@
             "denom": "ibc/9A76CDF0CBCEF37923F32518FA15E5DC92B9F56128292BC4D63C4AEA76CBB110",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Dymension",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "DYM.dym",
@@ -20874,7 +21220,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "138637257289413679886961"
+            "amount": "138675448705850666050361"
           }
         }
       ],
@@ -20911,7 +21257,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2488.000000000000000000"
+        "amount": "2810.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20932,7 +21278,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "58.963754085151470000"
+        "amount": "16.861274951343110000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -20953,7 +21299,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "135.992415277251980000"
+        "amount": "152.853690228595070000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21031,7 +21377,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
-            "name": "Tether USD",
+            "name": "Tether USD (Kava)",
             "display": "usdt",
             "symbol": "USDT",
             "traces": [
@@ -21069,6 +21415,10 @@
             "denom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Tether"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDT.kava",
@@ -21098,7 +21448,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "41172010"
+            "amount": "945747175"
           }
         },
         {
@@ -21119,7 +21469,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
-            "name": "Tether USD",
+            "name": "Tether USD (Ethereum via Axelar)",
             "display": "usdt",
             "symbol": "USDT",
             "traces": [
@@ -21157,6 +21507,10 @@
             "denom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
           "currency": {
             "currency": {
               "coinDenom": "USDT.eth.axl",
@@ -21186,7 +21540,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1959837990"
+            "amount": "1055262825"
           }
         }
       ],
@@ -21223,7 +21577,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2002.000000000000000000"
+        "amount": "1995.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21244,7 +21598,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "372.022868713260900000"
+        "amount": "1213.663878782906300000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -21265,7 +21619,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4245.549301747998500000"
+        "amount": "5119.480379181429000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21343,7 +21697,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/AB589511ED0DD5FA56171A39978AFBF1371DB986EC1C3526CE138A16377E39BB",
-            "name": "Wrapped Matic",
+            "name": "Polygon (ex-MATIC) (Axelar)",
             "display": "wmatic",
             "symbol": "WMATIC",
             "traces": [
@@ -21384,6 +21738,10 @@
             ],
             "denom": "ibc/AB589511ED0DD5FA56171A39978AFBF1371DB986EC1C3526CE138A16377E39BB",
             "decimal": 18
+          },
+          "provenance": {
+            "origin": "Polygon",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
@@ -21471,7 +21829,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1.598376880399983800"
+        "amount": "0.000000000000000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -21570,7 +21928,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/776917313EC3252954ED622945D4979651ACD909A18E528283F46D7B166F20BF",
-            "name": "Epix",
+            "name": "Epix (Epix)",
             "display": "epix",
             "symbol": "EPIX",
             "traces": [
@@ -21605,6 +21963,10 @@
             "denom": "ibc/776917313EC3252954ED622945D4979651ACD909A18E528283F46D7B166F20BF",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Epix",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "EPIX.epix",
@@ -21633,7 +21995,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "18242044219679960579020125"
+            "amount": "18009764907966876276020125"
           }
         }
       ],
@@ -21670,7 +22032,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1386.000000000000000000"
+        "amount": "1405.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21691,7 +22053,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "0.000000000000000000"
+        "amount": "17.927715938058800000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -21712,7 +22074,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "551.884495996818900000"
+        "amount": "524.810083622445300000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21794,7 +22156,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
-            "name": "AIOZ",
+            "name": "AIOZ Network (AIOZ Network)",
             "display": "aioz",
             "symbol": "AIOZ",
             "traces": [
@@ -21829,6 +22191,10 @@
             "denom": "ibc/BB0AFE2AFBD6E883690DAE4B9168EAC2B306BCC9C9292DACBB4152BBB08DB25F",
             "decimal": 18
           },
+          "provenance": {
+            "origin": "Aioz",
+            "issuer": null
+          },
           "currency": {
             "currency": {
               "coinDenom": "AIOZ.aioz",
@@ -21861,7 +22227,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "11685814356546494986960"
+            "amount": "12181770723484379232402"
           }
         }
       ],
@@ -21898,7 +22264,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1199.000000000000000000"
+        "amount": "1244.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -22018,7 +22384,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/18A91A3DDFD9776A247AE1B4B3298D754D1627B85F288DCEA473B7239F7B7A0E",
-            "name": "Zcash",
+            "name": "Zcash (Int3)",
             "display": "zec",
             "symbol": "ZEC",
             "traces": [
@@ -22049,6 +22415,10 @@
             ],
             "denom": "ibc/18A91A3DDFD9776A247AE1B4B3298D754D1627B85F288DCEA473B7239F7B7A0E",
             "decimal": 8
+          },
+          "provenance": {
+            "origin": "Zcash",
+            "issuer": "Int3face"
           },
           "currency": {
             "currency": {
@@ -22278,6 +22648,10 @@
             "denom": "ibc/A4D176906C1646949574B48C1928D475F2DF56DE0AC04E1C99B08F90BC21ABDE",
             "decimal": 8
           },
+          "provenance": {
+            "origin": "Aptos",
+            "issuer": "Wormhole"
+          },
           "currency": {
             "currency": {
               "coinDenom": "APT.wh",
@@ -22500,6 +22874,10 @@
             "denom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
             "decimal": 6
           },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Peggy"
+          },
           "currency": {
             "currency": {
               "coinDenom": "GLTO",
@@ -22549,7 +22927,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/52C57FCA7D6854AA178E7A183DDBE4EF322B904B1D719FC485F6FFBC1F72A19E",
-            "name": "Gelotto",
+            "name": "Gelotto (Juno)",
             "display": "glto",
             "symbol": "GLTO",
             "traces": [
@@ -22584,6 +22962,10 @@
             ],
             "denom": "ibc/52C57FCA7D6854AA178E7A183DDBE4EF322B904B1D719FC485F6FFBC1F72A19E",
             "decimal": 6
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Gelotto"
           },
           "currency": {
             "currency": {
@@ -22770,7 +23152,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/18FB5C09D9D2371F659D4846A956FA56225E377EE3C3652A2BF3542BF809159D",
-            "name": "Wrapped FIL from Filecoin",
+            "name": "Filecoin (Axelar)",
             "display": "fil",
             "symbol": "axlFIL",
             "traces": [
@@ -22803,6 +23185,10 @@
             ],
             "denom": "ibc/18FB5C09D9D2371F659D4846A956FA56225E377EE3C3652A2BF3542BF809159D",
             "decimal": 18
+          },
+          "provenance": {
+            "origin": "Filecoin",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
@@ -22992,7 +23378,7 @@
             ],
             "type_asset": "ics20",
             "base": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-            "name": "Optimism",
+            "name": "Optimism (Axelar)",
             "display": "op",
             "symbol": "OP",
             "traces": [
@@ -23025,6 +23411,10 @@
             ],
             "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
             "decimal": 18
+          },
+          "provenance": {
+            "origin": "Optimism",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {

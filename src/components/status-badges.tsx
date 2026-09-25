@@ -11,6 +11,7 @@ import { CircleHelp, ShieldAlert, Snowflake, TriangleAlert } from "lucide-react"
 
 import { AssetStatus } from "@/types/asset"
 import { PoolOverview, PoolStatus } from "@/types/pool"
+import { variantSymbol } from "@/lib/pool-sources"
 import { Badge, BadgeProps } from "@/components/ui/badge"
 import {
   Tooltip,
@@ -117,7 +118,7 @@ const PoolStatusBadges = ({
   const corrupted = status?.corruptedDenoms ?? []
   const symbolByDenom = _.chain(pool.reserveCoins ?? [])
     .keyBy((c) => c.asset?.base ?? c.currency.currency.coinMinimalDenom)
-    .mapValues((c) => c.asset?.symbol ?? c.currency.currency.coinDenom)
+    .mapValues((c) => variantSymbol(c))
     .value()
 
   return (
