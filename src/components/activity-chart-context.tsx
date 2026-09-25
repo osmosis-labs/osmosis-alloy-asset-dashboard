@@ -4,7 +4,15 @@ import { useMemo } from "react"
 import { BigNumber } from "bignumber.js"
 import _ from "lodash"
 import { LogIn, LogOut } from "lucide-react"
-import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import { PoolInOutAssets, PoolOverview } from "@/types/pool"
 import dayjs from "@/lib/dayjs"
@@ -35,28 +43,20 @@ const ActivityChartContent = ({
       .map((asset, i) => {
         const denom = asset.denom_units[0].denom
         const idx = (i % 5) + 1
+        // One net-flow series per asset: positive when more of it entered the
+        // pool than left in the bucket, negative when it drained. A transmuter
+        // swap moves one variant in and another out, so the signed net per
+        // variant is what shows which way the pool is being rebalanced.
         return [
-          [
-            `in.${denom}`,
-            {
-              asset,
-              label: `${asset.name} In`,
-              color: `hsl(var(--chart-${idx})`,
-              stackId: "a",
-            },
-          ],
-          [
-            `out.${denom}`,
-            {
-              asset,
-              label: `${asset.name} Out`,
-              color: `hsl(var(--chart-${idx})`,
-              stackId: "b",
-            },
-          ],
+          `net.${denom}`,
+          {
+            asset,
+            label: asset.name,
+            color: `hsl(var(--chart-${idx})`,
+            stackId: "net",
+          },
         ]
       })
-      .flatten()
       .fromPairs()
       .value()
   }, [pool])
@@ -110,6 +110,17 @@ const ActivityChartContent = ({
             .value(),
         }
       })
+      .map((point) => ({
+        ...point,
+        net: _.chain(_.keys(point.in))
+          .union(_.keys(point.out))
+          .map((denom) => [
+            denom,
+            (point.in[denom] ?? 0) - (point.out[denom] ?? 0),
+          ])
+          .fromPairs()
+          .value(),
+      }))
       .value()
   }, [activities, poolAssetDecimals])
 
@@ -118,14 +129,14 @@ const ActivityChartContent = ({
       className={cn("aspect-auto w-full", className)}
       config={configWithCount}
     >
-      <ComposedChart data={data} accessibilityLayer>
+      <ComposedChart data={data} stackOffset="sign" accessibilityLayer>
         <CartesianGrid vertical={false} />
         <ChartTooltip
           content={
             <ChartTooltipContent
               indicator="line"
               className="max-w-[250px]"
-              formatter={(value, name, item, index, payload) => {
+              formatter={(value, name, item) => {
                 const indicatorColor = item.payload.fill || item.color
                 const key = `${item.name || item.dataKey || "value"}`
                 const itemConfig = getPayloadConfigFromPayload(
@@ -134,64 +145,56 @@ const ActivityChartContent = ({
                   key
                 )
                 const suffix = itemConfig?.asset?.symbol
-                const denom = key.split(".")[1] || undefined
-                const lastItem = payload[index - 1]
-                const lastKey = `${lastItem?.name || lastItem?.dataKey || "value"}`
-                const isFirstForThisDenom =
-                  denom !== (lastKey.split(".")[1] || undefined) ||
-                  denom === undefined
-                const inOrOut = key.split(".")[0]
-                const inOrOutOrNone =
-                  inOrOut === "in" ? "in" : inOrOut === "out" ? "out" : "none"
+                // Keys are "net.<denom>" or "count"; only the first dot splits.
+                const dot = key.indexOf(".")
+                const series = dot === -1 ? key : key.slice(0, dot)
+                const denom = dot === -1 ? undefined : key.slice(dot + 1)
+                const amount = Number(value)
 
                 return (
                   <>
-                    {isFirstForThisDenom && (
-                      <>
-                        <div
-                          className={cn(
-                            "w-1 shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]"
-                          )}
-                          style={
-                            {
-                              "--color-bg": indicatorColor,
-                              "--color-border": indicatorColor,
-                            } as React.CSSProperties
-                          }
-                        />
-                        {((itemConfig?.label || name) as string)?.replace(
-                          / In| Out/,
-                          ""
-                        )}
-                      </>
-                    )}
                     <div
-                      className={cn(
-                        inOrOutOrNone !== "none"
-                          ? "flex basis-full items-center text-xs font-medium text-muted-foreground"
-                          : "ml-auto"
-                      )}
-                    >
-                      {inOrOutOrNone === "in" && (
-                        <>
-                          <LogIn className="ml-2 mr-1 size-3" /> In
-                        </>
-                      )}
-                      {inOrOutOrNone === "out" && (
-                        <>
-                          <LogOut className="ml-2 mr-1 size-3" /> Out
-                        </>
-                      )}
-                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                        <DecimalSpan mantissa={2}>
-                          {value as number | string}
-                        </DecimalSpan>
-                        {suffix && (
-                          <span className="font-normal text-muted-foreground">
-                            {suffix}
-                          </span>
-                        )}
+                      className="w-1 shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]"
+                      style={
+                        {
+                          "--color-bg": indicatorColor,
+                          "--color-border": indicatorColor,
+                        } as React.CSSProperties
+                      }
+                    />
+                    <div className="flex flex-1 flex-col">
+                      <div className="flex items-baseline gap-2">
+                        {(itemConfig?.label || name) as string}
+                        <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
+                          {series === "net" && amount !== 0 && (
+                            <span>{amount > 0 ? "+" : "−"}</span>
+                          )}
+                          <DecimalSpan mantissa={2}>
+                            {Math.abs(amount)}
+                          </DecimalSpan>
+                          {suffix && (
+                            <span className="font-normal text-muted-foreground">
+                              {suffix}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {series === "net" && denom && (
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center">
+                            <LogIn className="mr-1 size-3" />
+                            <DecimalSpan mantissa={2}>
+                              {item.payload.in?.[denom] ?? 0}
+                            </DecimalSpan>
+                          </span>
+                          <span className="flex items-center">
+                            <LogOut className="mr-1 size-3" />
+                            <DecimalSpan mantissa={2}>
+                              {item.payload.out?.[denom] ?? 0}
+                            </DecimalSpan>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </>
                 )
@@ -232,6 +235,7 @@ const ActivityChartContent = ({
           yAxisId="2"
           orientation="right"
         />
+        <ReferenceLine y={0} yAxisId="1" stroke="hsl(var(--border))" />
         {_.chain(config)
           .map((v, k) => (
             <Bar

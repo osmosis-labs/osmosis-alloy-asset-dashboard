@@ -662,58 +662,73 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
 })
 
 const ASSET_AMOUNT_REGEX = /([0-9]+)(.+)/
+// Bucket sizes the activity chart can use. The fetched swaps span anything
+// from ~5h (a busy pool's latest ACTIVITY_MAX_SWAPS) to the full 24h, so the
+// bucket is chosen from the actual span to keep roughly MAX_ACTIVITY_BUCKETS
+// columns instead of a fixed 2h that left busy pools with 3-4 columns.
+const ACTIVITY_BUCKET_MINUTES = [5, 10, 15, 30, 60, 120]
+const MAX_ACTIVITY_BUCKETS = 24
+
+const pickActivityBucketMinutes = (spanMinutes: number) =>
+  ACTIVITY_BUCKET_MINUTES.find(
+    (step) => Math.floor(spanMinutes / step) + 1 <= MAX_ACTIVITY_BUCKETS
+  ) ?? _.last(ACTIVITY_BUCKET_MINUTES)!
+
 export const getPoolInOutAssets = unstable_cache(
   async (poolId: string): Promise<PoolInOutAssets[]> => {
     const { txs } = await getPoolInOutTxs(poolId)
-    const groupped = _.chain(txs)
-      .flatMap((tx) =>
-        _.chain(tx?.events)
-          .filter(
-            (e: any) =>
-              e.type === "token_swapped" &&
-              _.some(
-                e.attributes,
-                (a: any) => a.key === "pool_id" && a.value === poolId
-              )
-          )
-          .map((e: any) => {
-            const [, amountIn, denomIn] = (
-              _.find(e.attributes, ["key", "tokens_in"]).value as string
-            ).match(ASSET_AMOUNT_REGEX)!
-
-            const [, amountOut, denomOut] = (
-              _.find(e.attributes, ["key", "tokens_out"]).value as string
-            ).match(ASSET_AMOUNT_REGEX)!
-
-            // truncate to every 2 hours
-            let truncatedToTwoHour = dayjs
-              .utc(tx.timestamp)
-              .set("minute", 0)
-              .set("second", 0)
-              .set("millisecond", 0)
-            truncatedToTwoHour = truncatedToTwoHour.set(
-              "hour",
-              _.floor(truncatedToTwoHour.hour() / 2) * 2
+    const swaps = _.flatMap(txs, (tx) =>
+      _.chain(tx?.events)
+        .filter(
+          (e: any) =>
+            e.type === "token_swapped" &&
+            _.some(
+              e.attributes,
+              (a: any) => a.key === "pool_id" && a.value === poolId
             )
+        )
+        .map((e: any) => {
+          const [, amountIn, denomIn] = (
+            _.find(e.attributes, ["key", "tokens_in"]).value as string
+          ).match(ASSET_AMOUNT_REGEX)!
 
-            return {
-              timestamp: truncatedToTwoHour,
-              in: {
-                amount: amountIn,
-                denom: denomIn,
-              },
-              out: {
-                amount: amountOut,
-                denom: denomOut,
-              },
-            }
-          })
-          .value()
-      )
-      .groupBy("timestamp")
-      .map((v, k) => {
+          const [, amountOut, denomOut] = (
+            _.find(e.attributes, ["key", "tokens_out"]).value as string
+          ).match(ASSET_AMOUNT_REGEX)!
+
+          return {
+            time: dayjs.utc(tx.timestamp).valueOf(),
+            in: {
+              amount: amountIn,
+              denom: denomIn,
+            },
+            out: {
+              amount: amountOut,
+              denom: denomOut,
+            },
+          }
+        })
+        .value()
+    )
+
+    if (swaps.length === 0) return []
+
+    const earliest = _.minBy(swaps, "time")!.time
+    const latest = _.maxBy(swaps, "time")!.time
+    const bucketMs =
+      pickActivityBucketMinutes((latest - earliest) / 60_000) * 60_000
+    const toBucket = (time: number) => Math.floor(time / bucketMs) * bucketMs
+
+    const byBucket = _.groupBy(swaps, (swap) => toBucket(swap.time))
+
+    // Every bucket between the first and last swap, including empty ones:
+    // the x-axis is categorical, so a missing bucket would silently squeeze
+    // time together.
+    return _.range(toBucket(earliest), toBucket(latest) + 1, bucketMs).map(
+      (bucket) => {
+        const v = byBucket[bucket] ?? []
         return {
-          timestamp: k,
+          timestamp: new Date(bucket).toISOString(),
           count: v.length,
           in: _.chain(v)
             .groupBy("in.denom")
@@ -736,11 +751,8 @@ export const getPoolInOutAssets = unstable_cache(
             )
             .value(),
         }
-      })
-      .reverse()
-      .value()
-
-    return groupped
+      }
+    )
   },
   ["pool-in-out-assets"],
   {
