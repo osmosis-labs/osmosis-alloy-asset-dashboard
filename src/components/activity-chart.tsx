@@ -55,9 +55,10 @@ const SuspensedActivityChart = async ({
     activities = await getPoolInOutAssets(pool.id)
   } catch (error) {
     console.error(`Failed to fetch activities for pool ${pool.id}:`, error)
-    // Return empty activity state on error
+    // No chart is rendered on error, so the message needs its own height
+    // (same box as the loading fallback) or it collapses onto the card edge.
     return (
-      <div className="absolute left-0 right-0 top-1/3 m-auto">
+      <div className="flex h-[300px] w-full items-center justify-center">
         <p className="text-muted-foreground">Unable to load asset activity</p>
       </div>
     )
