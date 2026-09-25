@@ -1,7 +1,7 @@
 import { PoolSwap } from "@/types/tx"
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
-import { FlowPoint } from "./swap-rows"
+import { floorToStoreBucket, FlowPoint } from "./swap-rows"
 
 // Read side of the activity store. The pool page uses it only when the store
 // has fresh, complete data for the requested window; otherwise the callers in
@@ -10,6 +10,12 @@ import { FlowPoint } from "./swap-rows"
 // The cron runs every 15 min; allow a few missed runs before treating the
 // store as stale.
 const MAX_STALENESS_MS = 60 * 60 * 1000
+
+// Pure: fresh when the store is complete through a block within the last
+// hour. Judged on covered_through (block time), not updatedAt: a page-capped
+// ingest or a backfill write bumps updatedAt while recent swaps are missing.
+export const isFresh = (coveredThrough: Date | null, now = Date.now()) =>
+  !!coveredThrough && now - coveredThrough.getTime() <= MAX_STALENESS_MS
 
 export const isStoreReady = async (
   poolId: string,
@@ -23,7 +29,7 @@ export const isStoreReady = async (
     return (
       !!cursor &&
       cursor.coveredFrom <= windowStart &&
-      Date.now() - cursor.updatedAt.getTime() <= MAX_STALENESS_MS
+      isFresh(cursor.coveredThrough)
     )
   } catch (e) {
     console.error(`[activity-store] cursor read failed for ${poolId}: ${e}`)
@@ -41,7 +47,7 @@ export const getStoreCoverage = async (
       where: { poolId },
     })
     if (!cursor) return null
-    if (Date.now() - cursor.updatedAt.getTime() > MAX_STALENESS_MS) return null
+    if (!isFresh(cursor.coveredThrough)) return null
     return { coveredFrom: cursor.coveredFrom }
   } catch (e) {
     console.error(`[activity-store] cursor read failed for ${poolId}: ${e}`)
@@ -53,8 +59,13 @@ export const readFlowPoints = async (
   poolId: string,
   from: Date
 ): Promise<FlowPoint[]> => {
+  // From the bucket containing `from`, so the straddling bucket is kept
+  // (bucket keys are 15-minute starts, `from` an exact time).
   const rows = await getPrisma().poolFlow15m.findMany({
-    where: { poolId, bucket: { gte: from } },
+    where: {
+      poolId,
+      bucket: { gte: new Date(floorToStoreBucket(from.getTime())) },
+    },
     orderBy: { bucket: "asc" },
   })
   return rows.map((r) => ({

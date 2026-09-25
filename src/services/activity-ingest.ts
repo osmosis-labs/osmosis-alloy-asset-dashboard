@@ -208,6 +208,12 @@ export const ingestPool = async ({
     hosts,
   })
 
+  const coveredThrough = coveredThroughTime({
+    coveredTo,
+    upTo,
+    upToTime,
+    events,
+  })
   const rowsAdded = await db.$transaction(async (tx) => {
     const added = await writeEvents(tx, poolId, events)
     await tx.activityCursor.upsert({
@@ -216,13 +222,38 @@ export const ingestPool = async ({
         poolId,
         height: BigInt(coveredTo),
         coveredFrom: upToTime,
+        coveredThrough,
       },
-      update: { height: BigInt(coveredTo) },
+      update: {
+        height: BigInt(coveredTo),
+        ...(coveredThrough ? { coveredThrough } : {}),
+      },
     })
     return added
   }, TX_OPTIONS)
 
   return { poolId, rowsAdded, cursor: coveredTo, lagBlocks: upTo - coveredTo }
+}
+
+// Pure: the block time a run leaves the store complete through. Reaching the
+// tip means the tip's time. A page-capped run stops short of the tip, so it
+// takes the newest event it kept (at or before the covered height, so a
+// slight underestimate, which errs towards "not fresh"); with no events it
+// made no progress and returns null (leave the stored value unchanged).
+export const coveredThroughTime = ({
+  coveredTo,
+  upTo,
+  upToTime,
+  events,
+}: {
+  coveredTo: number
+  upTo: number
+  upToTime: Date
+  events: SwapEvent[]
+}): Date | null => {
+  if (coveredTo >= upTo) return upToTime
+  if (events.length === 0) return null
+  return new Date(_.maxBy(events, (e) => e.height)!.timestamp)
 }
 
 // Drop swap rows older than `days`; their 15-minute rollups are kept.

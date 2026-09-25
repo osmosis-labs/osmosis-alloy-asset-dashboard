@@ -15,16 +15,20 @@ datasource db {
 
 // Per-pool ingest progress.
 model ActivityCursor {
-  poolId       String    @id @map("pool_id")
+  poolId         String    @id @map("pool_id")
   // Last fully processed block height (live ingest).
-  height       BigInt
+  height         BigInt
+  // Block time the store is complete through (the time of `height`, or a
+  // slightly earlier event time). Freshness is judged on this, not on
+  // updatedAt, which also moves on page-capped runs and backfill writes.
+  coveredThrough DateTime? @map("covered_through")
   // Earliest time the store has complete data for, lowered by the backfill.
   // Reads only use the store for windows starting at or after this.
-  coveredFrom  DateTime  @map("covered_from")
+  coveredFrom    DateTime  @map("covered_from")
   // Backfill progress: the height it started from and the last height done.
-  backfillFrom BigInt?   @map("backfill_from")
-  backfillTo   BigInt?   @map("backfill_to")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  backfillFrom   BigInt?   @map("backfill_from")
+  backfillTo     BigInt?   @map("backfill_to")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@map("activity_cursor")
 }

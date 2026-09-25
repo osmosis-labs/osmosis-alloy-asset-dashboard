@@ -108,6 +108,12 @@ export const pickActivityBucketMinutes = (spanMinutes: number) =>
     (step) => Math.floor(spanMinutes / step) + 1 <= MAX_ACTIVITY_BUCKETS
   ) ?? _.last(ACTIVITY_BUCKET_MINUTES)!
 
+// Start of the 15-minute store bucket containing `ms`. Flow reads start here
+// so the bucket that straddles a window's start is not dropped.
+export const STORE_BUCKET_MS = 15 * 60 * 1000
+export const floorToStoreBucket = (ms: number) =>
+  Math.floor(ms / STORE_BUCKET_MS) * STORE_BUCKET_MS
+
 // Per-bucket, per-denom in/out amounts (base units as decimal strings).
 export type FlowPoint = {
   time: number // ms

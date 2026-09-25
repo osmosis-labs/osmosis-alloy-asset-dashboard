@@ -251,3 +251,44 @@ test("long ranges get coarse buckets within the column cap", () => {
     assert.equal(step, minutes * 60_000, `${days}d bucket size`)
   }
 })
+
+const { coveredThroughTime } = await import(
+  pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
+)
+const { floorToStoreBucket } = await import(
+  pathToFileURL(path.resolve("src/services/swap-rows.ts")).href
+)
+
+test("covered-through time: tip on a full run, last event when capped", () => {
+  const upToTime = new Date("2026-09-25T12:00:00Z")
+  const events = [
+    { height: 90, timestamp: "2026-09-23T10:00:00Z" },
+    { height: 95, timestamp: "2026-09-23T11:00:00Z" },
+  ] as any
+  assert.equal(
+    coveredThroughTime({ coveredTo: 100, upTo: 100, upToTime, events }),
+    upToTime
+  )
+  // Capped far behind the tip: two-day-old events must not read as fresh.
+  assert.equal(
+    coveredThroughTime({
+      coveredTo: 96,
+      upTo: 100,
+      upToTime,
+      events,
+    })?.toISOString(),
+    "2026-09-23T11:00:00.000Z"
+  )
+  assert.equal(
+    coveredThroughTime({ coveredTo: 80, upTo: 100, upToTime, events: [] }),
+    null
+  )
+})
+
+test("flow reads start at the bucket straddling the window start", () => {
+  const from = Date.parse("2026-09-25T12:07:00Z")
+  assert.equal(
+    new Date(floorToStoreBucket(from)).toISOString(),
+    "2026-09-25T12:00:00.000Z"
+  )
+})
