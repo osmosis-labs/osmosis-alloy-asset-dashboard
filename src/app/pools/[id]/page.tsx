@@ -209,6 +209,7 @@ export default async function Home({
               pools={[pool]}
               description="Historical liquidity in $USD for the pool"
               className="md:col-span-7"
+              fillHeight
             />
             <SourceChart pool={pool} className="md:col-span-3" />
           </div>

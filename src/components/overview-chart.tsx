@@ -44,19 +44,23 @@ const OverviewChart = ({
   title,
   description,
   className,
+  fillHeight = false,
 }: {
   pools: PoolOverview[]
   title?: string
   description?: string
   className?: string
+  // Grow the chart to fill the card when a grid row makes the card taller
+  // than its content (pool page, next to Asset Sources). Only from md up:
+  // below that the grid is one column, the card has no set height, and a
+  // percentage height would collapse the chart to nothing.
+  fillHeight?: boolean
 }) => {
   // Shared with the other charts on the pool page; the home page (no
   // provider) keeps its own range, defaulting to a year as before.
   const { range, setRange } = useDateRange("1y")
 
   return (
-    // Flex column so the chart fills the card when the grid row is taller
-    // than its content (e.g. next to the Asset Sources card).
     <Card className={cn("flex w-full flex-col", className)}>
       <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
@@ -71,7 +75,9 @@ const OverviewChart = ({
         <OverviewChartContent
           pools={pools}
           period={dateRangeDays(range) ?? undefined}
-          className="h-full min-h-[250px] flex-1"
+          className={
+            fillHeight ? "h-[250px] md:h-full md:min-h-[250px]" : "h-[250px]"
+          }
         />
       </CardContent>
     </Card>
