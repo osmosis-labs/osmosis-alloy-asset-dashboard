@@ -15,7 +15,12 @@ import {
 import dayjs from "@/lib/dayjs"
 import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
-import { getAssetMap, getAssetPrice, getAssetStatusMapSafe } from "./asset"
+import {
+  getAssetMap,
+  getAssetPrice,
+  getAssetStatusMapSafe,
+  getFrontendAssetNamesSafe,
+} from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
 import { getPoolContractStatus } from "./transmuter"
@@ -87,10 +92,19 @@ const dropRedundantLiveSnapshot = (
   return gapHours > LIVE_SNAPSHOT_KEEP_AFTER_HOURS ? points : daily
 }
 
+// Variants carry the frontend's display name ("USDC (Noble)"); the
+// chain-registry name is only the fallback. Only reserve coins are renamed:
+// the alloy keeps its registry name.
+const withFrontendName = (
+  asset: AssetWithDecimal | undefined,
+  frontendName: string | undefined
+) => (asset && frontendName ? { ...asset, name: frontendName } : asset)
+
 const fillPoolOverview = async (
   pool: RawPoolOverview,
   assetMap?: _.Dictionary<AssetWithDecimal>,
-  statusMap: Record<string, AssetStatus> = {}
+  statusMap: Record<string, AssetStatus> = {},
+  frontendNames: Record<string, string> = {}
 ) => {
   if (!assetMap) {
     assetMap = await getAssetMap()
@@ -130,7 +144,10 @@ const fillPoolOverview = async (
       reserveCoins: pool.reserveCoins.map((coin) => {
         const c = JSON.parse(coin)
         return {
-          asset: assetMap[c.currency.coinMinimalDenom],
+          asset: withFrontendName(
+            assetMap[c.currency.coinMinimalDenom],
+            frontendNames[c.currency.coinMinimalDenom]
+          ),
           currency: {
             ...c,
             currency: {
@@ -269,7 +286,10 @@ const fillPoolOverview = async (
     reserveCoins: pool.reserveCoins.map((coin) => {
       const c = JSON.parse(coin)
       return {
-        asset: assetMap[c.currency.coinMinimalDenom],
+        asset: withFrontendName(
+          assetMap[c.currency.coinMinimalDenom],
+          frontendNames[c.currency.coinMinimalDenom]
+        ),
         currency: {
           ...c,
           currency: {
@@ -385,10 +405,11 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
 // Builds the overview from live upstream data. No caching here so the caller
 // controls when a rebuild happens and can decide whether to accept the result.
 const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
-  const [data, assetMap, statusMap] = await Promise.all([
+  const [data, assetMap, statusMap, frontendNames] = await Promise.all([
     getRawPoolsOverview(),
     getAssetMap(),
     getAssetStatusMapSafe(),
+    getFrontendAssetNamesSafe(),
   ])
 
   // The asset map gates every supported/unsupported decision. If it is empty
@@ -402,7 +423,7 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   }
 
   const pools = await Promise.all(
-    data.map((p) => fillPoolOverview(p, assetMap, statusMap))
+    data.map((p) => fillPoolOverview(p, assetMap, statusMap, frontendNames))
   )
 
   return {

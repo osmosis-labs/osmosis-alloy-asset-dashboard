@@ -93,7 +93,12 @@ const getAssets = async () => {
   }))
 }
 
-// Mirror of fetchAssetStatusMap in src/services/asset.ts: frontend-assetlist
+// Frontend display names by minimal denom, filled by getAssetStatusMap from
+// the same download. Mirrors withFrontendName in src/services/pool.ts:
+// reserve coins take the frontend name, the alloy keeps its registry name.
+const frontendNames = {}
+
+// Mirror of fetchFrontendAssetMeta in src/services/asset.ts: frontend-assetlist
 // operational flags keyed by minimal denom, flagged assets only. Non-fatal:
 // an empty map only hides tooltips, the onchain status below stays intact.
 const getAssetStatusMap = async () => {
@@ -103,6 +108,7 @@ const getAssetStatusMap = async () => {
     if (!Array.isArray(assets) || assets.length === 0) return {}
     const map = {}
     for (const a of assets) {
+      if (a.coinMinimalDenom && a.name) frontendNames[a.coinMinimalDenom] = a.name
       const status = {
         unstable: a.unstable === true,
         unstableReason: a.unstableReason ?? null,
@@ -242,8 +248,10 @@ const mean = (arr) => {
 const mapReserveCoins = (pool, assetMap) =>
   pool.reserveCoins.map((coin) => {
     const c = JSON.parse(coin)
+    const asset = assetMap[c.currency.coinMinimalDenom]
+    const frontendName = frontendNames[c.currency.coinMinimalDenom]
     return {
-      asset: assetMap[c.currency.coinMinimalDenom],
+      asset: asset && frontendName ? { ...asset, name: frontendName } : asset,
       currency: {
         ...c,
         currency: {

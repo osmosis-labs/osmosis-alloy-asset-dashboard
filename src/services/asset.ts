@@ -117,6 +117,7 @@ export const getAssetListUncached = async () => {
 
 type FrontendAsset = {
   coinMinimalDenom: string
+  name?: string
   unstable?: boolean
   unstableReason?: string | null
   disabled?: boolean
@@ -128,9 +129,17 @@ type FrontendAsset = {
   lastDowntimeDate?: string | null
 }
 
-// Status flags keyed by minimal denom. Only assets that carry at least one
-// flag are kept, so a lookup miss means "no flags", not "unknown".
-const fetchAssetStatusMap = async (): Promise<Record<string, AssetStatus>> => {
+type FrontendAssetMeta = {
+  // Status flags keyed by minimal denom. Only assets that carry at least one
+  // flag are kept, so a lookup miss means "no flags", not "unknown".
+  statusMap: Record<string, AssetStatus>
+  // Display names as the Osmosis frontend shows them ("USDC (Noble)"), keyed
+  // by minimal denom. The chain-registry list names several variants alike.
+  names: Record<string, string>
+}
+
+// One download of the ~2.5MB frontend list feeds both maps.
+const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
   const data = await fetchJsonWithRetry<{ assets: FrontendAsset[] }>(
     [BASE_FRONTEND_ASSET_LIST, MIRROR_FRONTEND_ASSET_LIST],
     { timeoutMs: 20000 }
@@ -140,7 +149,11 @@ const fetchAssetStatusMap = async (): Promise<Record<string, AssetStatus>> => {
   }
 
   const map: Record<string, AssetStatus> = {}
+  const names: Record<string, string> = {}
   for (const a of data) {
+    if (a.coinMinimalDenom && a.name) {
+      names[a.coinMinimalDenom] = a.name
+    }
     const status: AssetStatus = {
       unstable: a.unstable === true,
       unstableReason: a.unstableReason ?? null,
@@ -162,14 +175,29 @@ const fetchAssetStatusMap = async (): Promise<Record<string, AssetStatus>> => {
       map[a.coinMinimalDenom] = status
     }
   }
-  return map
+  return { statusMap: map, names }
 }
 
-export const getAssetStatusMap = unstable_cache(
-  fetchAssetStatusMap,
-  ["asset-status-map"],
+const getFrontendAssetMeta = unstable_cache(
+  fetchFrontendAssetMeta,
+  ["frontend-asset-meta"],
   { revalidate: 1800 }
 )
+
+export const getAssetStatusMap = async () =>
+  (await getFrontendAssetMeta()).statusMap
+
+// Non-throwing: a missing name map only falls back to chain-registry names.
+export const getFrontendAssetNamesSafe = async (): Promise<
+  Record<string, string>
+> => {
+  try {
+    return (await getFrontendAssetMeta()).names
+  } catch (e) {
+    console.error(`Error fetching frontend asset names: ${e}`)
+    return {}
+  }
+}
 
 // Non-throwing variant. The status flags are supplementary: the authoritative
 // frozen signal is the contract's own is_active query, so a missing map only

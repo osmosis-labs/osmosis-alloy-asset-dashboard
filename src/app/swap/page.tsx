@@ -25,12 +25,17 @@ export default function Home() {
 
       return pools.map((pool) => ({
         id: pool.id,
-        // Label variants with the frontend symbol (USDC.noble) rather than
-        // the chain-registry one, which is plain "USDC" for several variants.
+        // Label variants with the frontend symbol and name (USDC.noble,
+        // "USDC (Noble)") rather than the chain-registry ones, which are plain
+        // "USDC" for several variants.
         assets: pool.assets.map((denom) => {
           const asset = assets[denom]
-          const symbol = pool.assetSymbols?.[denom]
-          return asset && symbol ? { ...asset, symbol } : asset
+          if (!asset) return asset
+          return {
+            ...asset,
+            symbol: pool.assetSymbols?.[denom] ?? asset.symbol,
+            name: pool.assetNames?.[denom] ?? asset.name,
+          }
         }),
         alloy: {
           asset: assets[pool.alloy.asset],

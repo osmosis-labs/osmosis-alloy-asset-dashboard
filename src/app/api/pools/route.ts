@@ -25,6 +25,10 @@ export async function GET() {
           variantSymbol(coin),
         ])
       ),
+      // Frontend display names per variant ("USDC (Noble)").
+      assetNames: _.fromPairs(
+        pool.reserveCoins?.map((coin) => [variantDenom(coin), coin.asset?.name])
+      ),
       alloy: {
         asset: pool.alloy.asset?.denom,
         price: pool.alloy.price?.amount || "0",
