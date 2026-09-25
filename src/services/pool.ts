@@ -715,9 +715,28 @@ export type PoolActivity = {
   coveredFrom?: string
 }
 
+// The live LCD fallback has its own 30-minute cache, so the 5-minute refresh
+// of store reads below does not multiply LCD load (and fail2ban risk) while
+// the store is unavailable.
+const LIVE_REVALIDATE_SECONDS = 1800
+const STORE_REVALIDATE_SECONDS = 300
+
+const getLiveActivity = unstable_cache(
+  async (poolId: string): Promise<PoolActivity> => {
+    const { txs } = await getPoolInOutTxs(poolId)
+    const swaps = _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId))
+    return {
+      source: "live",
+      activities: bucketFlows(flowPointsFromSwaps(swaps)),
+    }
+  },
+  ["pool-activity-live-v1"],
+  { revalidate: LIVE_REVALIDATE_SECONDS }
+)
+
 // Cache key bumped with the return shape and the range argument: the Vercel
 // data cache is shared across deployments, and an old-shape entry must not be
-// read here.
+// read here. Store reads are cheap, so this refreshes every 5 minutes.
 export const getPoolInOutAssets = unstable_cache(
   async (poolId: string, range: string = "24h"): Promise<PoolActivity> => {
     const coverage = await getStoreCoverage(poolId)
@@ -734,7 +753,11 @@ export const getPoolInOutAssets = unstable_cache(
         const points = await readFlowPoints(poolId, new Date(from))
         return {
           source: "store",
-          activities: bucketFlows(points, { minBucketMinutes: 15, from }),
+          activities: bucketFlows(points, {
+            minBucketMinutes: 15,
+            from,
+            to: Date.now(),
+          }),
           coveredFrom: coverage.coveredFrom.toISOString(),
         }
       } catch (e) {
@@ -742,27 +765,30 @@ export const getPoolInOutAssets = unstable_cache(
       }
     }
 
-    const { txs } = await getPoolInOutTxs(poolId)
-    const swaps = _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId))
-    return {
-      source: "live",
-      activities: bucketFlows(flowPointsFromSwaps(swaps)),
-    }
+    return getLiveActivity(poolId)
   },
   ["pool-in-out-assets-v3"],
-  {
-    revalidate: 1800,
-  }
+  { revalidate: STORE_REVALIDATE_SECONDS }
 )
 
 const toPoolSwap = ({ msgIndex, eventIndex, ...swap }: SwapEvent): PoolSwap =>
   swap
 
-// Swap rows for the pool's transaction table. From the activity store when it
-// is fresh; otherwise from the same LCD fetch as the activity chart (React
-// cache() dedupes it within a render), so the table adds no LCD requests. The
-// raw tx pages (~3MB each) are too large for the data cache, so the compact
-// rows are cached here instead, on the same schedule.
+// Live fallback rows, from the same LCD fetch as the live activity (React
+// cache() dedupes it within a render). The raw tx pages (~3MB each) are too
+// large for the data cache, so the compact rows are cached instead, on the
+// live 30-minute schedule.
+const getLiveSwaps = unstable_cache(
+  async (poolId: string): Promise<PoolSwap[]> => {
+    const { txs } = await getPoolInOutTxs(poolId)
+    return _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId)).map(toPoolSwap)
+  },
+  ["pool-swaps-live-v1"],
+  { revalidate: LIVE_REVALIDATE_SECONDS }
+)
+
+// Swap rows for the pool's transaction table: from the activity store when it
+// is fresh (refreshed every 5 minutes), otherwise the live fallback.
 export const getPoolSwaps = unstable_cache(
   async (poolId: string): Promise<PoolSwap[]> => {
     const windowStart = new Date(Date.now() - DAY_MS)
@@ -773,11 +799,8 @@ export const getPoolSwaps = unstable_cache(
         console.error(`[getPoolSwaps] store read failed: ${e}`)
       }
     }
-    const { txs } = await getPoolInOutTxs(poolId)
-    return _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId)).map(toPoolSwap)
+    return getLiveSwaps(poolId)
   },
   ["pool-swaps"],
-  {
-    revalidate: 1800,
-  }
+  { revalidate: STORE_REVALIDATE_SECONDS }
 )

@@ -133,11 +133,14 @@ export const bucketFlows = (
   {
     minBucketMinutes = 0,
     from,
-  }: { minBucketMinutes?: number; from?: number } = {}
+    to,
+  }: { minBucketMinutes?: number; from?: number; to?: number } = {}
 ): PoolInOutAssets[] => {
   if (points.length === 0) return []
   const earliest = from ?? _.minBy(points, "time")!.time
-  const latest = _.maxBy(points, "time")!.time
+  // `to` extends the range past the last point (e.g. a frozen pool's chart
+  // runs on, empty, to the present).
+  const latest = Math.max(_.maxBy(points, "time")!.time, to ?? -Infinity)
   const bucketMs =
     Math.max(
       pickActivityBucketMinutes((latest - earliest) / 60_000),

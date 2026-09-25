@@ -292,3 +292,16 @@ test("flow reads start at the bucket straddling the window start", () => {
     "2026-09-25T12:00:00.000Z"
   )
 })
+
+test("bucketFlows zero-fills up to `to` (a frozen pool runs on to the present)", () => {
+  const from = Date.parse("2026-08-26T00:00:00Z")
+  const lastSwap = Date.parse("2026-09-07T12:00:00Z")
+  const now = Date.parse("2026-09-25T00:00:00Z")
+  const buckets = bucketFlows(
+    [{ time: lastSwap, denom: "a", amountIn: "1", amountOut: "0", swaps: 1 }],
+    { minBucketMinutes: 15, from, to: now }
+  )
+  const last = Date.parse(buckets[buckets.length - 1].timestamp)
+  assert.ok(now - last < 86_400_000, "runs to the present")
+  assert.equal(buckets[buckets.length - 1].count, 0)
+})

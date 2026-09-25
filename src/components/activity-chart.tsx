@@ -39,12 +39,18 @@ const fetchActivity = async (url: string): Promise<PoolActivity> => {
 const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
   const frozen = isFrozen(pool.status)
   const { range, setRange } = useDateRange()
-  // A frozen pool rejects every swap, so its reserves cannot move: skip the
-  // fetch and show the frozen message instead of an empty chart.
+  // Client-fetched, so AutoRefresh's router.refresh() does not reach it: poll
+  // on the same 5-minute cadence as the store's cache. Frozen pools are still
+  // fetched: a pool frozen today has swaps from before the freeze in longer
+  // ranges.
   const { data, error, isLoading } = useSWR(
-    frozen ? null : `/api/pools/${pool.id}/activity?range=${range}`,
+    `/api/pools/${pool.id}/activity?range=${range}`,
     fetchActivity,
-    { keepPreviousData: true, revalidateOnFocus: false }
+    {
+      keepPreviousData: true,
+      revalidateOnFocus: false,
+      refreshInterval: 5 * 60 * 1000,
+    }
   )
 
   const days = ACTIVITY_RANGE_DAYS[range]
@@ -64,19 +70,24 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
             the pool than left)
           </CardDescription>
         </div>
-        {!frozen && <DateRangeSelect range={range} setRange={setRange} />}
+        <DateRangeSelect range={range} setRange={setRange} />
       </CardHeader>
       <CardContent className="relative">
-        {frozen ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2 text-center">
-            <Snowflake className="size-8 text-sky-500 dark:text-sky-300" />
-            <p className="font-semibold">{POOL_STATUS.frozen.title}</p>
-            <p className="max-w-md text-sm text-muted-foreground">
-              {POOL_STATUS.frozen.description} Its reserves do not change while
-              frozen, so there is no activity to show.
+        {frozen && (
+          // The pool rejects every swap now, so there is no new activity;
+          // earlier activity in the selected range is still shown below.
+          <div className="mb-3 flex items-start gap-2 rounded-md border border-sky-500/40 bg-sky-500/10 p-2 text-left text-sm">
+            <Snowflake className="mt-0.5 size-4 shrink-0 text-sky-500 dark:text-sky-300" />
+            <p>
+              <span className="font-semibold">{POOL_STATUS.frozen.title}.</span>{" "}
+              <span className="text-muted-foreground">
+                {POOL_STATUS.frozen.description} Activity from before the freeze
+                is shown for the selected range.
+              </span>
             </p>
           </div>
-        ) : error && !data ? (
+        )}
+        {error && !data ? (
           <Message>
             <p className="text-muted-foreground">
               Unable to load asset activity
@@ -90,7 +101,11 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
           <>
             {data.activities.length === 0 && (
               <div className="absolute left-0 right-0 top-1/3 m-auto text-center">
-                <p className="text-muted-foreground">No asset activity</p>
+                <p className="text-muted-foreground">
+                  {frozen
+                    ? "No swaps in this range. The pool is frozen."
+                    : "No asset activity"}
+                </p>
               </div>
             )}
             <ActivityChartContent
