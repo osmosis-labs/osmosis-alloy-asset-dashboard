@@ -1,8 +1,10 @@
 import { Suspense } from "react"
+import { POOL_STATUS } from "@/constants/status"
 import { ACTIVITY_MAX_SWAPS, getPoolInOutAssets } from "@/services/pool"
-import { Loader2 } from "lucide-react"
+import { Loader2, Snowflake } from "lucide-react"
 
 import { PoolOverview } from "@/types/pool"
+import { cn } from "@/lib/utils"
 import {
   Card,
   CardContent,
@@ -12,10 +14,12 @@ import {
 } from "@/components/ui/card"
 
 import { ActivityChartContent } from "./activity-chart-context"
+import { isFrozen, poolTileClass } from "./status-badges"
 
 const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
+  const frozen = isFrozen(pool.status)
   return (
-    <Card className="w-full">
+    <Card className={cn("w-full", poolTileClass(pool.status))}>
       <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>Pool Asset Activity</CardTitle>
@@ -27,15 +31,28 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
         </div>
       </CardHeader>
       <CardContent className="relative">
-        <Suspense
-          fallback={
-            <div className="flex h-[300px] w-full items-center justify-center">
-              <Loader2 className="size-8 animate-spin" />
-            </div>
-          }
-        >
-          <SuspensedActivityChart pool={pool} className="h-[300px]" />
-        </Suspense>
+        {frozen ? (
+          // A frozen pool rejects every swap, so its reserves cannot move:
+          // say so instead of drawing an empty chart, and skip the LCD fetch.
+          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2 text-center">
+            <Snowflake className="size-8 text-sky-500 dark:text-sky-300" />
+            <p className="font-semibold">{POOL_STATUS.frozen.title}</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              {POOL_STATUS.frozen.description} Its reserves do not change while
+              frozen, so there is no activity to show.
+            </p>
+          </div>
+        ) : (
+          <Suspense
+            fallback={
+              <div className="flex h-[300px] w-full items-center justify-center">
+                <Loader2 className="size-8 animate-spin" />
+              </div>
+            }
+          >
+            <SuspensedActivityChart pool={pool} className="h-[300px]" />
+          </Suspense>
+        )}
       </CardContent>
     </Card>
   )
