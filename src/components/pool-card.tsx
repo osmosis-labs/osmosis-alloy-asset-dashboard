@@ -223,7 +223,11 @@ const PoolAssetCard = ({
           <div className="inline-flex flex-wrap items-center gap-2 font-semibold leading-none">
             <span>{c.asset.name}</span>
             <Badge size="xs">{variantSymbol(c)}</Badge>
-            <Badge size="xs" variant="secondary" title="Bridge / Issuer">
+            <Badge
+              size="xs"
+              variant="secondary"
+              title="Provider (bridge or issuer)"
+            >
               {issuer}
             </Badge>
             {origin !== "Unknown" && (

@@ -33,7 +33,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const DESCRIPTIONS: Record<SourceGrouping, string> = {
   variant: "Share of the pool held in each variant.",
-  issuer: "Share of the pool by the bridge or issuer that minted it.",
+  issuer: "Share of the pool by provider: the bridge or issuer that minted it.",
   origin: "Share of the pool by the chain the asset was issued on.",
 }
 

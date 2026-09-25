@@ -215,7 +215,7 @@ export default async function Home({
                 <CardTitle>Underlying Assets</CardTitle>
                 <CardDescription>
                   Underlying assets in the pool with their amounts, by variant,
-                  by bridge or issuer, or by origin chain.
+                  by provider, or by origin chain.
                 </CardDescription>
               </div>
               <TabsList>

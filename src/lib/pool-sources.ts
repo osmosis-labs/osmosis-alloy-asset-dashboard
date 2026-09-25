@@ -38,7 +38,7 @@ export const sourceColor = (index: number) =>
 export type SourceGrouping = "variant" | "issuer" | "origin"
 export const SOURCE_GROUPINGS: { value: SourceGrouping; label: string }[] = [
   { value: "variant", label: "Variant" },
-  { value: "issuer", label: "Bridge / Issuer" },
+  { value: "issuer", label: "Provider" },
   { value: "origin", label: "Origin" },
 ]
 
@@ -92,10 +92,10 @@ export const getPoolSources = (
     .sortBy((v) => -v.totalAmount)
     .value()
 
-// Per-variant color: its bridge/issuer's color (as in the chart's Bridge /
-// Issuer view), darkened for the second and later variants from the same
-// issuer (e.g. cbBTC.axl and WBTC.eth.axl) so they stay distinguishable while
-// reading as one issuer.
+// Per-variant color: its provider's color (as in the chart's Provider view),
+// darkened for the second and later variants from the same provider (e.g.
+// cbBTC.axl and WBTC.eth.axl) so they stay distinguishable while reading as
+// one provider.
 export const getVariantStyles = (pool: PoolOverview) =>
   _.chain(getPoolSources(pool, "issuer"))
     .flatMap((source, sourceIndex) =>
