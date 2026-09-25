@@ -23,6 +23,7 @@ const archiveJson = async (
       const res = await fetchLcd(`${host}${path}`, {
         timeoutMs: 30000,
         headers: height ? { "x-cosmos-block-height": String(height) } : {},
+        returnServerErrors: true,
       })
       const body = await res.json().catch(() => null)
       if (res.ok) return body
