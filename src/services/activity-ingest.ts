@@ -80,13 +80,21 @@ export const fetchSwapEvents = async ({
     const data = await lcdJson(hosts, `${base}&page=${page}`)
     const txs: any[] = data.tx_responses ?? []
     for (const tx of txs) events.push(...swapEventsFromTx(tx, poolId))
-    if (txs.length < PAGE_LIMIT) {
+    // Stop on `total`, not just a short page: when the range holds an exact
+    // multiple of PAGE_LIMIT txs the last page is full, and asking for the next
+    // one is an error (500 "page should be within [1, n] range").
+    if (isLastPage(page, txs.length, Number(data.total))) {
       exhausted = true
       break
     }
   }
   return selectCompleteHeights(events, { from, to, exhausted })
 }
+
+// Pure: whether `page` (1-based) is the last page of the result set.
+export const isLastPage = (page: number, pageSize: number, total: number) =>
+  pageSize < PAGE_LIMIT ||
+  (Number.isFinite(total) && page * PAGE_LIMIT >= total)
 
 // Pure: which events to keep and how far the range is covered. Exported for
 // tests.

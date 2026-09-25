@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url"
 const { swapEventsFromTx, bucketFlows, flowPointsFromSwaps } = await import(
   pathToFileURL(path.resolve("src/services/swap-rows.ts")).href
 )
-const { selectCompleteHeights, bucketRange } = await import(
+const { selectCompleteHeights, bucketRange, isLastPage } = await import(
   pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
 )
 
@@ -213,4 +213,21 @@ test("flowPointsFromSwaps emits one in and one out point per swap", () => {
       ["b", "0", "2"],
     ]
   )
+})
+
+test("a full page is the last page when it reaches the reported total", () => {
+  assert.equal(isLastPage(1, 100, 100), true) // exactly 100 txs: no page 2
+  assert.equal(isLastPage(1, 100, 250), false)
+  assert.equal(isLastPage(3, 50, 250), true) // short page
+  assert.equal(isLastPage(1, 100, NaN), false) // total missing: rely on page size
+})
+
+const { correctHeight } = await import(
+  pathToFileURL(path.resolve("src/services/reserves.ts")).href
+)
+
+test("height correction moves towards the target at the measured block rate", () => {
+  // 1,000 blocks at 1.2s is 20 minutes: a block 20 min late should step back 1,000.
+  assert.equal(correctHeight(5000, 1_200_000, 0, 1200), 4000)
+  assert.equal(correctHeight(5000, 0, 600_000, 1200), 5500)
 })

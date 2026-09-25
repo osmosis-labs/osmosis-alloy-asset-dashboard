@@ -48,6 +48,25 @@ if (!isDatabaseEnabled()) {
   process.exit(1)
 }
 
+// The archive LCD occasionally returns 500s or drops a large page; ride those
+// out with backoff instead of aborting a multi-hour run (progress is saved per
+// slice, so a hard failure can also just be re-run).
+const withBackoff = async <T,>(
+  label: string,
+  fn: () => Promise<T>
+): Promise<T> => {
+  const delays = [10_000, 30_000, 60_000, 120_000]
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn()
+    } catch (e) {
+      if (attempt >= delays.length) throw e
+      console.warn(`${label}: ${e}; retrying in ${delays[attempt] / 1000}s`)
+      await new Promise((r) => setTimeout(r, delays[attempt]))
+    }
+  }
+}
+
 const hosts = args.host?.length
   ? args.host
   : ["https://lcd.archive.osmosis.zone"]
@@ -108,13 +127,10 @@ for (const poolId of poolIds) {
   let rows = 0
   while (from < end) {
     const to = Math.min(from + slice, end)
-    const { events, coveredTo } = await fetchSwapEvents({
-      poolId,
-      from,
-      to,
-      maxPages: 50,
-      hosts,
-    })
+    const { events, coveredTo } = await withBackoff(
+      `pool ${poolId} @${from}`,
+      () => fetchSwapEvents({ poolId, from, to, maxPages: 50, hosts })
+    )
     if (coveredTo <= from) {
       throw new Error(`pool ${poolId}: no progress at ${from}; lower --slice`)
     }
