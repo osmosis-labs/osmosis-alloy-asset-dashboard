@@ -138,6 +138,7 @@ export const writeEvents = async (
       ts: new Date(e.timestamp),
       sender: e.sender,
       action: e.action,
+      contract: e.contract ?? null,
       denomIn: e.in.denom,
       amountIn: new Prisma.Decimal(e.in.amount),
       denomOut: e.out.denom,

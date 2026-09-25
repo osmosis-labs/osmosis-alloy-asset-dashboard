@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import { getContractNamesSafe } from "@/services/contracts"
 import { ACTIVITY_MAX_SWAPS, getPoolSwaps } from "@/services/pool"
 import { Loader2 } from "lucide-react"
 
@@ -42,7 +43,16 @@ TransactionTable.displayName = "TransactionTable"
 const SuspensedTransactionTable = async ({ pool }: { pool: PoolOverview }) => {
   try {
     const swaps = await getPoolSwaps(pool.id)
-    return <TransactionTableContent pool={pool} swaps={swaps} />
+    const contractNames = await getContractNamesSafe(
+      swaps.map((s) => s.contract)
+    )
+    return (
+      <TransactionTableContent
+        pool={pool}
+        swaps={swaps}
+        contractNames={contractNames}
+      />
+    )
   } catch (error) {
     console.error(`Failed to fetch swaps for pool ${pool.id}:`, error)
     return (

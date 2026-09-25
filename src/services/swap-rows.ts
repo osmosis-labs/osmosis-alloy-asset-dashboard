@@ -49,6 +49,34 @@ export const swapAccount = (message: any, eventSender: string | undefined) => {
   return eventSender ?? ""
 }
 
+// The contract that routed a swap, if any: the target of a MsgExecuteContract
+// (e.g. Skip's entry point), the wasm.contract in an IBC-hooks packet memo, or
+// the same inside an authz MsgExec. Direct pool-manager swaps have none.
+export const swapContract = (message: any): string | undefined => {
+  const type = message?.["@type"]
+  if (type === "/cosmos.authz.v1beta1.MsgExec") {
+    for (const inner of message.msgs ?? []) {
+      const contract = swapContract(inner)
+      if (contract) return contract
+    }
+    return undefined
+  }
+  if (type === "/cosmwasm.wasm.v1.MsgExecuteContract") {
+    return typeof message.contract === "string" ? message.contract : undefined
+  }
+  if (type === "/ibc.core.channel.v1.MsgRecvPacket") {
+    try {
+      const data = JSON.parse(atob(message.packet?.data ?? ""))
+      const memo = typeof data?.memo === "string" ? JSON.parse(data.memo) : null
+      const contract = memo?.wasm?.contract
+      return typeof contract === "string" ? contract : undefined
+    } catch {
+      return undefined
+    }
+  }
+  return undefined
+}
+
 // A PoolSwap plus the indexes that make it unique within its tx (the store's
 // primary key is pool + tx hash + msg index + event index).
 export type SwapEvent = PoolSwap & { msgIndex: number; eventIndex: number }
@@ -86,6 +114,7 @@ export const swapEventsFromTx = (tx: any, poolId: string): SwapEvent[] =>
         success: tx.code === 0,
         sender: swapAccount(message, attr("sender")),
         action: shortMessageType(message),
+        contract: swapContract(message),
         in: { amount: amountIn ?? "0", denom: denomIn ?? "" },
         out: { amount: amountOut ?? "0", denom: denomOut ?? "" },
         msgIndex,

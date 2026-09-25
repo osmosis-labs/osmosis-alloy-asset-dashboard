@@ -44,6 +44,8 @@ model PoolSwap {
   // The account behind the swap (see swapAccount in src/services/swap-rows.ts).
   sender     String
   action     String
+  // Routing contract (see swapContract in src/services/swap-rows.ts), if any.
+  contract   String?
   denomIn    String   @map("denom_in")
   amountIn   Decimal  @map("amount_in") @db.Decimal(78, 0)
   denomOut   String   @map("denom_out")

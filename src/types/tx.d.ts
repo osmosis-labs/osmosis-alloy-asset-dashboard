@@ -12,6 +12,9 @@ export type PoolSwap = {
   // Short type of the message that emitted the event, e.g. "SwapExactAmountIn",
   // "RecvPacket", "ExecuteContract".
   action: string
+  // Contract that routed the swap (router call target or IBC-hooks memo
+  // contract); absent for direct swaps and for rows stored before this field.
+  contract?: string
   in: { amount: string; denom: string }
   out: { amount: string; denom: string }
 }

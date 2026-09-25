@@ -93,6 +93,7 @@ export const readSwaps = async (
     success: true,
     sender: r.sender,
     action: r.action,
+    contract: r.contract ?? undefined,
     in: { amount: r.amountIn.toFixed(0), denom: r.denomIn },
     out: { amount: r.amountOut.toFixed(0), denom: r.denomOut },
   }))

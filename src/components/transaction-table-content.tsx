@@ -115,21 +115,33 @@ const KIND_CLASS: Record<SwapKind, string> = {
   Rebalance: "",
 }
 
-// How the swap reached the pool, from the message that emitted it.
-const swapRoute = (swap: PoolSwap) => {
+const shortAddress = (a: string) => `${a.slice(0, 8)}..${a.slice(-4)}`
+
+// How the swap reached the pool, from the message that emitted it, naming the
+// routing contract when there is one (e.g. "IBC · Injective · Skip").
+const swapRoute = (
+  swap: PoolSwap,
+  contractNames: Record<string, string | null>
+) => {
+  const contract = swap.contract
+    ? (contractNames[swap.contract] ?? shortAddress(swap.contract))
+    : null
   if (swap.action === "RecvPacket") {
-    return `IBC · ${chainNameForAddress(swap.sender)}`
+    const ibc = `IBC · ${chainNameForAddress(swap.sender)}`
+    return contract ? `${ibc} · ${contract}` : ibc
   }
-  if (swap.action === "ExecuteContract") return "Contract"
+  if (swap.action === "ExecuteContract") return contract ?? "Contract"
   if (/^(SwapExact|SplitRoute)/.test(swap.action)) return "Direct"
-  return swap.action
+  return contract ?? swap.action
 }
 const TransactionTableContent = ({
   pool,
   swaps,
+  contractNames = {},
 }: {
   pool: PoolOverview
   swaps: PoolSwap[]
+  contractNames?: Record<string, string | null>
 }) => {
   const [limit, setLimit] = useState<(typeof LIMITS)[number]>("20")
   const [page, setPage] = useState(1)
@@ -271,9 +283,11 @@ const TransactionTableContent = ({
         cell: ({ row }) => (
           <span
             className="whitespace-nowrap text-muted-foreground"
-            title={row.original.action}
+            title={[row.original.action, row.original.contract]
+              .filter(Boolean)
+              .join(" · ")}
           >
-            {swapRoute(row.original)}
+            {swapRoute(row.original, contractNames)}
           </span>
         ),
       },
@@ -301,7 +315,7 @@ const TransactionTableContent = ({
         },
       },
     ]
-  }, [denomMeta, priceOf, pool.alloy.asset?.base])
+  }, [denomMeta, priceOf, pool.alloy.asset?.base, contractNames])
 
   const totalPage = Math.max(Math.ceil(swaps.length / Number(limit)), 1)
   const pageRows = useMemo(
