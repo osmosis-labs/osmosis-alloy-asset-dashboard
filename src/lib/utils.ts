@@ -55,6 +55,64 @@ export const fetchWithRetry = async (
     : new Error(`fetchWithRetry failed for ${String(input)}`)
 }
 
+// lcd.osmosis.zone bans any IP that makes more than 20 requests within 1s for
+// 12h (fail2ban; every response status counts, 429s included) and rate-limits
+// to 5 req/s with a burst of 10. Request STARTS are spaced process-wide so the
+// pool pages rendering in one function instance or build worker stay under
+// both. Slow responses still overlap; only the starts are paced. A build
+// prerenders pool pages in ~3 worker processes behind one IP, so 700ms keeps
+// their combined rate (~4.3 req/s) under the 5 req/s limit.
+const LCD_MIN_INTERVAL_MS = 700
+let lcdNextSlotAt = 0
+
+const waitForLcdSlot = async () => {
+  const now = Date.now()
+  const slotAt = Math.max(now, lcdNextSlotAt)
+  lcdNextSlotAt = slotAt + LCD_MIN_INTERVAL_MS
+  if (slotAt > now) {
+    await new Promise((r) => setTimeout(r, slotAt - now))
+  }
+}
+
+/**
+ * fetch for lcd.osmosis.zone: every attempt waits for a paced slot, and only
+ * network errors and 5xx are retried. 429 and 403 are returned as-is: a 429
+ * retry is one more request toward the fail2ban threshold, and a 403 is the
+ * ban itself, which a retry cannot lift.
+ */
+export const fetchLcd = async (
+  input: string | URL,
+  init?: RequestInit & { retries?: number; timeoutMs?: number }
+): Promise<Response> => {
+  const { retries = 1, timeoutMs = 15000, ...rest } = init ?? {}
+
+  let lastError: unknown
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    await waitForLcdSlot()
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const response = await fetch(input, {
+        ...rest,
+        signal: rest.signal ?? controller.signal,
+      })
+      if (response.status >= 500) {
+        lastError = new Error(`Upstream returned ${response.status}`)
+      } else {
+        return response
+      }
+    } catch (e) {
+      lastError = e
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`fetchLcd failed for ${String(input)}`)
+}
+
 /**
  * Like fetchWithRetry, but the JSON body read is inside the retry loop and
  * under the per-attempt timeout. fetchWithRetry resolves as soon as headers

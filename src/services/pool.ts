@@ -13,7 +13,7 @@ import {
   RawPoolOverview,
 } from "@/types/pool"
 import dayjs from "@/lib/dayjs"
-import { fetchWithRetry } from "@/lib/utils"
+import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
 import { getAssetMap, getAssetPrice, getAssetStatusMapSafe } from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
@@ -578,7 +578,7 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   const BLOCKS_PER_DAY = 72000
   let height: number
   try {
-    const heightResponse = await fetchWithRetry(
+    const heightResponse = await fetchLcd(
       "https://lcd.osmosis.zone/cosmos/base/tendermint/v1beta1/blocks/latest"
     )
 
@@ -606,15 +606,18 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
       `token_swapped.pool_id=${poolId} AND tx.height>=${height}`
     )
     const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=${query}&order_by=2`
-    const totalResponse = await fetchWithRetry(`${url}&limit=1`, {
+    const totalResponse = await fetchLcd(`${url}&limit=1`, {
       timeoutMs: 30000,
     })
 
+    // Throw rather than return empty: getPoolInOutAssets is wrapped in
+    // unstable_cache, which persists returned values but not thrown errors, so
+    // an empty result from a rate-limited or banned IP would be served as "no
+    // activity" for the whole revalidate window.
     if (!totalResponse.ok) {
-      console.error(
+      throw new Error(
         `Failed to fetch tx count: ${totalResponse.status} ${totalResponse.statusText}`
       )
-      return { total: 0, txs: [] }
     }
 
     const totalData = await totalResponse.json()
@@ -625,26 +628,32 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
     const txs = await Promise.all(
       _.range(1, pages + 1).map(async (page) => {
         try {
-          const response = await fetchWithRetry(
+          const response = await fetchLcd(
             `${url}&limit=${limit}&page=${page}`,
             { timeoutMs: 30000 }
           )
           if (!response.ok) {
             console.warn(`Failed to fetch tx page ${page}: ${response.status}`)
-            return []
+            return null
           }
           const data = await response.json()
-          return data.tx_responses
+          return (data.tx_responses ?? []) as any[]
         } catch (e) {
           console.warn(`Error fetching tx page ${page}: ${e}`)
-          return []
+          return null
         }
       })
     )
 
+    // Partial pages still plot; every page failing is an outage, not "no
+    // activity", so it must not be cached (see the tx count above).
+    if (pages > 0 && txs.every((t) => t === null)) {
+      throw new Error(`All ${pages} tx pages failed for pool ${poolId}`)
+    }
+
     return {
       total,
-      txs: txs.flat(),
+      txs: txs.flatMap((t) => t ?? []),
     }
   } catch (e) {
     console.error(e)
