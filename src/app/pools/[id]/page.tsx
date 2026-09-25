@@ -27,6 +27,7 @@ import { ActivityChart } from "../../../components/activity-chart"
 import { CopyDenom } from "../../../components/copy-denom"
 import { PriceVolumeChart } from "../../../components/price-volume-chart"
 import { SourceChart } from "../../../components/source-chart"
+import { TransactionTable } from "../../../components/transaction-table"
 
 export const revalidate = 3600 // 1 hour
 // Above Vercel's 15s default; see src/app/page.tsx.
@@ -290,9 +291,7 @@ export default async function Home({
           </Card>
         </Tabs>
 
-        {/* The transaction table is hidden until it has a working data source:
-            its only upstream (the AllesLabs GraphQL indexer) was decommissioned.
-            The component is kept for when a replacement endpoint exists. */}
+        <TransactionTable pool={pool} />
       </div>
     </main>
   )

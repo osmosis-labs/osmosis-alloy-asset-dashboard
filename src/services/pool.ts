@@ -12,6 +12,7 @@ import {
   PoolOverview,
   RawPoolOverview,
 } from "@/types/pool"
+import { PoolSwap } from "@/types/tx"
 import dayjs from "@/lib/dayjs"
 import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
@@ -776,6 +777,65 @@ export const getPoolInOutAssets = unstable_cache(
     )
   },
   ["pool-in-out-assets"],
+  {
+    revalidate: 1800,
+  }
+)
+
+// Short message type ("/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn" ->
+// "SwapExactAmountIn"), unwrapping authz MsgExec to the message it ran.
+const shortMessageType = (message: any): string => {
+  if (message?.["@type"] === "/cosmos.authz.v1beta1.MsgExec") {
+    return shortMessageType(_.last(message.msgs as any[]))
+  }
+  const type = String(_.last(String(message?.["@type"] ?? "").split(".")))
+  return type.replace(/^Msg/, "") || "Unknown"
+}
+
+// Swap rows for the pool's transaction table, from the same LCD fetch as the
+// activity chart (React cache() dedupes it within a render), so the table adds
+// no LCD requests. The raw tx pages (~3MB each) are too large for the data
+// cache, so the compact rows are cached here instead, on the same schedule.
+export const getPoolSwaps = unstable_cache(
+  async (poolId: string): Promise<PoolSwap[]> => {
+    const { txs } = await getPoolInOutTxs(poolId)
+    return _.flatMap(txs, (tx) =>
+      _.chain(tx?.events)
+        .filter(
+          (e: any) =>
+            e.type === "token_swapped" &&
+            _.some(
+              e.attributes,
+              (a: any) => a.key === "pool_id" && a.value === poolId
+            )
+        )
+        .map((e: any) => {
+          const attr = (key: string) =>
+            _.find(e.attributes, ["key", key])?.value as string | undefined
+          const [, amountIn, denomIn] =
+            (attr("tokens_in") ?? "").match(ASSET_AMOUNT_REGEX) ?? []
+          const [, amountOut, denomOut] =
+            (attr("tokens_out") ?? "").match(ASSET_AMOUNT_REGEX) ?? []
+          const msgIndex = Number(attr("msg_index"))
+          const message = Number.isInteger(msgIndex)
+            ? tx.tx?.body?.messages?.[msgIndex]
+            : _.last(tx.tx?.body?.messages)
+
+          return {
+            hash: tx.txhash,
+            height: Number(tx.height),
+            timestamp: tx.timestamp,
+            success: tx.code === 0,
+            sender: attr("sender") ?? "",
+            action: shortMessageType(message),
+            in: { amount: amountIn ?? "0", denom: denomIn ?? "" },
+            out: { amount: amountOut ?? "0", denom: denomOut ?? "" },
+          }
+        })
+        .value()
+    )
+  },
+  ["pool-swaps"],
   {
     revalidate: 1800,
   }
