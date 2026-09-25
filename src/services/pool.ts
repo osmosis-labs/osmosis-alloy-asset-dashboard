@@ -593,7 +593,14 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   }
 
   try {
-    const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=token_swapped.pool_id=${poolId}&query=tx.height>=${height}&order_by=2`
+    // One `query` with AND. With two separate `query` params the LCD applies
+    // only one of them, so the height window was silently dropped: the count
+    // covered the pool's whole history and a frozen pool showed pre-freeze
+    // swaps as recent activity.
+    const query = encodeURIComponent(
+      `token_swapped.pool_id=${poolId} AND tx.height>=${height}`
+    )
+    const url = `https://lcd.osmosis.zone/cosmos/tx/v1beta1/txs?query=${query}&order_by=2`
     const totalResponse = await fetchWithRetry(`${url}&limit=1`, {
       timeoutMs: 30000,
     })
