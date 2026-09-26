@@ -145,8 +145,8 @@ const CompositionChart = ({
               : "Pool reserves (in the alloy's unit) by "}
             {SOURCE_GROUPINGS.find(
               (g) => g.value === grouping
-            )?.label.toLowerCase()}
-            , from daily snapshots
+            )?.label.toLowerCase()}{" "}
+            over time
           </CardDescription>
         </div>
         <div className="flex flex-wrap justify-center gap-2">

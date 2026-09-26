@@ -66,8 +66,9 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>Pool Asset Activity</CardTitle>
           <CardDescription>
-            Net change in each variant&apos;s reserve (above zero: more entered
-            the pool than left)
+            Net change in each variant&apos;s reserve per period, from every
+            swap since the pool launched. Above zero: more entered the pool than
+            left.
           </CardDescription>
         </div>
         <DateRangeSelect range={range} setRange={setRange} />

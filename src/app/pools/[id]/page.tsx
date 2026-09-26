@@ -207,7 +207,7 @@ export default async function Home({
           <div className="grid w-full gap-6 md:grid-cols-10">
             <OverviewChart
               pools={[pool]}
-              description="Historical liquidity in $USD for the pool"
+              description="Historical liquidity of the pool in USD"
               className="md:col-span-7"
               fillHeight
             />

@@ -67,7 +67,7 @@ const PriceVolumeChart = ({ denom }: { denom: string }) => {
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>Alloy Asset Volume And Price</CardTitle>
           <CardDescription>
-            Alloy asset volume in $USD and price over time
+            Trading volume in USD and price of the alloy asset over time
           </CardDescription>
         </div>
         <DateRangeSelect range={range} setRange={setRange} />

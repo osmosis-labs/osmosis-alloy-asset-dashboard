@@ -66,7 +66,7 @@ const OverviewChart = ({
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>{title || "Liquidity Overview"}</CardTitle>
           <CardDescription>
-            {description || "Showing Liquidity For All Pools"}
+            {description || "Historical liquidity of all alloyed pools in USD"}
           </CardDescription>
         </div>
         <DateRangeSelect range={range} setRange={setRange} />
