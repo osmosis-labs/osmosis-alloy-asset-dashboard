@@ -4,7 +4,7 @@ import { MinimalPool } from "@/types/pool"
 // src/services/pool.ts, which pulls in server-only code (the Postgres
 // activity store), so client components can import it.
 export const getPoolsFromAPI = async () => {
-  return await fetch("/api/pools").then((res) =>
-    res.json().then((d) => d as MinimalPool[])
-  )
+  const res = await fetch("/api/pools")
+  if (!res.ok) throw new Error(`Pools unavailable (${res.status})`)
+  return (await res.json()) as MinimalPool[]
 }
