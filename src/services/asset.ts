@@ -11,6 +11,7 @@ import {
   CurrencyWithPrice,
   FiatAmount,
 } from "@/types/asset"
+import { collectKeyPages } from "@/lib/paginate"
 import { fetchJsonWithRetry } from "@/lib/utils"
 
 const BASE_ASSET_WITH_PRICE_URL =
@@ -273,21 +274,23 @@ export const getUserAssets = async (address: string) => {
   unstable_noStore()
 
   try {
-    const limit = 100
-    const offset = 0
-    const response = await fetch(
-      `https://lcd.osmosis.zone/cosmos/bank/v1beta1/spendable_balances/${address}?pagination.limit=${limit}&pagination.offset=${offset}`
-    )
-
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch user assets: ${response.status} ${response.statusText}`
+    // Every page: a wallet can hold more than 100 denoms, and a missing
+    // balance reads as zero in the swap form.
+    return await collectKeyPages<Coin>(async (key) => {
+      const params = new URLSearchParams({ "pagination.limit": "100" })
+      if (key) params.set("pagination.key", key)
+      const response = await fetch(
+        `https://lcd.osmosis.zone/cosmos/bank/v1beta1/spendable_balances/${address}?${params}`
       )
-      return []
-    }
-
-    const data = await response.json()
-    return data.balances as Coin[]
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`)
+      }
+      const data = await response.json()
+      return {
+        items: (data.balances ?? []) as Coin[],
+        nextKey: data.pagination?.next_key,
+      }
+    })
   } catch (e) {
     console.error(`Error fetching user assets: ${e}`)
     return []
