@@ -126,6 +126,28 @@ export const selectCompleteHeights = (
   }
 }
 
+// Pure: ends a backfill slice on a 15-minute bucket boundary. Events in the
+// bucket that the slice's last block falls in are dropped (the bucket may
+// continue past the slice), and coverage is pulled back to just before the
+// first dropped event, so the next slice starts with that whole bucket. Every
+// bucket is then written by exactly one slice, from rows that slice fetched:
+// its rollup never depends on swap rows from an earlier slice, which may
+// already be pruned. Exported for tests.
+export const trimToBucketBoundary = (
+  events: SwapEvent[],
+  { coveredTo, coveredToTime }: { coveredTo: number; coveredToTime: Date }
+): { events: SwapEvent[]; coveredTo: number } => {
+  const bucketMs = BUCKET_SECONDS * 1000
+  const boundary = Math.floor(coveredToTime.getTime() / bucketMs) * bucketMs
+  const time = (e: SwapEvent) => new Date(e.timestamp).getTime()
+  const dropped = events.filter((e) => time(e) >= boundary)
+  if (dropped.length === 0) return { events, coveredTo }
+  return {
+    events: events.filter((e) => time(e) < boundary),
+    coveredTo: _.minBy(dropped, "height")!.height - 1,
+  }
+}
+
 // Pure: the 15-minute bucket range [start, end) that fully contains `events`.
 export const bucketRange = (events: SwapEvent[]) => {
   const times = events.map((e) => new Date(e.timestamp).getTime() / 1000)

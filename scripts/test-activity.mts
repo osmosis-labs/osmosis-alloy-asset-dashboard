@@ -8,9 +8,10 @@ import { pathToFileURL } from "node:url"
 const { swapEventsFromTx, bucketFlows, flowPointsFromSwaps } = await import(
   pathToFileURL(path.resolve("src/services/swap-rows.ts")).href
 )
-const { selectCompleteHeights, bucketRange, isLastPage } = await import(
-  pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
-)
+const { selectCompleteHeights, bucketRange, isLastPage, trimToBucketBoundary } =
+  await import(
+    pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
+  )
 
 const swapped = (
   poolId: string,
@@ -145,6 +146,44 @@ test("page-capped range drops the possibly split last height", () => {
 
 test("capped range with no events makes no progress", () => {
   const r = selectCompleteHeights([], { from: 7, to: 20, exhausted: false })
+  assert.equal(r.coveredTo, 7)
+})
+
+const at = (height: number, timestamp: string) => ({ height, timestamp }) as any
+
+test("slice trim drops the bucket its last block falls in", () => {
+  // Last block at 12:20 is in the 12:15 bucket, which may continue past it.
+  const r = trimToBucketBoundary(
+    [
+      at(10, "2026-09-25T12:01:00Z"),
+      at(20, "2026-09-25T12:16:00Z"),
+      at(25, "2026-09-25T12:19:00Z"),
+    ],
+    { coveredTo: 30, coveredToTime: new Date("2026-09-25T12:20:00Z") }
+  )
+  assert.deepEqual(
+    r.events.map((e: any) => e.height),
+    [10]
+  )
+  assert.equal(r.coveredTo, 19) // next slice starts with height 20
+})
+
+test("slice trim keeps everything when the last bucket has no events", () => {
+  const events = [at(10, "2026-09-25T12:01:00Z")]
+  const r = trimToBucketBoundary(events, {
+    coveredTo: 30,
+    coveredToTime: new Date("2026-09-25T12:20:00Z"),
+  })
+  assert.equal(r.events.length, 1)
+  assert.equal(r.coveredTo, 30)
+})
+
+test("slice trim reports no progress when every event is in the last bucket", () => {
+  const r = trimToBucketBoundary([at(8, "2026-09-25T12:16:00Z")], {
+    coveredTo: 30,
+    coveredToTime: new Date("2026-09-25T12:20:00Z"),
+  })
+  assert.equal(r.events.length, 0)
   assert.equal(r.coveredTo, 7)
 })
 

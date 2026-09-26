@@ -40,6 +40,7 @@ const {
   blockTime,
   fetchSwapEvents,
   latestHeight,
+  trimToBucketBoundary,
   writeEvents,
 } = await import(
   pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
@@ -97,7 +98,7 @@ const chain = { height: tip, time: tipTime.getTime() }
 // rate, which lands months off that far back.
 const target = new Date(tipTime.getTime() - days * 86_400_000)
 const { height: start } = await withBackoff("start height", () =>
-  heightAtTime(target, { tip: chain })
+  heightAtTime(target, { tip: chain, hosts })
 )
 const startTime = await withBackoff("start time", () => blockTime(start, hosts))
 console.log(
@@ -108,22 +109,22 @@ console.log(
 // exist just to build their 15-minute rollups, so the backfill prunes them as
 // it goes instead of holding a whole history in the table at once.
 const RETENTION_MS = 31 * 86_400_000
-// Rows this far behind the newest processed swap are kept: the next slice
-// may recompute the 15-minute bucket that straddles the slice boundary from
-// the rows still in the table.
+// Rows this far behind the newest processed swap are kept. Slices end on a
+// bucket boundary (trimToBucketBoundary), so no later slice needs them; the
+// margin is only a safety net.
 const PRUNE_TAIL_MS = 30 * 60_000
 
 // First height at which the pool's contract exists (bisection on the
 // archive), so a long backfill does not walk empty blocks before the pool.
 const creationHeight = async (poolId: string, hi: number) => {
   const address = await withBackoff(`pool ${poolId} contract`, () =>
-    poolContractAddress(poolId)
+    poolContractAddress(poolId, hosts)
   )
   let lo = 1
   while (hi - lo > 2000) {
     const mid = Math.floor((lo + hi) / 2)
     const liquidity = await withBackoff(`pool ${poolId} exists @${mid}`, () =>
-      poolLiquidityAt(address, mid)
+      poolLiquidityAt(address, mid, hosts)
     )
     if (liquidity === null) lo = mid
     else hi = mid
@@ -168,12 +169,15 @@ for (const poolId of poolIds) {
     )
     continue
   }
-  // Stop where existing coverage begins (an earlier, shorter backfill), with a
-  // small overlap; inserts are idempotent.
+  // Stop where existing coverage begins (an earlier, shorter backfill), with an
+  // overlap of ~40 minutes: inserts are idempotent, and the overlap must span
+  // the whole bucket the earlier backfill started in (which it wrote from a
+  // partial set of rows). The final slice's last bucket is left untouched by
+  // trimToBucketBoundary, so the earlier, complete rollup there is kept.
   const coverageStart = await withBackoff(`pool ${poolId} coverage start`, () =>
-    heightAtTime(cursor.coveredFrom, { tip: chain })
+    heightAtTime(cursor.coveredFrom, { tip: chain, hosts })
   )
-  const end = Math.min(Number(cursor.height), coverageStart.height + 1000)
+  const end = Math.min(Number(cursor.height), coverageStart.height + 2000)
   const poolStart = Math.max(start, await creationHeight(poolId, end))
 
   // Resume a previous run over the same (or a wider) range.
@@ -195,7 +199,14 @@ for (const poolId of poolIds) {
   let pruned = 0
   while (from < end) {
     const to = Math.min(from + slice, end)
-    const { events, coveredTo } = await fetchSlice(poolId, from, to)
+    const fetched = await fetchSlice(poolId, from, to)
+    const coveredToTime = await withBackoff(`pool ${poolId} time`, () =>
+      blockTime(fetched.coveredTo, hosts)
+    )
+    const { events, coveredTo } = trimToBucketBoundary(fetched.events, {
+      coveredTo: fetched.coveredTo,
+      coveredToTime,
+    })
     if (coveredTo <= from) {
       throw new Error(`pool ${poolId}: no progress at ${from}; lower --slice`)
     }
