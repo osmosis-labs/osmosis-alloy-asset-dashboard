@@ -11,6 +11,7 @@ import {
   CurrencyWithPrice,
   FiatAmount,
 } from "@/types/asset"
+import { collectKeyPages } from "@/lib/paginate"
 import { fetchJsonWithRetry } from "@/lib/utils"
 
 const BASE_ASSET_WITH_PRICE_URL =
@@ -118,6 +119,7 @@ export const getAssetListUncached = async () => {
 type FrontendAsset = {
   coinMinimalDenom: string
   name?: string
+  symbol?: string
   unstable?: boolean
   unstableReason?: string | null
   disabled?: boolean
@@ -136,6 +138,9 @@ type FrontendAssetMeta = {
   // Display names as the Osmosis frontend shows them ("USDC (Noble)"), keyed
   // by minimal denom. The chain-registry list names several variants alike.
   names: Record<string, string>
+  // Frontend symbols ("USDC.noble") by minimal denom, for denoms no longer in
+  // a pool (removed variants in the reserve history).
+  symbols: Record<string, string>
 }
 
 // One download of the ~2.5MB frontend list feeds both maps.
@@ -150,9 +155,13 @@ const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
 
   const map: Record<string, AssetStatus> = {}
   const names: Record<string, string> = {}
+  const symbols: Record<string, string> = {}
   for (const a of data) {
     if (a.coinMinimalDenom && a.name) {
       names[a.coinMinimalDenom] = a.name
+    }
+    if (a.coinMinimalDenom && a.symbol) {
+      symbols[a.coinMinimalDenom] = a.symbol
     }
     const status: AssetStatus = {
       unstable: a.unstable === true,
@@ -175,17 +184,29 @@ const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
       map[a.coinMinimalDenom] = status
     }
   }
-  return { statusMap: map, names }
+  return { statusMap: map, names, symbols }
 }
 
 const getFrontendAssetMeta = unstable_cache(
   fetchFrontendAssetMeta,
-  ["frontend-asset-meta"],
+  ["frontend-asset-meta-v2"],
   { revalidate: 1800 }
 )
 
 export const getAssetStatusMap = async () =>
   (await getFrontendAssetMeta()).statusMap
+
+// Non-throwing: a missing symbol map only falls back to chain-registry symbols.
+export const getFrontendAssetSymbolsSafe = async (): Promise<
+  Record<string, string>
+> => {
+  try {
+    return (await getFrontendAssetMeta()).symbols
+  } catch (e) {
+    console.error(`Error fetching frontend asset symbols: ${e}`)
+    return {}
+  }
+}
 
 // Non-throwing: a missing name map only falls back to chain-registry names.
 export const getFrontendAssetNamesSafe = async (): Promise<
@@ -273,21 +294,23 @@ export const getUserAssets = async (address: string) => {
   unstable_noStore()
 
   try {
-    const limit = 100
-    const offset = 0
-    const response = await fetch(
-      `https://lcd.osmosis.zone/cosmos/bank/v1beta1/spendable_balances/${address}?pagination.limit=${limit}&pagination.offset=${offset}`
-    )
-
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch user assets: ${response.status} ${response.statusText}`
+    // Every page: a wallet can hold more than 100 denoms, and a missing
+    // balance reads as zero in the swap form.
+    return await collectKeyPages<Coin>(async (key) => {
+      const params = new URLSearchParams({ "pagination.limit": "100" })
+      if (key) params.set("pagination.key", key)
+      const response = await fetch(
+        `https://lcd.osmosis.zone/cosmos/bank/v1beta1/spendable_balances/${address}?${params}`
       )
-      return []
-    }
-
-    const data = await response.json()
-    return data.balances as Coin[]
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`)
+      }
+      const data = await response.json()
+      return {
+        items: (data.balances ?? []) as Coin[],
+        nextKey: data.pagination?.next_key,
+      }
+    })
   } catch (e) {
     console.error(`Error fetching user assets: ${e}`)
     return []

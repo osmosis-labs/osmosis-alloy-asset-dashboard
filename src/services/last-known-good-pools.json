@@ -94,96 +94,6 @@
         },
         {
           "asset": {
-            "description": "Coinbase Wrapped Bitcoin on Axelar",
-            "denom_units": [
-              {
-                "denom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
-                "exponent": 0,
-                "aliases": [
-                  "cbbtc-satoshi"
-                ]
-              },
-              {
-                "denom": "cbbtc",
-                "exponent": 8
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
-            "name": "Coinbase Wrapped BTC (Axelar)",
-            "display": "cbbtc",
-            "symbol": "axl-cbBTC",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "cbbtc-satoshi",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/cbbtc-satoshi"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "axelar",
-                  "base_denom": "cbbtc-satoshi"
-                },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.png",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "denom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
-            "decimal": 8
-          },
-          "provenance": {
-            "origin": "Base",
-            "issuer": "Axelar"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "cbBTC.axl",
-              "coinName": "Coinbase Wrapped BTC (Axelar)",
-              "coinMinimalDenom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
-              "coinDecimals": 8,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/cbbtc.axl.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1z6r6qdknhgsc0zeracktgpcxf43j6sekq07nw8sxduc9lg0qjjlqfu25e3/alloyed/allBTC",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 8,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "398144981"
-          }
-        },
-        {
-          "asset": {
             "description": "Bitcoin. On Cosmos.",
             "denom_units": [
               {
@@ -276,64 +186,70 @@
         },
         {
           "asset": {
-            "description": "Wrapped Bitcoin via Eureka",
+            "description": "Coinbase Wrapped Bitcoin on Axelar",
             "denom_units": [
               {
-                "denom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
-                "exponent": 0
+                "denom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
+                "exponent": 0,
+                "aliases": [
+                  "cbbtc-satoshi"
+                ]
               },
               {
-                "denom": "wbtc",
+                "denom": "cbbtc",
                 "exponent": 8
               }
             ],
             "type_asset": "ics20",
-            "base": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
-            "name": "Wrapped Bitcoin (Ethereum via Eureka)",
-            "display": "wbtc",
-            "symbol": "WBTC",
+            "base": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
+            "name": "Coinbase Wrapped BTC (Axelar)",
+            "display": "cbbtc",
+            "symbol": "axl-cbBTC",
             "traces": [
               {
                 "type": "ibc",
                 "counterparty": {
-                  "chain_name": "cosmoshub",
-                  "base_denom": "ibc/D742E8566B0B8CC8F569D950051C09CF57988A88F0E45574BFB3079D41DE6462",
-                  "channel_id": "channel-141"
+                  "chain_name": "axelar",
+                  "base_denom": "cbbtc-satoshi",
+                  "channel_id": "channel-3"
                 },
                 "chain": {
-                  "channel_id": "channel-0",
-                  "path": "transfer/channel-0/transfer/08-wasm-1369/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+                  "channel_id": "channel-208",
+                  "path": "transfer/channel-208/cbbtc-satoshi"
                 }
               }
             ],
             "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.svg"
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.svg"
             },
             "images": [
               {
                 "image_sync": {
-                  "chain_name": "cosmoshub",
-                  "base_denom": "ibc/D742E8566B0B8CC8F569D950051C09CF57988A88F0E45574BFB3079D41DE6462"
+                  "chain_name": "axelar",
+                  "base_denom": "cbbtc-satoshi"
                 },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.svg"
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.svg",
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/base/images/cbbtc.png",
+                "theme": {
+                  "circle": true
+                }
               }
             ],
-            "denom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
+            "denom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
             "decimal": 8
           },
           "provenance": {
-            "origin": "Ethereum",
-            "issuer": "Eureka"
+            "origin": "Base",
+            "issuer": "Axelar"
           },
           "currency": {
             "currency": {
-              "coinDenom": "WBTC.eth.atom",
-              "coinName": "Wrapped Bitcoin (Ethereum via Eureka)",
-              "coinMinimalDenom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
+              "coinDenom": "cbBTC.axl",
+              "coinName": "Coinbase Wrapped BTC (Axelar)",
+              "coinMinimalDenom": "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A",
               "coinDecimals": 8,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/wbtc.eth.atom.svg",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/cbbtc.axl.svg",
               "isUnstable": false,
               "areTransfersDisabled": false,
               "areDepositsHalted": false,
@@ -355,7 +271,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "14048"
+            "amount": "398144981"
           }
         },
         {
@@ -452,6 +368,90 @@
             },
             "amount": "12114412"
           }
+        },
+        {
+          "asset": {
+            "description": "Wrapped Bitcoin via Eureka",
+            "denom_units": [
+              {
+                "denom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
+                "exponent": 0
+              },
+              {
+                "denom": "wbtc",
+                "exponent": 8
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
+            "name": "Wrapped Bitcoin (Ethereum via Eureka)",
+            "display": "wbtc",
+            "symbol": "WBTC",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "cosmoshub",
+                  "base_denom": "ibc/D742E8566B0B8CC8F569D950051C09CF57988A88F0E45574BFB3079D41DE6462",
+                  "channel_id": "channel-141"
+                },
+                "chain": {
+                  "channel_id": "channel-0",
+                  "path": "transfer/channel-0/transfer/08-wasm-1369/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "cosmoshub",
+                  "base_denom": "ibc/D742E8566B0B8CC8F569D950051C09CF57988A88F0E45574BFB3079D41DE6462"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/wbtc.svg"
+              }
+            ],
+            "denom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
+            "decimal": 8
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Eureka"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "WBTC.eth.atom",
+              "coinName": "Wrapped Bitcoin (Ethereum via Eureka)",
+              "coinMinimalDenom": "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB",
+              "coinDecimals": 8,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/wbtc.eth.atom.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1z6r6qdknhgsc0zeracktgpcxf43j6sekq07nw8sxduc9lg0qjjlqfu25e3/alloyed/allBTC",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 8,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "14048"
+          }
         }
       ],
       "spreadFactor": {
@@ -487,7 +487,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "8222604.000000000000000000"
+        "amount": "8186635.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -4660,11 +4660,11 @@
         }
       ],
       "prices": {
-        "factory/osmo1z0qrq605sjgcqpylfl4aa6s90x738j7m58wyatt0tdzflg2ha26q67k743/wbtc": "74059.547688911789353000000000000000000000",
-        "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A": "72660.647650662308219700000000000000000000",
-        "ibc/75345531D87BD90BF108BE7240BD721CB2CB0A1F16D4EBA71B09EC3C43E15C8F": "73955.905920889601009300000000000000000000",
-        "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB": "72660.647650662308219700000000000000000000",
-        "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F": "74006.838589279086727700000000000000000000"
+        "factory/osmo1z0qrq605sjgcqpylfl4aa6s90x738j7m58wyatt0tdzflg2ha26q67k743/wbtc": "74065.338285195581596500000000000000000000",
+        "ibc/616C2EA69BC328F245CE449785CB0B526B462C48F19DCF9B3D30699579B4308A": "74039.584124427337574600000000000000000000",
+        "ibc/75345531D87BD90BF108BE7240BD721CB2CB0A1F16D4EBA71B09EC3C43E15C8F": "74107.749792223587180500000000000000000000",
+        "ibc/88386AC48152D48B34B082648DF836F975506F0B57DBBFC10A54213B1BF484CB": "74039.584124427337574600000000000000000000",
+        "ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F": "74083.556339241815254800000000000000000000"
       },
       "alloy": {
         "asset": {
@@ -4735,7 +4735,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "73823.540789326664596927"
+          "amount": "74160.541788319727302500"
         }
       },
       "limiters": {
@@ -4885,7 +4885,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1705271647807"
+            "amount": "1500644459161"
           }
         },
         {
@@ -4974,7 +4974,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "134520942584"
+            "amount": "336154500015"
           }
         },
         {
@@ -5063,7 +5063,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "231473806"
+            "amount": "1757554"
           }
         }
       ],
@@ -5100,7 +5100,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1840025.000000000000000000"
+        "amount": "1835636.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -5121,7 +5121,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "613118.397461908400000000"
+        "amount": "917555.860749108500000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -5142,7 +5142,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4009173.870104410700000000"
+        "amount": "4313202.150297281000000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -5341,9 +5341,9 @@
         }
       ],
       "prices": {
-        "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4": "1.000000000000000000000000000000000000",
+        "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4": "0.999223237141538772186413037244480275",
         "ibc/794C7D7F3B857713878A3A1927251FA6AC1EEE520424C1F6FAFE9BA26D476138": "1.000000000000000000000000000000000000",
-        "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858": "1.000000000000000000000000000000000000"
+        "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858": "0.999404037162600419396678692296578441"
       },
       "alloy": {
         "asset": {
@@ -5431,90 +5431,6 @@
       "codeId": "996",
       "contractAddress": "osmo1k6c8jln7ejuqwtqmay3yvzrg3kueaczl96pk067ldg8u835w0yhsw27twm",
       "reserveCoins": [
-        {
-          "asset": {
-            "description": "Ether via Eureka",
-            "denom_units": [
-              {
-                "denom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
-                "exponent": 0
-              },
-              {
-                "denom": "eth",
-                "exponent": 18
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
-            "name": "Ethereum (Eureka)",
-            "display": "eth",
-            "symbol": "ETH",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "cosmoshub",
-                  "base_denom": "ibc/C0B53D3D23827AE38058BED0BDCD554229278AF530A8D265FCF6DFF7C4B2ADFF",
-                  "channel_id": "channel-141"
-                },
-                "chain": {
-                  "channel_id": "channel-0",
-                  "path": "transfer/channel-0/transfer/08-wasm-1369/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "cosmoshub",
-                  "base_denom": "ibc/C0B53D3D23827AE38058BED0BDCD554229278AF530A8D265FCF6DFF7C4B2ADFF"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.svg"
-              }
-            ],
-            "denom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
-            "decimal": 18
-          },
-          "provenance": {
-            "origin": "Ethereum",
-            "issuer": "Eureka"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "ETH.atom",
-              "coinName": "Ethereum (Eureka)",
-              "coinMinimalDenom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
-              "coinDecimals": 18,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/eth.atom.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1k6c8jln7ejuqwtqmay3yvzrg3kueaczl96pk067ldg8u835w0yhsw27twm/alloyed/allETH",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 18,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "734625362482116439"
-          }
-        },
         {
           "asset": {
             "description": "Ethereum (ETH) is a decentralized, open-source blockchain system featuring smart contract functionality. It's the native cryptocurrency of the Ethereum platform, often regarded as the second most popular digital currency after Bitcoin. Ethereum was proposed in late 2013 and development was crowdfunded in 2014, leading to its network going live on 30 July 2015.\n\nETH, as a digital currency, is used for a variety of purposes within the Ethereum ecosystem, including the execution of decentralized smart contracts and as a mode of payment. Unlike Bitcoin, Ethereum was designed to be a platform for applications that can operate without the need for intermediaries, using blockchain technology. This has made Ethereum a leading platform for various applications, including decentralized finance (DeFi), non-fungible tokens (NFTs), and more. Ethereum is constantly evolving, with a significant upgrade termed Ethereum 2.0, which aims to improve its scalability, security, and sustainability.",
@@ -5616,7 +5532,91 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "417242936371361838119"
+            "amount": "417223758588583668671"
+          }
+        },
+        {
+          "asset": {
+            "description": "Ether via Eureka",
+            "denom_units": [
+              {
+                "denom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
+                "exponent": 0
+              },
+              {
+                "denom": "eth",
+                "exponent": 18
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
+            "name": "Ethereum (Eureka)",
+            "display": "eth",
+            "symbol": "ETH",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "cosmoshub",
+                  "base_denom": "ibc/C0B53D3D23827AE38058BED0BDCD554229278AF530A8D265FCF6DFF7C4B2ADFF",
+                  "channel_id": "channel-141"
+                },
+                "chain": {
+                  "channel_id": "channel-0",
+                  "path": "transfer/channel-0/transfer/08-wasm-1369/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "cosmoshub",
+                  "base_denom": "ibc/C0B53D3D23827AE38058BED0BDCD554229278AF530A8D265FCF6DFF7C4B2ADFF"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/eth-white.svg"
+              }
+            ],
+            "denom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
+            "decimal": 18
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Eureka"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "ETH.atom",
+              "coinName": "Ethereum (Eureka)",
+              "coinMinimalDenom": "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B",
+              "coinDecimals": 18,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/eth.atom.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1k6c8jln7ejuqwtqmay3yvzrg3kueaczl96pk067ldg8u835w0yhsw27twm/alloyed/allETH",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 18,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "738363704664180181"
           }
         }
       ],
@@ -5653,7 +5653,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1121728.000000000000000000"
+        "amount": "1120359.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -5674,7 +5674,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "15266.418813061435000000"
+        "amount": "9666.322917593280000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -5695,7 +5695,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "206388.623509520900000000"
+        "amount": "198742.892974044630000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -9826,8 +9826,8 @@
         }
       ],
       "prices": {
-        "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B": "2677.434202988798593018638996000000000000",
-        "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5": "2683.509101000000000000000000000000000000"
+        "ibc/20850C646CDDDC2270E9BBDB08558B5FEE57B647EC6827F41096AABFD8A0471B": "2685.994345000000000000000000000000000000",
+        "ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5": "2680.414653892987524330336120000000000000"
       },
       "alloy": {
         "asset": {
@@ -9895,7 +9895,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "2686.056929000000000000"
+          "amount": "2685.994345000000000000"
         }
       },
       "limiters": {
@@ -10009,93 +10009,6 @@
         },
         {
           "asset": {
-            "description": "Tether USD via Eureka",
-            "denom_units": [
-              {
-                "denom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
-                "exponent": 0
-              },
-              {
-                "denom": "usdt",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
-            "name": "Tether USD (Ethereum via Eureka)",
-            "display": "usdt",
-            "symbol": "USDT",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "cosmoshub",
-                  "base_denom": "ibc/E7E51FFF94A8B55BE84CEB0345E5CAF0A5DAEB374C6806CE908098B8996C7782",
-                  "channel_id": "channel-141"
-                },
-                "chain": {
-                  "channel_id": "channel-0",
-                  "path": "transfer/channel-0/transfer/08-wasm-1369/0xdac17f958d2ee523a2206206994597c13d831ec7"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "cosmoshub",
-                  "base_denom": "ibc/E7E51FFF94A8B55BE84CEB0345E5CAF0A5DAEB374C6806CE908098B8996C7782"
-                },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "denom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
-            "decimal": 6
-          },
-          "provenance": {
-            "origin": "Ethereum",
-            "issuer": "Eureka"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "USDT.eth.atom",
-              "coinName": "Tether USD (Ethereum via Eureka)",
-              "coinMinimalDenom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
-              "coinDecimals": 6,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdt.eth.atom.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1em6xs47hd82806f5cxgyufguxrrc7l0aqx7nzzptjuqgswczk8csavdxek/alloyed/allUSDT",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "2700332"
-          }
-        },
-        {
-          "asset": {
             "description": "Tether's USD stablecoin on Axelar",
             "denom_units": [
               {
@@ -10183,7 +10096,94 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "148919752514"
+            "amount": "148916701092"
+          }
+        },
+        {
+          "asset": {
+            "description": "Tether USD via Eureka",
+            "denom_units": [
+              {
+                "denom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
+                "exponent": 0
+              },
+              {
+                "denom": "usdt",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
+            "name": "Tether USD (Ethereum via Eureka)",
+            "display": "usdt",
+            "symbol": "USDT",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "cosmoshub",
+                  "base_denom": "ibc/E7E51FFF94A8B55BE84CEB0345E5CAF0A5DAEB374C6806CE908098B8996C7782",
+                  "channel_id": "channel-141"
+                },
+                "chain": {
+                  "channel_id": "channel-0",
+                  "path": "transfer/channel-0/transfer/08-wasm-1369/0xdac17f958d2ee523a2206206994597c13d831ec7"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "cosmoshub",
+                  "base_denom": "ibc/E7E51FFF94A8B55BE84CEB0345E5CAF0A5DAEB374C6806CE908098B8996C7782"
+                },
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg",
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
+                "theme": {
+                  "circle": true
+                }
+              }
+            ],
+            "denom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
+            "decimal": 6
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Eureka"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "USDT.eth.atom",
+              "coinName": "Tether USD (Ethereum via Eureka)",
+              "coinMinimalDenom": "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6",
+              "coinDecimals": 6,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdt.eth.atom.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1em6xs47hd82806f5cxgyufguxrrc7l0aqx7nzzptjuqgswczk8csavdxek/alloyed/allUSDT",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "2700332"
           }
         }
       ],
@@ -10220,7 +10220,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "588724.000000000000000000"
+        "amount": "589222.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -10241,7 +10241,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2031.168819917892000000"
+        "amount": "1548.364745719384700000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -10262,7 +10262,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "22108.440660669050000000"
+        "amount": "20903.303527559830000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -14393,9 +14393,9 @@
         }
       ],
       "prices": {
-        "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D": "0.998317952856515763000000000000000000",
+        "ibc/2AD3C64D19ADFBB522CD738B58F421102143F827C1CAFF574A8BF0B81017D53D": "0.999321186329699068000000000000000000",
         "ibc/7BC2F718C47C0749791F2612A914C8C39D1A4F533A27AF7285D924D4B617DDA6": "0.840979782270606532000000000000000000",
-        "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4": "0.998516652923430352439297603471233674"
+        "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4": "0.998706970841106536554922812194542352"
       },
       "alloy": {
         "asset": {
@@ -14475,7 +14475,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "0.998317952856515763"
+          "amount": "0.998511463291565208"
         }
       },
       "limiters": {
@@ -14505,95 +14505,6 @@
       "codeId": "996",
       "contractAddress": "osmo1qnglc04tmhg32uc4kxlxh55a5cmhj88cpa3rmtly484xqu82t79sfv94w0",
       "reserveCoins": [
-        {
-          "asset": {
-            "description": "The native token of the XRPL EVM Sidechain",
-            "denom_units": [
-              {
-                "denom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
-                "exponent": 0,
-                "aliases": [
-                  "axrp"
-                ]
-              },
-              {
-                "denom": "XRP",
-                "exponent": 18
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
-            "name": "Ripple (XRPL EVM)",
-            "display": "XRP",
-            "symbol": "XRP",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "xrplevm",
-                  "base_denom": "axrp",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-104325",
-                  "path": "transfer/channel-104325/axrp"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "xrplevm",
-                  "base_denom": "axrp"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.svg"
-              }
-            ],
-            "coingecko_id": "ripple",
-            "denom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
-            "decimal": 18
-          },
-          "provenance": {
-            "origin": "XRPL",
-            "issuer": "Ripple"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "XRP.xrplevm",
-              "coinName": "Ripple (XRPL EVM)",
-              "coinMinimalDenom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
-              "coinDecimals": 18,
-              "coinGeckoId": "ripple",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/xrp.xrplevm.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1qnglc04tmhg32uc4kxlxh55a5cmhj88cpa3rmtly484xqu82t79sfv94w0/alloyed/allXRP",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 18,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "1938647176703206526099"
-          }
-        },
         {
           "asset": {
             "description": "XRP bridged from XRPL",
@@ -14685,6 +14596,95 @@
             },
             "amount": "102964446056"
           }
+        },
+        {
+          "asset": {
+            "description": "The native token of the XRPL EVM Sidechain",
+            "denom_units": [
+              {
+                "denom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
+                "exponent": 0,
+                "aliases": [
+                  "axrp"
+                ]
+              },
+              {
+                "denom": "XRP",
+                "exponent": 18
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
+            "name": "Ripple (XRPL EVM)",
+            "display": "XRP",
+            "symbol": "XRP",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "xrplevm",
+                  "base_denom": "axrp",
+                  "channel_id": "channel-3"
+                },
+                "chain": {
+                  "channel_id": "channel-104325",
+                  "path": "transfer/channel-104325/axrp"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "xrplevm",
+                  "base_denom": "axrp"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/xrpl/images/xrp.svg"
+              }
+            ],
+            "coingecko_id": "ripple",
+            "denom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
+            "decimal": 18
+          },
+          "provenance": {
+            "origin": "XRPL",
+            "issuer": "Ripple"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "XRP.xrplevm",
+              "coinName": "Ripple (XRPL EVM)",
+              "coinMinimalDenom": "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609",
+              "coinDecimals": 18,
+              "coinGeckoId": "ripple",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/xrp.xrplevm.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1qnglc04tmhg32uc4kxlxh55a5cmhj88cpa3rmtly484xqu82t79sfv94w0/alloyed/allXRP",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 18,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "1938647176703206526099"
+          }
         }
       ],
       "spreadFactor": {
@@ -14720,7 +14720,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "41602.000000000000000000"
+        "amount": "48454.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17361,8 +17361,8 @@
         }
       ],
       "prices": {
-        "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609": "0.443950124220126106000000000000000000",
-        "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3": "0.443789886248359190098209368778611149"
+        "ibc/46EB46DB30D3BBC6F404A9232C09785F36D40DA05C662A8E295712ECBAFF1609": "0.461482985901694459000000000000000000",
+        "ibc/63A7CA0B6838AD8CAD6B5103998FF9B9B6A6F06FBB9638BFF51E63E0142339F3": "0.461892971416509011383028135235167680"
       },
       "alloy": {
         "asset": {
@@ -17430,7 +17430,7 @@
             "upperCase": false,
             "lowerCase": false
           },
-          "amount": "0.457888845352651517"
+          "amount": "0.460076535852935193"
         }
       },
       "limiters": {},
@@ -17561,7 +17561,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "350756501002"
+            "amount": "350758093106"
           }
         },
         {
@@ -17650,7 +17650,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "2398998"
+            "amount": "806894"
           }
         }
       ],
@@ -17687,7 +17687,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "349392.000000000000000000"
+        "amount": "346307.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -17708,7 +17708,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4247.511248317170000000"
+        "amount": "4360.943624373000000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -17729,442 +17729,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "296422.682887938460000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "1925",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo1n3n75av8awcnw4jl62n3l48e6e4sxqmaf97w5ua6ddu4s475q5qq9udvx4",
-      "reserveCoins": [
-        {
-          "asset": {
-            "description": "Solana (SOL) is the native asset of the Solana blockchain.",
-            "denom_units": [
-              {
-                "denom": "ibc/1E43D59E565D41FB4E54CA639B838FFD5BCFC20003D330A56CB1396231AA1CBA",
-                "exponent": 0,
-                "aliases": [
-                  "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA"
-                ]
-              },
-              {
-                "denom": "wormhole/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA/8",
-                "exponent": 8,
-                "aliases": []
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/1E43D59E565D41FB4E54CA639B838FFD5BCFC20003D330A56CB1396231AA1CBA",
-            "name": "Solana (Wormhole)",
-            "display": "wormhole/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA/8",
-            "symbol": "SOL",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "gateway",
-                  "base_denom": "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-2186",
-                  "path": "transfer/channel-2186/factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/solana/images/sol_circle.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/solana/images/sol_circle.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "gateway",
-                  "base_denom": "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/8sYgCzLRJC3J7qPn2bNbx6PiGcarhyx8rBhVaNnfvHCA"
-                },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/solana/images/sol_circle.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/solana/images/sol_circle.png",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "denom": "ibc/1E43D59E565D41FB4E54CA639B838FFD5BCFC20003D330A56CB1396231AA1CBA",
-            "decimal": 8
-          },
-          "provenance": {
-            "origin": "Solana",
-            "issuer": "Wormhole"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "SOL.wh",
-              "coinName": "Solana (Wormhole)",
-              "coinMinimalDenom": "ibc/1E43D59E565D41FB4E54CA639B838FFD5BCFC20003D330A56CB1396231AA1CBA",
-              "coinDecimals": 8,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/sol.wh.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1n3n75av8awcnw4jl62n3l48e6e4sxqmaf97w5ua6ddu4s475q5qq9udvx4/alloyed/allSOL",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 8,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "292548825003"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "348226.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "1758.647546177055300000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "25965.774624484533000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "2242",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo10pk4crey8fpdyqd62rsau0y02e3rk055w5u005ah6ly7k849k5tsf72x40",
-      "reserveCoins": [
-        {
-          "asset": {
-            "denom_units": [
-              {
-                "denom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-                "exponent": 0,
-                "aliases": [
-                  "cbdoge-satoshi"
-                ]
-              },
-              {
-                "denom": "cbdoge",
-                "exponent": 8
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-            "name": "Coinbase Wrapped DOGE (Axelar)",
-            "display": "cbdoge",
-            "symbol": "axl-cbDOGE",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "cbdoge-satoshi",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/cbdoge-satoshi"
-                }
-              }
-            ],
-            "denom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-            "decimal": 8
-          },
-          "provenance": {
-            "origin": "Base",
-            "issuer": "Axelar"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "cbDOGE.axl",
-              "coinName": "Coinbase Wrapped DOGE (Axelar)",
-              "coinMinimalDenom": "ibc/D6ED8CCF01DE2F86D0D8A9605A8535A66C930697E986616227506EBDE8B8AC91",
-              "coinDecimals": 8,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/cbdoge.axl.png",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo10pk4crey8fpdyqd62rsau0y02e3rk055w5u005ah6ly7k849k5tsf72x40/alloyed/allDOGE",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 8,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "130646027827242"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "127072.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
+        "amount": "284889.290939654460000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18308,7 +17873,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "8682080324850644741898"
+            "amount": "8681591028924443741898"
           }
         }
       ],
@@ -18345,7 +17910,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "121014.000000000000000000"
+        "amount": "119414.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18366,7 +17931,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5934.299014643568000000"
+        "amount": "4986.397091655695500000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18387,7 +17952,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "6984.707705043227000000"
+        "amount": "6989.193714865843500000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -18537,7 +18102,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "15699048136777829769829847769"
+            "amount": "15698913737700972368396847769"
           }
         }
       ],
@@ -18574,7 +18139,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "73801.000000000000000000"
+        "amount": "73753.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18762,7 +18327,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "246340992341541775851697"
+            "amount": "246580433494380980149762"
           }
         }
       ],
@@ -18799,7 +18364,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "63060.000000000000000000"
+        "amount": "60959.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -18820,7 +18385,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "450.811134425474850000"
+        "amount": "291.932478832254900000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -18841,7 +18406,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2708.020685827049400000"
+        "amount": "2707.594940301262000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -19026,7 +18591,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "35974.000000000000000000"
+        "amount": "37207.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19252,7 +18817,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "25772.000000000000000000"
+        "amount": "27143.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19440,7 +19005,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "228384570659720"
+            "amount": "228481854351751"
           }
         },
         {
@@ -19532,7 +19097,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "121627774540280"
+            "amount": "121530490848249"
           }
         }
       ],
@@ -19569,7 +19134,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "20992.000000000000000000"
+        "amount": "21072.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19590,7 +19155,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "57.357450848928170000"
+        "amount": "30.034528455951484000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -19611,7 +19176,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "620.535336889840000000"
+        "amount": "601.478689283075600000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -19763,7 +19328,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "154035859810723528568784"
+            "amount": "153646967019666710543123"
           }
         }
       ],
@@ -19800,7 +19365,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "20441.000000000000000000"
+        "amount": "20478.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -19821,7 +19386,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5.229295005929599000"
+        "amount": "59.517516133826966000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -19842,7 +19407,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "629.465314170578300000"
+        "amount": "685.548595082339100000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -19897,89 +19462,87 @@
       "status": null
     },
     {
-      "id": "1969",
+      "id": "2674",
       "type": "cosmwasm-alloyed",
       "codeId": "996",
-      "contractAddress": "osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x",
+      "contractAddress": "osmo1nqu7rc5mj5p2cgyfp7gl3lw7kw99cltple3xtzl2cs5fyw0r2tasr7xv48",
       "reserveCoins": [
         {
           "asset": {
-            "description": "TRONIX is the mainnet native token of the TRON Protocol issued by TRON DAO, known as TRX.",
+            "description": "Sui’s native asset is called SUI.",
             "denom_units": [
               {
-                "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-                "exponent": 0
+                "denom": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
+                "exponent": 0,
+                "aliases": [
+                  "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh"
+                ]
               },
               {
-                "denom": "trx",
-                "exponent": 6
+                "denom": "wormhole/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh/8",
+                "exponent": 8,
+                "aliases": []
               }
             ],
-            "type_asset": "sdk.coin",
-            "address": "osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9",
-            "base": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-            "name": "Tron (Router)",
-            "display": "trx",
-            "symbol": "TRX.rt",
+            "type_asset": "ics20",
+            "base": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
+            "name": "Sui (Wormhole)",
+            "display": "wormhole/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh/8",
+            "symbol": "SUI",
             "traces": [
               {
-                "type": "bridge",
+                "type": "ibc",
                 "counterparty": {
-                  "chain_name": "tron",
-                  "base_denom": "sun"
+                  "chain_name": "gateway",
+                  "base_denom": "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh",
+                  "channel_id": "channel-3"
                 },
-                "provider": "Router"
+                "chain": {
+                  "channel_id": "channel-2186",
+                  "path": "transfer/channel-2186/factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh"
+                }
               }
             ],
             "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg"
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/sui/images/sui.svg"
             },
             "images": [
               {
                 "image_sync": {
-                  "chain_name": "tron",
-                  "base_denom": "sun"
+                  "chain_name": "gateway",
+                  "base_denom": "factory/wormhole14ejqjyq8um4p3xfqj74yld5waqljf88fz25yxnma0cngspxe3les00fpjx/46YEtoSN1AcwgGSRoWruoS6bnVh8XpMp5aQTpKohCJYh"
                 },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
-                "theme": {
-                  "circle": true
-                }
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/sui/images/sui.svg"
               }
             ],
-            "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-            "decimal": 6
+            "denom": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
+            "decimal": 8
           },
           "provenance": {
-            "origin": "Tron",
-            "issuer": "Router"
+            "origin": "Sui",
+            "issuer": "Wormhole"
           },
           "currency": {
             "currency": {
-              "coinDenom": "TRX.rt",
-              "coinName": "Tron (Router)",
-              "coinMinimalDenom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
-              "coinDecimals": 6,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/trx.rt.svg",
-              "isUnstable": true,
-              "unstableReason": "source_chain_killed",
-              "areTransfersDisabled": false,
-              "areDepositsHalted": true,
-              "depositHaltReason": "source_chain_killed",
-              "areWithdrawalsHalted": true,
-              "withdrawalHaltReason": "source_chain_killed",
-              "isVerified": false,
-              "variantGroupKey": "factory/osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x/alloyed/allTRX",
-              "isAlloyed": false,
-              "tooltipMessage": "This asset reached Osmosis through the Router bridge, which has been permanently sunset following a passed governance proposal. The bridge path is no longer available, so deposits and withdrawals are disabled. For more information see: https://routerprotocol.medium.com/proposal-to-sunset-router-chain-55ea9fd0e799"
+              "coinDenom": "SUI.wh",
+              "coinName": "Sui (Wormhole)",
+              "coinMinimalDenom": "ibc/B1C287C2701774522570010EEBCD864BCB7AB714711B3AA218699FDD75E832F5",
+              "coinDecimals": 8,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/sui.wh.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": true,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1nqu7rc5mj5p2cgyfp7gl3lw7kw99cltple3xtzl2cs5fyw0r2tasr7xv48/alloyed/allSUI",
+              "isAlloyed": false
             },
             "options": {
               "separator": " ",
               "upperCase": false,
               "lowerCase": false,
               "hideDenom": false,
-              "maxDecimals": 6,
+              "maxDecimals": 8,
               "trim": false,
               "shrink": false,
               "ready": true,
@@ -19987,7 +19550,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "10663580871"
+            "amount": "1346424777486"
           }
         }
       ],
@@ -20024,7 +19587,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5981.000000000000000000"
+        "amount": "12444.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20218,7 +19781,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "6729759582619436808"
+            "amount": "6729920645160296199"
           }
         }
       ],
@@ -20255,7 +19818,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5204.000000000000000000"
+        "amount": "5180.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20276,7 +19839,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "7.303415246163976000"
+        "amount": "7.115852755310662000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -20297,7 +19860,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "533.068607309705800000"
+        "amount": "533.191918392617500000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -20448,7 +20011,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "8643879823073"
+            "amount": "8649280256944"
           }
         },
         {
@@ -20540,7 +20103,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "1686120176927"
+            "amount": "1680719743056"
           }
         }
       ],
@@ -20577,7 +20140,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "4823.000000000000000000"
+        "amount": "4871.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -20807,7 +20370,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3802.000000000000000000"
+        "amount": "3457.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21030,7 +20593,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "3005.000000000000000000"
+        "amount": "3055.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21197,9 +20760,7 @@
               "coinDecimals": 18,
               "coinGeckoId": "dymension",
               "coinImageUrl": "https://app.osmosis.zone/tokens/generated/dym.dym.svg",
-              "isUnstable": true,
-              "unstableReason": "market",
-              "lastDowntimeDate": "2026-05-30T15:33:12.966Z",
+              "isUnstable": false,
               "areTransfersDisabled": false,
               "areDepositsHalted": false,
               "areWithdrawalsHalted": false,
@@ -21220,7 +20781,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "138675448705850666050361"
+            "amount": "138571648679140666050361"
           }
         }
       ],
@@ -21257,7 +20818,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "2810.000000000000000000"
+        "amount": "2555.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21278,7 +20839,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "16.861274951343110000"
+        "amount": "22.683319085231340000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -21299,7 +20860,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "152.853690228595070000"
+        "amount": "161.245854047432770000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21354,93 +20915,92 @@
       "status": null
     },
     {
-      "id": "1211",
-      "type": "cosmwasm-transmuter",
-      "codeId": "148",
-      "contractAddress": "osmo1gyg0pys40ex2f6a4dytd3ewpx2xfrsnt3rdc2t4j3s3jc9qx8kqsny066c",
+      "id": "2244",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo1csp8fk353hnq2tmulklecxpex43qmjvrkxjcsh4c3eqcw2vjcslq5jls9v",
       "reserveCoins": [
         {
           "asset": {
-            "description": "Tether gives you the joint benefits of open blockchain technology and traditional currency by converting your cash into a stable digital currency equivalent.",
+            "description": "Native LTC from Litecoin blockchain bridged via Int3face bridge",
             "denom_units": [
               {
-                "denom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
+                "denom": "ibc/905326586AE1C86AC8B1CDB20BE957DE5FB23963EDD2C9ADD3E835CC22115A46",
                 "exponent": 0,
                 "aliases": [
-                  "erc20/tether/usdt"
+                  "factory/int31zlefkpe3g0vvm9a4h0jf9000lmqutlh99h7fsd/litecoin-ltc"
                 ]
               },
               {
-                "denom": "usdt",
-                "exponent": 6
+                "denom": "ltc",
+                "exponent": 8
               }
             ],
             "type_asset": "ics20",
-            "base": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
-            "name": "Tether USD (Kava)",
-            "display": "usdt",
-            "symbol": "USDT",
+            "base": "ibc/905326586AE1C86AC8B1CDB20BE957DE5FB23963EDD2C9ADD3E835CC22115A46",
+            "name": "Litecoin (Int3)",
+            "display": "ltc",
+            "symbol": "LTC",
             "traces": [
               {
                 "type": "ibc",
                 "counterparty": {
-                  "chain_name": "kava",
-                  "base_denom": "erc20/tether/usdt",
-                  "channel_id": "channel-1"
+                  "chain_name": "int3face",
+                  "base_denom": "factory/int31zlefkpe3g0vvm9a4h0jf9000lmqutlh99h7fsd/litecoin-ltc",
+                  "channel_id": "channel-0"
                 },
                 "chain": {
-                  "channel_id": "channel-143",
-                  "path": "transfer/channel-143/erc20/tether/usdt"
+                  "channel_id": "channel-82819",
+                  "path": "transfer/channel-82819/factory/int31zlefkpe3g0vvm9a4h0jf9000lmqutlh99h7fsd/litecoin-ltc"
                 }
               }
             ],
             "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg"
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/ltc.int3.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/ltc.int3.svg"
             },
             "images": [
               {
                 "image_sync": {
-                  "chain_name": "kava",
-                  "base_denom": "erc20/tether/usdt"
+                  "chain_name": "int3face",
+                  "base_denom": "factory/int31zlefkpe3g0vvm9a4h0jf9000lmqutlh99h7fsd/litecoin-ltc"
                 },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
-                "theme": {
-                  "circle": true
-                }
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/ltc.int3.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/int3face/images/ltc.int3.svg"
               }
             ],
-            "coingecko_id": "tether",
-            "denom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
-            "decimal": 6
+            "denom": "ibc/905326586AE1C86AC8B1CDB20BE957DE5FB23963EDD2C9ADD3E835CC22115A46",
+            "decimal": 8
           },
           "provenance": {
-            "origin": "Ethereum",
-            "issuer": "Tether"
+            "origin": "Litecoin",
+            "issuer": "Int3face"
           },
           "currency": {
             "currency": {
-              "coinDenom": "USDT.kava",
-              "coinName": "Tether USD (Kava)",
-              "coinMinimalDenom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
-              "coinDecimals": 6,
-              "coinGeckoId": "tether",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdt.kava.svg",
-              "isUnstable": false,
+              "coinDenom": "LTC.int3",
+              "coinName": "Litecoin (Int3)",
+              "coinMinimalDenom": "ibc/905326586AE1C86AC8B1CDB20BE957DE5FB23963EDD2C9ADD3E835CC22115A46",
+              "coinDecimals": 8,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/ltc.int3.svg",
+              "isUnstable": true,
+              "unstableReason": "manual",
+              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
               "areTransfersDisabled": false,
-              "areDepositsHalted": false,
+              "areDepositsHalted": true,
+              "depositHaltReason": "bridge_down",
               "areWithdrawalsHalted": false,
               "isVerified": true,
-              "variantGroupKey": "factory/osmo1em6xs47hd82806f5cxgyufguxrrc7l0aqx7nzzptjuqgswczk8csavdxek/alloyed/allUSDT",
-              "isAlloyed": false
+              "variantGroupKey": "factory/osmo1csp8fk353hnq2tmulklecxpex43qmjvrkxjcsh4c3eqcw2vjcslq5jls9v/alloyed/allLTC",
+              "isAlloyed": false,
+              "tooltipMessage": "The Int3face bridge has shut down."
             },
             "options": {
               "separator": " ",
               "upperCase": false,
               "lowerCase": false,
               "hideDenom": false,
-              "maxDecimals": 6,
+              "maxDecimals": 8,
               "trim": false,
               "shrink": false,
               "ready": true,
@@ -21448,99 +21008,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "945747175"
-          }
-        },
-        {
-          "asset": {
-            "description": "Tether's USD stablecoin on Axelar",
-            "denom_units": [
-              {
-                "denom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
-                "exponent": 0,
-                "aliases": [
-                  "uusdt"
-                ]
-              },
-              {
-                "denom": "usdt",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
-            "name": "Tether USD (Ethereum via Axelar)",
-            "display": "usdt",
-            "symbol": "USDT",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "uusdt",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/uusdt"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "axelar",
-                  "base_denom": "uusdt"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg",
-                "theme": {
-                  "circle": true
-                }
-              }
-            ],
-            "coingecko_id": "axelar-usdt",
-            "denom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
-            "decimal": 6
-          },
-          "provenance": {
-            "origin": "Ethereum",
-            "issuer": "Axelar"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "USDT.eth.axl",
-              "coinName": "Tether USD (Ethereum via Axelar)",
-              "coinMinimalDenom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
-              "coinDecimals": 6,
-              "coinGeckoId": "axelar-usdt",
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdt.eth.axl.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1em6xs47hd82806f5cxgyufguxrrc7l0aqx7nzzptjuqgswczk8csavdxek/alloyed/allUSDT",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "1055262825"
+            "amount": "1115555655"
           }
         }
       ],
@@ -21577,7 +21045,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1995.000000000000000000"
+        "amount": "2413.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21598,7 +21066,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1213.663878782906300000"
+        "amount": "0.000000000000000000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -21619,7 +21087,231 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "5119.480379181429000000"
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "prices": {},
+      "liquidityChart": [],
+      "assets": null,
+      "alloy": {
+        "asset": null,
+        "price": null
+      },
+      "limiters": null,
+      "status": null
+    },
+    {
+      "id": "1969",
+      "type": "cosmwasm-alloyed",
+      "codeId": "996",
+      "contractAddress": "osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x",
+      "reserveCoins": [
+        {
+          "asset": {
+            "description": "TRONIX is the mainnet native token of the TRON Protocol issued by TRON DAO, known as TRX.",
+            "denom_units": [
+              {
+                "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+                "exponent": 0
+              },
+              {
+                "denom": "trx",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "sdk.coin",
+            "address": "osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9",
+            "base": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+            "name": "Tron (Router)",
+            "display": "trx",
+            "symbol": "TRX.rt",
+            "traces": [
+              {
+                "type": "bridge",
+                "counterparty": {
+                  "chain_name": "tron",
+                  "base_denom": "sun"
+                },
+                "provider": "Router"
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "tron",
+                  "base_denom": "sun"
+                },
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.svg",
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/tron/images/trx.png",
+                "theme": {
+                  "circle": true
+                }
+              }
+            ],
+            "denom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+            "decimal": 6
+          },
+          "provenance": {
+            "origin": "Tron",
+            "issuer": "Router"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "TRX.rt",
+              "coinName": "Tron (Router)",
+              "coinMinimalDenom": "factory/osmo1myv2g72h8dan7n4hx7stt3mmust6ws03zh6gxc7vz4hpmgp5z3lq9aunm9/TRX.rt",
+              "coinDecimals": 6,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/trx.rt.svg",
+              "isUnstable": true,
+              "unstableReason": "source_chain_killed",
+              "areTransfersDisabled": false,
+              "areDepositsHalted": true,
+              "depositHaltReason": "source_chain_killed",
+              "areWithdrawalsHalted": true,
+              "withdrawalHaltReason": "source_chain_killed",
+              "isVerified": false,
+              "variantGroupKey": "factory/osmo14mafhhp337yjj2aujplawz0tks6jd2lel4hkwz4agyzhvvztzaqsqzjq8x/alloyed/allTRX",
+              "isAlloyed": false,
+              "tooltipMessage": "This asset reached Osmosis through the Router bridge, which has been permanently sunset following a passed governance proposal. The bridge path is no longer available, so deposits and withdrawals are disabled. For more information see: https://routerprotocol.medium.com/proposal-to-sunset-router-chain-55ea9fd0e799"
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "10663580871"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "2201.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21808,7 +21500,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1912.000000000000000000"
+        "amount": "2097.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -21851,6 +21543,326 @@
           "lowerCase": false
         },
         "amount": "2.221144823777918000"
+      },
+      "feesSpent24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "feesSpent7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "0.000000000000000000"
+      },
+      "prices": {},
+      "liquidityChart": [],
+      "assets": null,
+      "alloy": {
+        "asset": null,
+        "price": null
+      },
+      "limiters": null,
+      "status": null
+    },
+    {
+      "id": "1211",
+      "type": "cosmwasm-transmuter",
+      "codeId": "148",
+      "contractAddress": "osmo1gyg0pys40ex2f6a4dytd3ewpx2xfrsnt3rdc2t4j3s3jc9qx8kqsny066c",
+      "reserveCoins": [
+        {
+          "asset": {
+            "description": "Tether's USD stablecoin on Axelar",
+            "denom_units": [
+              {
+                "denom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
+                "exponent": 0,
+                "aliases": [
+                  "uusdt"
+                ]
+              },
+              {
+                "denom": "usdt",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
+            "name": "Tether USD (Ethereum via Axelar)",
+            "display": "usdt",
+            "symbol": "USDT",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "axelar",
+                  "base_denom": "uusdt",
+                  "channel_id": "channel-3"
+                },
+                "chain": {
+                  "channel_id": "channel-208",
+                  "path": "transfer/channel-208/uusdt"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "axelar",
+                  "base_denom": "uusdt"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg",
+                "theme": {
+                  "circle": true
+                }
+              }
+            ],
+            "coingecko_id": "axelar-usdt",
+            "denom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
+            "decimal": 6
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Axelar"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "USDT.eth.axl",
+              "coinName": "Tether USD (Ethereum via Axelar)",
+              "coinMinimalDenom": "ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4",
+              "coinDecimals": 6,
+              "coinGeckoId": "axelar-usdt",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdt.eth.axl.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1em6xs47hd82806f5cxgyufguxrrc7l0aqx7nzzptjuqgswczk8csavdxek/alloyed/allUSDT",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "1046934831"
+          }
+        },
+        {
+          "asset": {
+            "description": "Tether gives you the joint benefits of open blockchain technology and traditional currency by converting your cash into a stable digital currency equivalent.",
+            "denom_units": [
+              {
+                "denom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
+                "exponent": 0,
+                "aliases": [
+                  "erc20/tether/usdt"
+                ]
+              },
+              {
+                "denom": "usdt",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
+            "name": "Tether USD (Kava)",
+            "display": "usdt",
+            "symbol": "USDT",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "kava",
+                  "base_denom": "erc20/tether/usdt",
+                  "channel_id": "channel-1"
+                },
+                "chain": {
+                  "channel_id": "channel-143",
+                  "path": "transfer/channel-143/erc20/tether/usdt"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "kava",
+                  "base_denom": "erc20/tether/usdt"
+                },
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.svg",
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdt.png",
+                "theme": {
+                  "circle": true
+                }
+              }
+            ],
+            "coingecko_id": "tether",
+            "denom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
+            "decimal": 6
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Tether"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "USDT.kava",
+              "coinName": "Tether USD (Kava)",
+              "coinMinimalDenom": "ibc/4ABBEF4C8926DDDB320AE5188CFD63267ABBCEFC0583E4AE05D6E5AA2401DDAB",
+              "coinDecimals": 6,
+              "coinGeckoId": "tether",
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/usdt.kava.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": true,
+              "variantGroupKey": "factory/osmo1em6xs47hd82806f5cxgyufguxrrc7l0aqx7nzzptjuqgswczk8csavdxek/alloyed/allUSDT",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "954075169"
+          }
+        }
+      ],
+      "spreadFactor": {
+        "options": {
+          "maxDecimals": 3,
+          "trim": true,
+          "shrink": false,
+          "ready": true,
+          "locale": true,
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "symbol": "%"
+        },
+        "rate": "0.000000000000000000"
+      },
+      "totalFiatValueLocked": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "1999.000000000000000000"
+      },
+      "volume24hUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "908.501081829268300000"
+      },
+      "volume7dUsd": {
+        "fiat": {
+          "currency": "usd",
+          "symbol": "$",
+          "maxDecimals": 2,
+          "locale": "en-US"
+        },
+        "options": {
+          "maxDecimals": 2,
+          "trim": true,
+          "shrink": true,
+          "ready": true,
+          "locale": "en-US",
+          "inequalitySymbol": true,
+          "inequalitySymbolSeparator": " ",
+          "separator": "",
+          "upperCase": false,
+          "lowerCase": false
+        },
+        "amount": "5115.946866442136000000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -21995,7 +22007,7 @@
               "inequalitySymbol": false,
               "inequalitySymbolSeparator": " "
             },
-            "amount": "18009764907966876276020125"
+            "amount": "18033467739220396368363211"
           }
         }
       ],
@@ -22032,7 +22044,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1405.000000000000000000"
+        "amount": "1388.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -22053,7 +22065,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "17.927715938058800000"
+        "amount": "19.750986667984880000"
       },
       "volume7dUsd": {
         "fiat": {
@@ -22074,7 +22086,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "524.810083622445300000"
+        "amount": "526.633354352371500000"
       },
       "feesSpent24hUsd": {
         "fiat": {
@@ -22264,7 +22276,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "1244.000000000000000000"
+        "amount": "1250.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -22489,7 +22501,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "809.000000000000000000"
+        "amount": "808.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -22720,7 +22732,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "659.000000000000000000"
+        "amount": "658.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -22824,93 +22836,6 @@
       "reserveCoins": [
         {
           "asset": {
-            "description": "GLTO-ERC20 on injective",
-            "denom_units": [
-              {
-                "denom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
-                "exponent": 0,
-                "aliases": [
-                  "peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2"
-                ]
-              },
-              {
-                "denom": "glto",
-                "exponent": 6
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
-            "name": "Gelotto",
-            "display": "glto",
-            "symbol": "GLTO",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "injective",
-                  "base_denom": "peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2",
-                  "channel_id": "channel-8"
-                },
-                "chain": {
-                  "channel_id": "channel-122",
-                  "path": "transfer/channel-122/peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "ethereum",
-                  "base_denom": "0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2"
-                },
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.png",
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.svg"
-              }
-            ],
-            "denom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
-            "decimal": 6
-          },
-          "provenance": {
-            "origin": "Ethereum",
-            "issuer": "Peggy"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "GLTO",
-              "coinName": "Gelotto",
-              "coinMinimalDenom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
-              "coinDecimals": 6,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/glto.svg",
-              "isUnstable": false,
-              "areTransfersDisabled": false,
-              "areDepositsHalted": false,
-              "areWithdrawalsHalted": false,
-              "isVerified": false,
-              "variantGroupKey": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 6,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "3240083610514"
-          }
-        },
-        {
-          "asset": {
             "description": "DeFi gaming platform built on Juno",
             "denom_units": [
               {
@@ -22997,6 +22922,93 @@
             },
             "amount": "17034947399486"
           }
+        },
+        {
+          "asset": {
+            "description": "GLTO-ERC20 on injective",
+            "denom_units": [
+              {
+                "denom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
+                "exponent": 0,
+                "aliases": [
+                  "peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2"
+                ]
+              },
+              {
+                "denom": "glto",
+                "exponent": 6
+              }
+            ],
+            "type_asset": "ics20",
+            "base": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
+            "name": "Gelotto",
+            "display": "glto",
+            "symbol": "GLTO",
+            "traces": [
+              {
+                "type": "ibc",
+                "counterparty": {
+                  "chain_name": "injective",
+                  "base_denom": "peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2",
+                  "channel_id": "channel-8"
+                },
+                "chain": {
+                  "channel_id": "channel-122",
+                  "path": "transfer/channel-122/peggy0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2"
+                }
+              }
+            ],
+            "logo_URIs": {
+              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.png",
+              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.svg"
+            },
+            "images": [
+              {
+                "image_sync": {
+                  "chain_name": "ethereum",
+                  "base_denom": "0xd73175f9eb15eee81745d367ae59309Ca2ceb5e2"
+                },
+                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.png",
+                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/glto.svg"
+              }
+            ],
+            "denom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
+            "decimal": 6
+          },
+          "provenance": {
+            "origin": "Ethereum",
+            "issuer": "Peggy"
+          },
+          "currency": {
+            "currency": {
+              "coinDenom": "GLTO",
+              "coinName": "Gelotto",
+              "coinMinimalDenom": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
+              "coinDecimals": 6,
+              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/glto.svg",
+              "isUnstable": false,
+              "areTransfersDisabled": false,
+              "areDepositsHalted": false,
+              "areWithdrawalsHalted": false,
+              "isVerified": false,
+              "variantGroupKey": "ibc/072E5B3D6F278B3E6A9C51D7EAD1A737148609512C5EBE8CBCB5663264A0DDB7",
+              "isAlloyed": false
+            },
+            "options": {
+              "separator": " ",
+              "upperCase": false,
+              "lowerCase": false,
+              "hideDenom": false,
+              "maxDecimals": 6,
+              "trim": false,
+              "shrink": false,
+              "ready": true,
+              "locale": true,
+              "inequalitySymbol": false,
+              "inequalitySymbolSeparator": " "
+            },
+            "amount": "3240083610514"
+          }
         }
       ],
       "spreadFactor": {
@@ -23032,7 +23044,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "559.000000000000000000"
+        "amount": "599.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {
@@ -23258,233 +23270,7 @@
           "upperCase": false,
           "lowerCase": false
         },
-        "amount": "439.000000000000000000"
-      },
-      "volume24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "volume7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent24hUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "feesSpent7dUsd": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "0.000000000000000000"
-      },
-      "prices": {},
-      "liquidityChart": [],
-      "assets": null,
-      "alloy": {
-        "asset": null,
-        "price": null
-      },
-      "limiters": null,
-      "status": null
-    },
-    {
-      "id": "1974",
-      "type": "cosmwasm-alloyed",
-      "codeId": "996",
-      "contractAddress": "osmo1nufyzqlm8qhu2w7lm0l4rrax0ec8rsk69mga4tel8eare7c7ljaqpk2lyg",
-      "reserveCoins": [
-        {
-          "asset": {
-            "denom_units": [
-              {
-                "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-                "exponent": 0,
-                "aliases": [
-                  "0x4200000000000000000000000000000000000042",
-                  "op-wei"
-                ]
-              },
-              {
-                "denom": "op",
-                "exponent": 18
-              }
-            ],
-            "type_asset": "ics20",
-            "base": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-            "name": "Optimism (Axelar)",
-            "display": "op",
-            "symbol": "OP",
-            "traces": [
-              {
-                "type": "ibc",
-                "counterparty": {
-                  "chain_name": "axelar",
-                  "base_denom": "op-wei",
-                  "channel_id": "channel-3"
-                },
-                "chain": {
-                  "channel_id": "channel-208",
-                  "path": "transfer/channel-208/op-wei"
-                }
-              }
-            ],
-            "logo_URIs": {
-              "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png",
-              "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.svg"
-            },
-            "images": [
-              {
-                "image_sync": {
-                  "chain_name": "axelar",
-                  "base_denom": "op-wei"
-                },
-                "svg": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.svg",
-                "png": "https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/optimism/images/op.png"
-              }
-            ],
-            "denom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-            "decimal": 18
-          },
-          "provenance": {
-            "origin": "Optimism",
-            "issuer": "Axelar"
-          },
-          "currency": {
-            "currency": {
-              "coinDenom": "OP.axl",
-              "coinName": "Optimism (Axelar)",
-              "coinMinimalDenom": "ibc/14A291DD362798D6805B7ABCB8D09AEEE02176108F89FA09AA43EA2EE096A2A9",
-              "coinDecimals": 18,
-              "coinImageUrl": "https://app.osmosis.zone/tokens/generated/op.axl.svg",
-              "isUnstable": true,
-              "unstableReason": "market",
-              "lastDowntimeDate": "2026-05-28T09:17:16.684Z",
-              "areTransfersDisabled": false,
-              "areDepositsHalted": true,
-              "depositHaltReason": "extended_unstable_market",
-              "areWithdrawalsHalted": false,
-              "isVerified": true,
-              "variantGroupKey": "factory/osmo1nufyzqlm8qhu2w7lm0l4rrax0ec8rsk69mga4tel8eare7c7ljaqpk2lyg/alloyed/allOP",
-              "isAlloyed": false
-            },
-            "options": {
-              "separator": " ",
-              "upperCase": false,
-              "lowerCase": false,
-              "hideDenom": false,
-              "maxDecimals": 18,
-              "trim": false,
-              "shrink": false,
-              "ready": true,
-              "locale": true,
-              "inequalitySymbol": false,
-              "inequalitySymbolSeparator": " "
-            },
-            "amount": "82944156748178740446996"
-          }
-        }
-      ],
-      "spreadFactor": {
-        "options": {
-          "maxDecimals": 3,
-          "trim": true,
-          "shrink": false,
-          "ready": true,
-          "locale": true,
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "symbol": "%"
-        },
-        "rate": "0.000000000000000000"
-      },
-      "totalFiatValueLocked": {
-        "fiat": {
-          "currency": "usd",
-          "symbol": "$",
-          "maxDecimals": 2,
-          "locale": "en-US"
-        },
-        "options": {
-          "maxDecimals": 2,
-          "trim": true,
-          "shrink": true,
-          "ready": true,
-          "locale": "en-US",
-          "inequalitySymbol": true,
-          "inequalitySymbolSeparator": " ",
-          "separator": "",
-          "upperCase": false,
-          "lowerCase": false
-        },
-        "amount": "425.000000000000000000"
+        "amount": "451.000000000000000000"
       },
       "volume24hUsd": {
         "fiat": {

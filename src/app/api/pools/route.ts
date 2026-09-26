@@ -4,7 +4,7 @@ import _ from "lodash"
 
 import { variantDenom, variantSymbol } from "@/lib/pool-sources"
 
-export const revalidate = 3600
+export const revalidate = 300
 // Above Vercel's 15s default; see src/app/page.tsx.
 export const maxDuration = 60
 

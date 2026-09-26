@@ -25,6 +25,12 @@ import useSWRImmutable from "swr/immutable"
 import { AssetWithDecimal } from "@/types/asset"
 import { MinimalAssetPool } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
+import {
+  parseSwapAmount,
+  QuoteInput,
+  quoteMatches,
+  toBaseAmount,
+} from "@/lib/swap-amount"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -99,6 +105,22 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
     debouncedSetInAmount(shownInAmount)
   }, [shownInAmount])
 
+  // The visible amount, parsed now (null when it cannot be submitted as
+  // shown). The quote follows the debounced amount, so a transaction may only
+  // be built once a quote for exactly this amount and these denoms is in.
+  const shownAmount = useMemo(
+    () => parseSwapAmount(shownInAmount, inAsset[0].decimal),
+    [shownInAmount, inAsset[0]]
+  )
+  const currentQuoteInput: QuoteInput | null = shownAmount
+    ? {
+        poolId: inAsset[1],
+        denomIn: inAsset[0].denom,
+        denomOut: outAsset[0].denom,
+        amountIn: toBaseAmount(shownAmount, inAsset[0].decimal),
+      }
+    : null
+
   const inPrice = useMemo(() => {
     return pools.find((pool) => pool.id === inAsset[1])?.alloy.price || "0"
   }, [inAsset[1], pools])
@@ -131,9 +153,13 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
       const amount = new BigNumber(quote.amount_out).shiftedBy(
         -outAsset[0].decimal
       )
+      // What this quote was fetched for, checked against the visible input
+      // before any transaction is built from it.
+      const input: QuoteInput = { poolId, denomIn, denomOut, amountIn: ina }
       return {
         amount,
         quote,
+        input,
       }
     },
     {
@@ -141,16 +167,34 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
     }
   )
 
+  const isQuoteCurrent = quoteMatches(
+    estimatedOut.data?.input,
+    currentQuoteInput
+  )
+
+  // Re-checked at submission (the handlers close over this render's input):
+  // the visible amount must parse and match the quote the transaction is
+  // built from.
+  const assertQuoteCurrent = () => {
+    if (
+      !estimatedOut.data ||
+      !quoteMatches(estimatedOut.data.input, currentQuoteInput)
+    ) {
+      throw new Error("The amount changed. Wait for the quote to update.")
+    }
+    return estimatedOut.data
+  }
+
   const [isSwapping, setIsSwapping] = useState(false)
   const swap = async () => {
     setIsSwapping(true)
     try {
       if (!address) throw new Error("Wallet not connected")
-      const amountIn = inAmount.shiftedBy(inAsset[0].decimal).toFixed(0)
-      if (!estimatedOut.data) throw new Error("Invalid estimated out")
-      const minAmountOut = estimatedOut.data.quote.amount_out
+      const quoted = assertQuoteCurrent()
+      const amountIn = quoted.input.amountIn
+      const minAmountOut = quoted.quote.amount_out
       const msg = swapExactAmountIn({
-        routes: estimatedOut.data.quote.route[0].pools.map((pool) => ({
+        routes: quoted.quote.route[0].pools.map((pool) => ({
           poolId: BigInt(pool.id),
           tokenOutDenom: pool.token_out_denom,
         })),
@@ -206,8 +250,7 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
     setIsSwapping(true)
     try {
       if (!address) throw new Error("Wallet not connected")
-      if (!estimatedOut.data) throw new Error("Invalid estimated out")
-      const minAmountOut = estimatedOut.data.quote.amount_out
+      const minAmountOut = assertQuoteCurrent().quote.amount_out
       if (!inAsset[0].denom.includes("alloy"))
         throw new Error("Invalid alloy asset")
       const contractAddress = inAsset[0].denom.split("/")[1]
@@ -318,14 +361,23 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
             <Badge
               variant="secondary"
               size="sm"
-              onClick={() => setShownInAmount(inBalance.div(2).toPrecision(4))}
+              onClick={() =>
+                // Exact half, in plain notation (toPrecision gave "1.235e+4"
+                // for large balances, which the amount parser rejects).
+                setShownInAmount(
+                  inBalance
+                    .div(2)
+                    .decimalPlaces(inAsset[0].decimal, BigNumber.ROUND_DOWN)
+                    .toFixed()
+                )
+              }
             >
               Half
             </Badge>
             <Badge
               variant="secondary"
               size="sm"
-              onClick={() => setShownInAmount(inBalance.toString())}
+              onClick={() => setShownInAmount(inBalance.toFixed())}
             >
               Max
             </Badge>
@@ -457,6 +509,7 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
               isInAssetCorrupted ||
               estimatedOut.error ||
               !estimatedOut.data ||
+              !isQuoteCurrent ||
               estimatedOut.data.amount.isZero() ||
               inBalance.isLessThan(inAmount) ||
               (isForceExit && !inAsset[0].denom.includes("alloy"))
@@ -469,13 +522,15 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
               ? "Pool Frozen"
               : isInAssetCorrupted
                 ? "Corrupted Asset Cannot Be Deposited"
-                : inBalance.isLessThan(inAmount)
-                  ? "Insufficient Balance"
-                  : isForceExit && !inAsset[0].denom.includes("alloy")
-                    ? "Force Exit Only Available For Alloy Asset"
-                    : isForceExit
-                      ? "Force Exit"
-                      : "Swap"}
+                : shownAmount === null
+                  ? "Invalid Amount"
+                  : inBalance.isLessThan(inAmount)
+                    ? "Insufficient Balance"
+                    : isForceExit && !inAsset[0].denom.includes("alloy")
+                      ? "Force Exit Only Available For Alloy Asset"
+                      : isForceExit
+                        ? "Force Exit"
+                        : "Swap"}
           </Button>
         )}
         {isForceExit && (

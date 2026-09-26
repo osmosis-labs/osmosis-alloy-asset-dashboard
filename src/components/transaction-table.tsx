@@ -1,8 +1,14 @@
 import { Suspense } from "react"
+import { getAssetPrice } from "@/services/asset"
+import { getContractNamesSafe } from "@/services/contracts"
+import { getDenomMetaSafe } from "@/services/denom-meta"
 import { ACTIVITY_MAX_SWAPS, getPoolSwaps } from "@/services/pool"
+import _ from "lodash"
 import { Loader2 } from "lucide-react"
 
 import { PoolOverview } from "@/types/pool"
+import { PoolSwap } from "@/types/tx"
+import { variantDenom } from "@/lib/pool-sources"
 import {
   Card,
   CardContent,
@@ -11,7 +17,49 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { TransactionTableContent } from "./transaction-table-content"
+import {
+  ExtraDenomMeta,
+  TransactionTableContent,
+} from "./transaction-table-content"
+
+// Symbol, decimals and price for swap denoms missing from the pool's current
+// reserves. The pools API omits a variant whose balance is zero, which happens
+// whenever a variant is drained (e.g. by rebalancing); its swaps still need a
+// value. Non-throwing: a denom that cannot be resolved stays unpriced.
+const getExtraDenomMeta = async (
+  pool: PoolOverview,
+  swaps: PoolSwap[]
+): Promise<Record<string, ExtraDenomMeta>> => {
+  const known = new Set(
+    _.compact([
+      ...pool.reserveCoins.map((c) => variantDenom(c)),
+      pool.alloy.asset?.base,
+    ])
+  )
+  const missing = _.uniq(
+    swaps.flatMap((s) => [s.in.denom, s.out.denom])
+  ).filter((d) => !known.has(d))
+  if (missing.length === 0) return {}
+  const [meta, prices] = await Promise.all([
+    getDenomMetaSafe(missing),
+    Promise.all(missing.map((d) => getAssetPrice(d))),
+  ])
+  return _.fromPairs(
+    _.compact(
+      missing.map((denom, i) => {
+        if (!meta[denom]) return null
+        const price = Number(prices[i]?.amount)
+        return [
+          denom,
+          {
+            ...meta[denom],
+            price: Number.isFinite(price) && price > 0 ? price : undefined,
+          },
+        ]
+      })
+    )
+  )
+}
 
 const TransactionTable = ({ pool }: { pool: PoolOverview }) => {
   return (
@@ -19,9 +67,8 @@ const TransactionTable = ({ pool }: { pool: PoolOverview }) => {
       <CardHeader className="text-center md:text-start">
         <CardTitle>Recent Swaps</CardTitle>
         <CardDescription>
-          Swaps through this pool over the last 24 hours, up to the{" "}
-          {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} most recent, with the
-          amounts that entered and left the pool.
+          Up to the latest {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} swaps
+          from the past 31 days, with the amounts that entered and left the pool
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -43,7 +90,18 @@ TransactionTable.displayName = "TransactionTable"
 const SuspensedTransactionTable = async ({ pool }: { pool: PoolOverview }) => {
   try {
     const swaps = await getPoolSwaps(pool.id)
-    return <TransactionTableContent pool={pool} swaps={swaps} />
+    const [contractNames, extraDenoms] = await Promise.all([
+      getContractNamesSafe(swaps.map((s) => s.contract)),
+      getExtraDenomMeta(pool, swaps),
+    ])
+    return (
+      <TransactionTableContent
+        pool={pool}
+        swaps={swaps}
+        contractNames={contractNames}
+        extraDenoms={extraDenoms}
+      />
+    )
   } catch (error) {
     console.error(`Failed to fetch swaps for pool ${pool.id}:`, error)
     return (
