@@ -250,7 +250,10 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
       console.log(txId)
     } catch (e: any) {
       toast.error("Swap Failed", {
-        description: describeSwapError(String(e?.message ?? e), errorAssets),
+        description: describeSwapError(String(e?.message ?? e), errorAssets, {
+          in: inAsset[0],
+          out: outAsset[0],
+        }),
       })
       console.error(e)
     } finally {
@@ -318,7 +321,10 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
       console.log(txId)
     } catch (e: any) {
       toast.error("Force Exit Failed", {
-        description: describeSwapError(String(e?.message ?? e), errorAssets),
+        description: describeSwapError(String(e?.message ?? e), errorAssets, {
+          in: inAsset[0],
+          out: outAsset[0],
+        }),
       })
       console.error(e)
     } finally {
@@ -505,7 +511,7 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
             {describeSwapError(
               price.error?.message || estimatedOut.error?.message,
               errorAssets,
-              outAsset[0]
+              { in: inAsset[0], out: outAsset[0] }
             )}
           </div>
         )}

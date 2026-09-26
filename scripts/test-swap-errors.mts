@@ -50,7 +50,7 @@ test("unfamiliar token symbol falls back to the quoted output asset", () => {
   const raw =
     "insufficient balance of token USDT, balance (1500000), amount (2000000)"
   assert.match(
-    describeSwapError(raw, assets, usdtAtom),
+    describeSwapError(raw, assets, { out: usdtAtom }),
     /only holds 1\.5 USDT\.eth\.atom, and this swap needs 2\./
   )
   assert.equal(
@@ -76,15 +76,37 @@ test("frozen pool", () => {
   )
 })
 
-test("corrupted asset deposit", () => {
+const usdtAxl = { denom: "ibc/USDTAXL", symbol: "USDT.eth.axl", decimal: 6 }
+const corruptedErr = wrapped(
+  "Corrupted asset: ibc/USDTATOM must not increase in amount or weight"
+)
+
+test("corrupted asset: depositing it", () => {
   assert.equal(
-    describeSwapError(
-      wrapped(
-        "Corrupted asset: ibc/USDTATOM must not increase in amount or weight"
-      ),
-      assets
-    ),
+    describeSwapError(corruptedErr, [...assets, usdtAxl], {
+      in: usdtAtom,
+      out: allUsdt,
+    }),
     "USDT.eth.atom is marked as corrupted in this pool: it can only be taken out, not deposited."
+  )
+})
+
+test("corrupted asset: taking out another variant raises its share", () => {
+  // Burning allUSDT for USDT.eth.axl (a swap or a Force Exit) shrinks the
+  // pool, so the corrupted variant's weight goes up.
+  assert.equal(
+    describeSwapError(corruptedErr, [...assets, usdtAxl], {
+      in: allUsdt,
+      out: usdtAxl,
+    }),
+    "USDT.eth.atom is marked as corrupted in this pool, and its share of the pool must not grow. Taking out USDT.eth.axl would increase it: take out USDT.eth.atom instead."
+  )
+})
+
+test("corrupted asset without swap context", () => {
+  assert.match(
+    describeSwapError(corruptedErr, assets),
+    /share of the pool must not grow\. This would increase it/
   )
 })
 

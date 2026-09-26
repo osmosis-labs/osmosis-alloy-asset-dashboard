@@ -30,10 +30,14 @@ const percent = (weight: string) =>
 // backticks.
 const DENOM = String.raw`[(\x60]?([a-zA-Z][^\s,()\x60]*)[)\x60]?`
 
+// The swap the error came from: what goes into the pool and what comes out.
+export type SwapContext = { in?: ErrorAsset; out?: ErrorAsset }
+
 // A readable version of a quote or transaction error for the swap form:
 // amounts in display units with symbols instead of base units and denoms.
-// `quotedOut` is the asset the quote pays out, the only one a pool can run
-// short of, used when the error names a token by an unfamiliar symbol.
+// `swap.out` is the only token a pool can run short of, used when a shortfall
+// names a token by an unfamiliar symbol; `swap.in` tells a corrupted-asset
+// deposit apart from a withdrawal that raises a corrupted asset's share.
 //
 // Covers the transmuter's (v3.2) errors for frozen pools, corrupted assets,
 // pool shortfalls and rate limiters as they surface in a failed transaction,
@@ -41,7 +45,7 @@ const DENOM = String.raw`[(\x60]?([a-zA-Z][^\s,()\x60]*)[)\x60]?`
 export const describeSwapError = (
   raw: string,
   assets: ErrorAsset[],
-  quotedOut?: ErrorAsset
+  swap: SwapContext = {}
 ): string => {
   const message = unwrapErrorMessage(raw)
   const find = (token: string) =>
@@ -53,13 +57,27 @@ export const describeSwapError = (
     return "This pool is frozen: swaps and Force Exit are disabled until it is reactivated."
   }
 
-  // Corrupted asset (transmuter CorruptedAssetRelativelyIncreased): it may
-  // only leave the pool.
+  // Corrupted asset (transmuter CorruptedAssetRelativelyIncreased): neither
+  // its amount nor its share of the pool may grow. Depositing it raises the
+  // amount; taking out any other variant shrinks the pool and so raises its
+  // share.
   const corrupted = message.match(
     new RegExp(`corrupted asset: ${DENOM} must not increase`, "i")
   )
   if (corrupted) {
-    return `${label(corrupted[1])} is marked as corrupted in this pool: it can only be taken out, not deposited.`
+    const token = corrupted[1]
+    const name = label(token)
+    const isDeposit =
+      !!swap.in && (swap.in.denom === token || swap.in.symbol === token)
+    if (isDeposit) {
+      return `${name} is marked as corrupted in this pool: it can only be taken out, not deposited.`
+    }
+    const taking = swap.out ? `Taking out ${swap.out.symbol}` : "This"
+    return (
+      `${name} is marked as corrupted in this pool, and its share of the ` +
+      `pool must not grow. ${taking} would increase it: take out ${name} ` +
+      `instead.`
+    )
   }
 
   // Pool shortfall. SQS quote: "insufficient balance of token (ibc/...),
@@ -78,7 +96,7 @@ export const describeSwapError = (
     const [token, balance, amount] = quoteShortfall
       ? [quoteShortfall[1], quoteShortfall[2], quoteShortfall[3]]
       : [txShortfall![2], txShortfall![3], txShortfall![1]]
-    const asset = find(token) ?? quotedOut
+    const asset = find(token) ?? swap.out
     if (!asset) return `The pool does not hold enough ${token} for this swap.`
     return (
       `The pool only holds ${displayAmount(balance, asset)} ${asset.symbol}, ` +
