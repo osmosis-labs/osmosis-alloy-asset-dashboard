@@ -57,6 +57,8 @@ import {
 import { DecimalSpan } from "@/components/decimal-span"
 
 type DenomMeta = { symbol: string; decimals: number; image?: string }
+// A swap denom outside the pool's current reserves (see transaction-table).
+export type ExtraDenomMeta = DenomMeta & { price?: number }
 
 const AssetAmountWithTooltip = ({
   amount,
@@ -138,18 +140,24 @@ const TransactionTableContent = ({
   pool,
   swaps,
   contractNames = {},
+  extraDenoms = {},
 }: {
   pool: PoolOverview
   swaps: PoolSwap[]
   contractNames?: Record<string, string | null>
+  extraDenoms?: Record<string, ExtraDenomMeta>
 }) => {
   const [limit, setLimit] = useState<(typeof LIMITS)[number]>("20")
   const [page, setPage] = useState(1)
 
   // Symbols and decimals for the pool's variants (frontend symbols) and the
-  // alloy itself: the only denoms a swap through this pool can carry.
+  // alloy itself: the only denoms a swap through this pool can carry. Variants
+  // missing from the current reserves (drained to zero) come from extraDenoms.
   const denomMeta = useMemo(() => {
-    const meta: Record<string, DenomMeta> = {}
+    const meta: Record<string, DenomMeta> = _.mapValues(
+      extraDenoms,
+      ({ symbol, decimals, image }) => ({ symbol, decimals, image })
+    )
     for (const coin of pool.reserveCoins ?? []) {
       const denom = variantDenom(coin)
       if (!denom) continue
@@ -168,17 +176,23 @@ const TransactionTableContent = ({
       }
     }
     return meta
-  }, [pool])
+  }, [pool, extraDenoms])
 
   // USD price by denom: variants from the pool's price map, the alloy from its
   // own price. A swap's value is its input amount at the input's price.
   const priceOf = useMemo(() => {
-    const prices: Record<string, number> = { ...pool.prices }
+    const prices: Record<string, number> = {
+      ..._.pickBy(
+        _.mapValues(extraDenoms, (d) => d.price),
+        (p): p is number => p !== undefined
+      ),
+      ...pool.prices,
+    }
     if (pool.alloy.asset && pool.alloy.price?.amount) {
       prices[pool.alloy.asset.base] = Number(pool.alloy.price.amount)
     }
     return (denom: string) => prices[denom]
-  }, [pool])
+  }, [pool, extraDenoms])
 
   const columns: ColumnDef<PoolSwap>[] = useMemo(() => {
     return [
