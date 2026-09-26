@@ -215,10 +215,16 @@ for (const poolId of poolIds) {
     const coveredToTime = await withBackoff(`pool ${poolId} time`, () =>
       blockTime(fetched.coveredTo, hosts)
     )
-    const { events, coveredTo } = trimToBucketBoundary(fetched.events, {
+    const trimmed = trimToBucketBoundary(fetched.events, {
       coveredTo: fetched.coveredTo,
       coveredToTime,
     })
+    const events = trimmed.events
+    // The final slice still drops its last bucket (it lies inside the
+    // existing coverage, whose rollup is complete; see `end`) but then
+    // finishes at `end`, rather than resuming just before the dropped events
+    // forever when the whole remaining range falls within that bucket.
+    const coveredTo = fetched.coveredTo >= end ? end : trimmed.coveredTo
     if (coveredTo <= from) {
       throw new Error(`pool ${poolId}: no progress at ${from}; lower --slice`)
     }
