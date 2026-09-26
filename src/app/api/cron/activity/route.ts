@@ -24,6 +24,10 @@ import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 // without the matching bearer token are rejected, and the route refuses to run
 // if CRON_SECRET is unset.
 export const dynamic = "force-dynamic"
+// Every LCD read must be live: Next 14 keeps fetch() responses in the Data
+// Cache by default, and a cached latest-block response pins every run to the
+// same tip, so the cursors stop advancing.
+export const fetchCache = "force-no-store"
 export const maxDuration = 300
 
 // Swap rows are kept this long; their 15-minute rollups are kept for good.
