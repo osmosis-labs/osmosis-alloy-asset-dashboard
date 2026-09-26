@@ -35,9 +35,6 @@ importers:
       '@cosmos-kit/keplr':
         specifier: ^2.17.1
         version: 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@walletconnect/sign-client@2.25.0(bufferutil@4.1.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8))(@walletconnect/types@2.25.0)(bufferutil@4.1.0)(starknet@8.9.2)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8)
-      '@cosmos-kit/leap':
-        specifier: ^2.17.1
-        version: 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@walletconnect/types@2.25.0)(bufferutil@4.1.0)(cosmjs-types@0.10.1)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8)
       '@cosmos-kit/react':
         specifier: ^2.24.1
         version: 2.24.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@interchain-ui/react@1.26.3(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(bufferutil@4.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(utf-8-validate@5.0.10)
@@ -520,25 +517,6 @@ packages:
 
   '@cosmos-kit/keplr@2.17.1':
     resolution: {integrity: sha512-szVutDVDCWE4bCUWNo6M49OVd1ta4opuc896KXBGPOwndSuw1si95n488zpo+ang3lRZ0IyaqpLVkDHdQ9lqSg==}
-
-  '@cosmos-kit/leap-extension@2.17.1':
-    resolution: {integrity: sha512-LXvCSAvRmAexnoqa9iYaKa8bGwIoHKIOl/YznBFBiWrkdjwOwabMXhOJ/UN+sZzhu0syBsinPoZVB+2amLsOjQ==}
-    peerDependencies:
-      '@cosmjs/amino': '>=0.32.3'
-      '@cosmjs/proto-signing': '>=0.32.3'
-
-  '@cosmos-kit/leap-metamask-cosmos-snap@0.17.1':
-    resolution: {integrity: sha512-/DSziXSePt72fYsc1/UIt64bYLSx/bjelGZPeWmJFDwNRjU8FUdvdvZxQHrLOLCwKFfzYgyB1Vvc4MPprM7kMw==}
-    peerDependencies:
-      '@cosmjs/amino': '>=0.32.3'
-      '@cosmjs/proto-signing': '>=0.32.3'
-      cosmjs-types: '>=0.9.0'
-
-  '@cosmos-kit/leap-mobile@2.16.1':
-    resolution: {integrity: sha512-NTmmT6kj68CYmQIup+M+uBichyH9B4R07gtFpfXI0AfyjFLRuEJrrhkEYt5hAMGmxOj21p7vbwjLtfPXb29a5w==}
-
-  '@cosmos-kit/leap@2.17.1':
-    resolution: {integrity: sha512-8L5SpANb3PVGUmk6ScnyoDbrkwmQ8GPuGvM9/9FzJud8k1B73CXQ1KsGLNjFK/FSteVQbN2n9+11K9UYEdoqPg==}
 
   '@cosmos-kit/react-lite@2.18.1':
     resolution: {integrity: sha512-Us7gBZtb1eYxcwMu74ii+pIeR4TE5Q+JhSXkyKUJHh/wDQyTNhCYGpp9PJUMUAiuLuPsv1qToEoeuk6gcD7XaQ==}
@@ -1360,27 +1338,9 @@ packages:
       '@walletconnect/types': ^2
       starknet: ^8
 
-  '@leapwallet/cosmos-snap-provider@0.1.26':
-    resolution: {integrity: sha512-KqT4OTECINPZohosLkAzdYotzV5YYJwzg2r/GKKMv3ndIuiqom/9WCaEs9W3KzPaRe69rOZpjbFmcu0gB4PSww==}
-
   '@mapbox/node-pre-gyp@1.0.11':
     resolution: {integrity: sha512-Yhlar6v9WQgUp/He7BdgzOz8lqMQ8sU+jkCq7Wx8Myc5YFJLbEe7lgui/V7G1qB1DJykHSGwreceSaD60Y0PUQ==}
     hasBin: true
-
-  '@metamask/object-multiplex@1.3.0':
-    resolution: {integrity: sha512-czcQeVYdSNtabd+NcYQnrM69MciiJyd1qvKH8WM2Id3C0ZiUUX5Xa/MK+/VUk633DBhVOwdNzAKIQ33lGyA+eQ==}
-    engines: {node: '>=12.0.0'}
-
-  '@metamask/providers@11.1.2':
-    resolution: {integrity: sha512-xjE4cKrGpKZjripkMKMStc0H4LXrWJPijfbaj1kKeDLVhRH2Yu3ZecV3iIhf1EIJePeA+Kx6Pcm7d0IVJ+ea7g==}
-    engines: {node: '>=16.0.0'}
-
-  '@metamask/safe-event-emitter@2.0.0':
-    resolution: {integrity: sha512-/kSXhY692qiV1MXu6EeOZvg5nECLclxNXcKCxJ3cXQgYuRymRHpdx/t7JXfsK+JLjwA1e1c1/SBrlQYpusC29Q==}
-
-  '@metamask/safe-event-emitter@3.1.3':
-    resolution: {integrity: sha512-Pnl74ukgoOkSItBRmZ9nnhdBbRtBI1ZvpeYjKNgxjVzDWa/AtruKZc+7LjfZ0iO8iYqh7Ts3bPs2Gu7M2hSf7g==}
-    engines: {node: '>=12.0.0'}
 
   '@msgpack/msgpack@3.1.3':
     resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==}
@@ -3633,9 +3593,6 @@ packages:
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
 
-  end-of-stream@1.4.5:
-    resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
-
   enhanced-resolve@5.17.1:
     resolution: {integrity: sha512-LMHl3dXhTcfv8gM4kEzIUeTQ+7fpdA0l2tUf34BddXPkz2A5xJ5L/Pchd5BL6rdccM9QGvu0sWZzK1Z1t4wwyg==}
     engines: {node: '>=10.13.0'}
@@ -4142,9 +4099,6 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  eth-rpc-errors@4.0.3:
-    resolution: {integrity: sha512-Z3ymjopaoft7JDoxZcEb3pwdGh7yiYMhOwm2doUt6ASXlMavpNlK6Cre0+IMl2VSGyEU9rkiperQhp5iRxn5Pg==}
-
   ethers@5.8.0:
     resolution: {integrity: sha512-DUq+7fHrCg1aPDFCHx6UIPb3nmt2XMpM7Y/g2gLhsl3lIBqeAfOJIl1qEvRf2uq3BiKxmh6Fh5pfp2ieyek7Kg==}
 
@@ -4182,10 +4136,6 @@ packages:
 
   exsolve@1.1.1:
     resolution: {integrity: sha512-9U/jZUgjnSGyntRr6y5Muu1MJcwFl6kPu7k8qLF0IMNfLqvw0NZ4nnVDq0RVoZ0RvCyumib4Ez3KYrVfilrw+g==}
-
-  extension-port-stream@2.1.1:
-    resolution: {integrity: sha512-qknp5o5rj2J9CRKfVB8KJr+uXQlrojNZzdESUPhKYLXf97TPcGf6qWWKmpsNNtUyOdzFhab1ON0jzouNxHHvow==}
-    engines: {node: '>=12.0.0'}
 
   fast-check@3.23.2:
     resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
@@ -4906,14 +4856,6 @@ packages:
 
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
-
-  json-rpc-engine@6.1.0:
-    resolution: {integrity: sha512-NEdLrtrq1jUZyfjkr9OCz9EzCNhnRyWtt1PAnvnhwy6e8XETS0Dtc+ZNCO2gvuAoKsIn2+vCSowXTYE4CkgnAQ==}
-    engines: {node: '>=10.0.0'}
-
-  json-rpc-middleware-stream@4.2.3:
-    resolution: {integrity: sha512-4iFb0yffm5vo3eFKDbQgke9o17XBcLQ2c3sONrXSbcOLzP8LTojqo8hRGVgtJShhm5q4ZDSNq039fAx9o65E1w==}
-    engines: {node: '>=14.0.0'}
 
   json-schema-to-ts@1.6.4:
     resolution: {integrity: sha512-pR4yQ9DHz6itqswtHCm26mw45FSNfQ9rEQjosaZErhn5J3J2sIViQiz8rDaezjKAhFGpmsoczYVBgGHzFw/stA==}
@@ -5834,9 +5776,6 @@ packages:
 
   pump@3.0.0:
     resolution: {integrity: sha512-LwZy+p3SFs1Pytd/jYct4wpv49HiYCqd9Rlc5ZVdk0V+8Yzv6jR5Blk3TRmPL1ft69TxP0IMZGJ+WPFU2BFhww==}
-
-  pump@3.0.4:
-    resolution: {integrity: sha512-VS7sjc6KR7e1ukRFhQSY5LM2uBWAUPiOPa/A3mkKmiMwSmRFUITt0xuj+/lesgnCv+dPIEYlkzrcyXgquIHMcA==}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -6809,9 +6748,6 @@ packages:
   web-vitals@0.2.4:
     resolution: {integrity: sha512-6BjspCO9VriYy12z356nL6JBS0GYeEcA457YyRzD+dD6XYCQ75NKhcOHUMHentOE7OcVCIXXDvOm0jKFfQG2Gg==}
 
-  webextension-polyfill@0.10.0:
-    resolution: {integrity: sha512-c5s35LgVa5tFaHhrZDnr3FpQpjj1BB+RXhLTYUxGqBVN460HkbM8TBtEqdXWbpTKfzwCcjAZVF7zXCYSKtcp9g==}
-
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
 
@@ -7687,122 +7623,6 @@ snapshots:
       - encoding
       - ioredis
       - starknet
-      - supports-color
-      - typescript
-      - uWebSockets.js
-      - utf-8-validate
-      - zod
-
-  '@cosmos-kit/leap-extension@2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@chain-registry/keplr': 1.74.674
-      '@cosmjs/amino': 0.36.2
-      '@cosmjs/proto-signing': 0.36.2
-      '@cosmos-kit/core': 2.18.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@react-native-async-storage/async-storage'
-      - '@upstash/redis'
-      - '@vercel/kv'
-      - bufferutil
-      - encoding
-      - ioredis
-      - supports-color
-      - uWebSockets.js
-      - utf-8-validate
-
-  '@cosmos-kit/leap-metamask-cosmos-snap@0.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(bufferutil@4.1.0)(cosmjs-types@0.10.1)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@chain-registry/keplr': 1.74.674
-      '@cosmjs/amino': 0.36.2
-      '@cosmjs/proto-signing': 0.36.2
-      '@cosmos-kit/core': 2.18.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@leapwallet/cosmos-snap-provider': 0.1.26
-      '@metamask/providers': 11.1.2
-      cosmjs-types: 0.10.1
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@react-native-async-storage/async-storage'
-      - '@upstash/redis'
-      - '@vercel/kv'
-      - bufferutil
-      - encoding
-      - ioredis
-      - supports-color
-      - uWebSockets.js
-      - utf-8-validate
-
-  '@cosmos-kit/leap-mobile@2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@walletconnect/types@2.25.0)(bufferutil@4.1.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8)':
-    dependencies:
-      '@chain-registry/keplr': 1.74.674
-      '@cosmos-kit/core': 2.18.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@walletconnect/types@2.25.0)(bufferutil@4.1.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8)
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@cosmjs/amino'
-      - '@cosmjs/proto-signing'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@react-native-async-storage/async-storage'
-      - '@upstash/redis'
-      - '@vercel/kv'
-      - '@walletconnect/types'
-      - bufferutil
-      - encoding
-      - ioredis
-      - supports-color
-      - typescript
-      - uWebSockets.js
-      - utf-8-validate
-      - zod
-
-  '@cosmos-kit/leap@2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@walletconnect/types@2.25.0)(bufferutil@4.1.0)(cosmjs-types@0.10.1)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8)':
-    dependencies:
-      '@cosmos-kit/leap-extension': 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@cosmos-kit/leap-metamask-cosmos-snap': 0.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(bufferutil@4.1.0)(cosmjs-types@0.10.1)(utf-8-validate@5.0.10)
-      '@cosmos-kit/leap-mobile': 2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@walletconnect/types@2.25.0)(bufferutil@4.1.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8)
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@cosmjs/amino'
-      - '@cosmjs/proto-signing'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@react-native-async-storage/async-storage'
-      - '@upstash/redis'
-      - '@vercel/kv'
-      - '@walletconnect/types'
-      - bufferutil
-      - cosmjs-types
-      - encoding
-      - ioredis
       - supports-color
       - typescript
       - uWebSockets.js
@@ -8863,13 +8683,6 @@ snapshots:
       long: 5.3.2
       starknet: 8.9.2
 
-  '@leapwallet/cosmos-snap-provider@0.1.26':
-    dependencies:
-      '@cosmjs/amino': 0.32.4
-      '@cosmjs/proto-signing': 0.32.4
-      bignumber.js: 9.1.2
-      long: 5.3.2
-
   '@mapbox/node-pre-gyp@1.0.11':
     dependencies:
       detect-libc: 2.0.3
@@ -8884,30 +8697,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-
-  '@metamask/object-multiplex@1.3.0':
-    dependencies:
-      end-of-stream: 1.4.5
-      once: 1.4.0
-      readable-stream: 2.3.8
-
-  '@metamask/providers@11.1.2':
-    dependencies:
-      '@metamask/object-multiplex': 1.3.0
-      '@metamask/safe-event-emitter': 3.1.3
-      detect-browser: 5.3.0
-      eth-rpc-errors: 4.0.3
-      extension-port-stream: 2.1.1
-      fast-deep-equal: 3.1.3
-      is-stream: 2.0.1
-      json-rpc-engine: 6.1.0
-      json-rpc-middleware-stream: 4.2.3
-      pump: 3.0.4
-      webextension-polyfill: 0.10.0
-
-  '@metamask/safe-event-emitter@2.0.0': {}
-
-  '@metamask/safe-event-emitter@3.1.3': {}
 
   '@msgpack/msgpack@3.1.3': {}
 
@@ -11582,10 +11371,6 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  end-of-stream@1.4.5:
-    dependencies:
-      once: 1.4.0
-
   enhanced-resolve@5.17.1:
     dependencies:
       graceful-fs: 4.2.11
@@ -12236,10 +12021,6 @@ snapshots:
 
   etag@1.8.1: {}
 
-  eth-rpc-errors@4.0.3:
-    dependencies:
-      fast-safe-stringify: 2.1.1
-
   ethers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     dependencies:
       '@ethersproject/abi': 5.8.0
@@ -12319,10 +12100,6 @@ snapshots:
   exit-hook@2.2.1: {}
 
   exsolve@1.1.1: {}
-
-  extension-port-stream@2.1.1:
-    dependencies:
-      webextension-polyfill: 0.10.0
 
   fast-check@3.23.2:
     dependencies:
@@ -13053,17 +12830,6 @@ snapshots:
   jsesc@2.5.2: {}
 
   json-buffer@3.0.1: {}
-
-  json-rpc-engine@6.1.0:
-    dependencies:
-      '@metamask/safe-event-emitter': 2.0.0
-      eth-rpc-errors: 4.0.3
-
-  json-rpc-middleware-stream@4.2.3:
-    dependencies:
-      '@metamask/safe-event-emitter': 3.1.3
-      json-rpc-engine: 6.1.0
-      readable-stream: 2.3.8
 
   json-schema-to-ts@1.6.4:
     dependencies:
@@ -13997,11 +13763,6 @@ snapshots:
   pump@3.0.0:
     dependencies:
       end-of-stream: 1.4.4
-      once: 1.4.0
-
-  pump@3.0.4:
-    dependencies:
-      end-of-stream: 1.4.5
       once: 1.4.0
 
   punycode@2.3.1: {}
@@ -15116,8 +14877,6 @@ snapshots:
       d3-timer: 3.0.1
 
   web-vitals@0.2.4: {}
-
-  webextension-polyfill@0.10.0: {}
 
   webidl-conversions@3.0.1: {}
 

@@ -6,7 +6,6 @@ import { AminoTypes, defaultRegistryTypes, GasPrice } from "@cosmjs/stargate"
 import { wallets as compass } from "@cosmos-kit/compass"
 import { wallets as cosmostation } from "@cosmos-kit/cosmostation"
 import { wallets as keplr } from "@cosmos-kit/keplr"
-import { wallets as leap } from "@cosmos-kit/leap"
 import { ChainProvider, useModalTheme } from "@cosmos-kit/react"
 import { wallets as station } from "@cosmos-kit/station"
 import { wallets as trust } from "@cosmos-kit/trust"
@@ -55,7 +54,6 @@ const WalletProvider = ({ children }: { children: ReactNode }) => {
       assetLists={osmosisAsset}
       wallets={[
         ...keplr,
-        ...leap,
         ...compass,
         ...cosmostation,
         ...station,
