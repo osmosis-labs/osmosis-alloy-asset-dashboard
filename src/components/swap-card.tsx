@@ -32,6 +32,7 @@ import {
   quoteMatches,
   toBaseAmount,
 } from "@/lib/swap-amount"
+import { describeSwapError, ErrorAsset } from "@/lib/swap-errors"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -191,6 +192,17 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
     return estimatedOut.data
   }
 
+  // Every asset the form can show, for turning denoms and base amounts in
+  // error messages into symbols and display amounts.
+  const errorAssets: ErrorAsset[] = useMemo(
+    () =>
+      _.uniqBy(
+        pools.flatMap((pool) => [...(pool.assets ?? []), pool.alloy.asset]),
+        "denom"
+      ),
+    [pools]
+  )
+
   const [isSwapping, setIsSwapping] = useState(false)
   const swap = async () => {
     setIsSwapping(true)
@@ -244,7 +256,10 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
       console.log(txId)
     } catch (e: any) {
       toast.error("Swap Failed", {
-        description: e.message,
+        description: describeSwapError(String(e?.message ?? e), errorAssets, {
+          in: inAsset[0],
+          out: outAsset[0],
+        }),
       })
       console.error(e)
     } finally {
@@ -312,7 +327,10 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
       console.log(txId)
     } catch (e: any) {
       toast.error("Force Exit Failed", {
-        description: e.message,
+        description: describeSwapError(String(e?.message ?? e), errorAssets, {
+          in: inAsset[0],
+          out: outAsset[0],
+        }),
       })
       console.error(e)
     } finally {
@@ -515,10 +533,11 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
           </div>
         )}
         {(price.error?.message || estimatedOut.error?.message) && (
-          <div className="break-all rounded-md bg-destructive p-1 text-xs font-medium text-destructive-foreground opacity-70">
-            {(price.error?.message || estimatedOut.error?.message)?.replace(
-              `(${outAsset[0].denom})`,
-              outAsset[0].symbol
+          <div className="break-words rounded-md bg-destructive p-1 text-xs font-medium text-destructive-foreground opacity-70">
+            {describeSwapError(
+              price.error?.message || estimatedOut.error?.message,
+              errorAssets,
+              { in: inAsset[0], out: outAsset[0] }
             )}
           </div>
         )}
