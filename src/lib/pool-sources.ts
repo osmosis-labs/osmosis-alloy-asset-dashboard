@@ -92,24 +92,24 @@ export const getPoolSources = (
     .sortBy((v) => -v.totalAmount)
     .value()
 
-// Per-variant color: its provider's color (as in the chart's Provider view),
-// darkened for the second and later variants from the same provider (e.g.
-// cbBTC.axl and WBTC.eth.axl) so they stay distinguishable while reading as
-// one provider.
+// Color for the index-th variant: the five palette colors, then the same
+// colors darkened for a sixth or later variant.
+export const variantColor = (index: number) =>
+  index < 5
+    ? sourceColor(index)
+    : `color-mix(in srgb, ${sourceColor(index)} 60%, black)`
+
+// Per-variant color: one palette color per variant, most prevalent first, so
+// variants from the same provider (e.g. cbBTC.axl and WBTC.eth.axl) are as
+// easy to tell apart as any others. The palette has five colors; a sixth or
+// later variant reuses them, darkened.
 export const getVariantStyles = (pool: PoolOverview) =>
-  _.chain(getPoolSources(pool, "issuer"))
-    .flatMap((source, sourceIndex) =>
-      _.sortBy(source.assets, (a) => -a.formattedAmount).map((a, rank) => {
-        const base = sourceColor(sourceIndex)
+  _.chain(getPoolSources(pool, "variant"))
+    .flatMap((source, index) =>
+      source.assets.map((a) => {
         return [
           variantDenom(a),
-          {
-            symbol: variantSymbol(a),
-            color:
-              rank === 0
-                ? base
-                : `color-mix(in srgb, ${base} ${Math.max(100 - rank * 25, 40)}%, black)`,
-          },
+          { symbol: variantSymbol(a), color: variantColor(index) },
         ]
       })
     )
