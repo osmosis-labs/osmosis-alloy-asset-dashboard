@@ -11,6 +11,7 @@ import {
   ChevronsUpDown,
   Copy,
   ExternalLink,
+  Info,
   Loader2,
   ShieldAlert,
   Snowflake,
@@ -34,6 +35,11 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { DecimalSpan } from "@/components/decimal-span"
@@ -319,7 +325,27 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
       <div className="flex w-full items-center">
         <div className="flex items-center gap-2">
           <Switch checked={isForceExit} onCheckedChange={setIsForceExit} />
-          <div className="text-sm font-semibold">Force Exit</div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1 text-sm font-semibold"
+              >
+                Force Exit
+                <Info className="size-3 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 space-y-2 text-xs">
+              <p>
+                Force Exit withdraws a variant directly through the alloy
+                pool&apos;s smart contract, bypassing Osmosis routing.
+              </p>
+              <p>
+                It only works while the pool is not frozen: a frozen pool&apos;s
+                contract rejects exits.
+              </p>
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="flex-1" />
         <Button
@@ -532,13 +558,6 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
                         ? "Force Exit"
                         : "Swap"}
           </Button>
-        )}
-        {isForceExit && (
-          <div className="text-xs font-semibold text-muted-foreground">
-            *Force Exit is a feature that allows you to exit the pool through
-            the alloy pool&apos;s smart contract, bypassing the Osmosis routing
-            mechanism.
-          </div>
         )}
       </div>
       <div className="max-w-[300px] self-center text-xs text-muted-foreground">
