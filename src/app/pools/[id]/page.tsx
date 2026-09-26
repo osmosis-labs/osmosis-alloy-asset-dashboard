@@ -38,13 +38,13 @@ export const revalidate = 300 // 5 minutes
 // Above Vercel's 15s default; see src/app/page.tsx.
 export const maxDuration = 60
 
+// Next 15: route params arrive as a Promise.
+type PoolPageProps = { params: Promise<{ id: string }> }
+
 export const generateMetadata = async ({
-  params: { id },
-}: {
-  params: {
-    id: string
-  }
-}): Promise<Metadata> => {
+  params,
+}: PoolPageProps): Promise<Metadata> => {
+  const { id } = await params
   const pool = await getPoolOverview(id)
 
   if (!pool) {
@@ -66,13 +66,8 @@ export async function generateStaticParams() {
   }))
 }
 
-export default async function Home({
-  params: { id },
-}: {
-  params: {
-    id: string
-  }
-}) {
+export default async function Home({ params }: PoolPageProps) {
+  const { id } = await params
   const pool = await getPoolOverview(id)
 
   if (!pool) {

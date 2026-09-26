@@ -16,14 +16,16 @@ export const maxDuration = 60
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  // Next 15: route params arrive as a Promise.
+  const { id } = await params
   const range = new URL(request.url).searchParams.get("range") ?? "24h"
-  if (!(range in ACTIVITY_RANGE_DAYS) || !/^\d+$/.test(params.id)) {
+  if (!(range in ACTIVITY_RANGE_DAYS) || !/^\d+$/.test(id)) {
     return NextResponse.json({ error: "bad request" }, { status: 400 })
   }
   try {
-    const activity = await getPoolInOutAssets(params.id, range)
+    const activity = await getPoolInOutAssets(id, range)
     const denoms = await getDenomMetaSafe(
       _.uniq(
         activity.activities.flatMap((a) => [..._.keys(a.in), ..._.keys(a.out)])
@@ -31,7 +33,7 @@ export async function GET(
     )
     return NextResponse.json({ ...activity, denoms })
   } catch (e) {
-    console.error(`[api/activity] pool ${params.id} ${range}: ${e}`)
+    console.error(`[api/activity] pool ${id} ${range}: ${e}`)
     return NextResponse.json({ error: "unavailable" }, { status: 502 })
   }
 }
