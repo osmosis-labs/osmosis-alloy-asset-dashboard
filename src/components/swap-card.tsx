@@ -1,4 +1,4 @@
-import { Reducer, useEffect, useMemo, useReducer, useState } from "react"
+import { useEffect, useMemo, useReducer, useState } from "react"
 import { POOL_STATUS } from "@/constants/status"
 import { getUserAssets } from "@/services/asset"
 import { getBaseDirectQuote, getDirectQuote } from "@/services/quote"
@@ -89,8 +89,8 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
     return new BigNumber(asset?.amount || 0).shiftedBy(-inAsset[0].decimal)
   }, [balance.data, inAsset[0]])
 
-  const [inAmount, setInAmount] = useReducer<Reducer<BigNumber, string>>(
-    (prevState, action) => {
+  const [inAmount, setInAmount] = useReducer(
+    (prevState: BigNumber, action: string) => {
       if (!action) return new BigNumber(0)
       const bn = new BigNumber(action, 10)
       if (bn.isNaN()) return prevState
