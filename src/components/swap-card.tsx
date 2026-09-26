@@ -561,8 +561,8 @@ const SwapCard = ({ pools }: { pools: MinimalAssetPool[] }) => {
         )}
       </div>
       <div className="max-w-[300px] self-center text-xs text-muted-foreground">
-        *This only routes through alloy pool which should swap 1:1, depending on
-        liquidity of the assets in the pool.
+        Swaps go directly through this alloy pool at 1:1, up to the amount of
+        the variant it holds.
       </div>
     </div>
   )
