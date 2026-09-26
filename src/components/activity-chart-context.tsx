@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import type { DenomMeta } from "@/services/denom-meta"
 import { BigNumber } from "bignumber.js"
 import _ from "lodash"
 import { LogIn, LogOut } from "lucide-react"
@@ -19,6 +20,7 @@ import dayjs from "@/lib/dayjs"
 import { NumberFormatter } from "@/lib/number"
 import {
   getVariantStyles,
+  variantColor,
   variantDenom,
   variantSymbol,
 } from "@/lib/pool-sources"
@@ -34,12 +36,29 @@ import {
 } from "@/components/ui/chart"
 import { DecimalSpan } from "@/components/decimal-span"
 
+// Base amounts to display units. Denoms without known decimals are dropped:
+// showing them as zero would hide real flow.
+const toDisplay = (
+  amounts: Record<string, string>,
+  decimals: _.Dictionary<number>
+) =>
+  _.chain(amounts)
+    .pickBy((_v, denom) => decimals[denom] !== undefined)
+    .mapValues((v, denom) =>
+      new BigNumber(v).shiftedBy(-decimals[denom]).toNumber()
+    )
+    .value()
+
 const ActivityChartContent = ({
   activities,
+  denoms,
   className,
   pool,
 }: {
   activities: PoolInOutAssets[]
+  // Symbol and decimals for denoms in the activity (from the API), covering
+  // variants no longer in the pool's current reserves.
+  denoms: Record<string, DenomMeta>
   pool: PoolOverview
   className?: string
 }) => {
@@ -50,33 +69,65 @@ const ActivityChartContent = ({
   // The alloy token is not a reserve (the transmuter mints it on the way out
   // and burns it on the way in), so it has no series here. Variants are
   // labelled with the frontend symbol and colored like their source in the
-  // Asset Sources chart.
+  // Asset Sources chart. Variants that appear in the activity but are no
+  // longer in the current reserves (drained to zero, or removed) follow the
+  // current ones, with the next palette colors.
+  const historicalDenoms = useMemo(() => {
+    const current = new Set(
+      _.compact([
+        ...pool.reserveCoins.map((c) => variantDenom(c)),
+        pool.alloy.asset?.base,
+      ])
+    )
+    return _.chain(activities)
+      .flatMap((a) => [..._.keys(a.in), ..._.keys(a.out)])
+      .uniq()
+      .filter((d) => !current.has(d) && !!denoms[d])
+      .sortBy((d) => denoms[d].symbol)
+      .value()
+  }, [activities, denoms, pool])
+
   const config = useMemo(() => {
     const variantStyles = getVariantStyles(pool)
-    return _.fromPairs(
-      pool.reserveCoins.map((coin) => {
-        const denom = variantDenom(coin) ?? ""
-        return [
-          `net.${denom}`,
-          {
-            label: variantStyles[denom]?.symbol ?? variantSymbol(coin),
-            symbol: variantStyles[denom]?.symbol ?? variantSymbol(coin),
-            color: variantStyles[denom]?.color ?? "hsl(var(--chart-1))",
-            stackId: "net",
-          },
-        ]
-      })
-    ) as ChartConfig
-  }, [pool])
+    const currentSeries = pool.reserveCoins.map((coin) => {
+      const denom = variantDenom(coin) ?? ""
+      return [
+        `net.${denom}`,
+        {
+          label: variantStyles[denom]?.symbol ?? variantSymbol(coin),
+          symbol: variantStyles[denom]?.symbol ?? variantSymbol(coin),
+          color: variantStyles[denom]?.color ?? "hsl(var(--chart-1))",
+          stackId: "net",
+        },
+      ]
+    })
+    const historicalSeries = historicalDenoms.map((denom, i) => [
+      `net.${denom}`,
+      {
+        label: denoms[denom].symbol,
+        symbol: denoms[denom].symbol,
+        color: variantColor(pool.reserveCoins.length + i),
+        stackId: "net",
+      },
+    ])
+    return _.fromPairs([...currentSeries, ...historicalSeries]) as ChartConfig
+  }, [pool, denoms, historicalDenoms])
 
+  // Decimals by denom: the pool's reserves and alloy, then the API's metadata
+  // for anything else. A denom without known decimals is left out of the
+  // chart rather than shown as zero.
   const poolAssetDecimals = useMemo(() => {
-    return _.chain(pool.reserveCoins)
-      .map((p) => p.asset)
-      .concat(pool.alloy.asset)
-      .map((a) => [a.denom, a.decimal])
-      .fromPairs()
-      .value() as _.Dictionary<number>
-  }, [pool])
+    return {
+      ..._.mapValues(denoms, (d) => d.decimals),
+      ..._.chain(pool.reserveCoins)
+        .map((p) => p.asset)
+        .concat(pool.alloy.asset)
+        .compact()
+        .map((a) => [a.denom, a.decimal])
+        .fromPairs()
+        .value(),
+    } as _.Dictionary<number>
+  }, [pool, denoms])
 
   const data = useMemo(() => {
     return _.chain(activities)
@@ -85,28 +136,8 @@ const ActivityChartContent = ({
         return {
           timestamp,
           count: activity.count,
-          in: _.chain(activity.in)
-            .mapValues((v, k) => {
-              try {
-                return new BigNumber(v)
-                  .shiftedBy(-poolAssetDecimals[k])
-                  .toNumber()
-              } catch (e) {
-                return 0
-              }
-            })
-            .value(),
-          out: _.chain(activity.out)
-            .mapValues((v, k) => {
-              try {
-                return new BigNumber(v)
-                  .shiftedBy(-poolAssetDecimals[k])
-                  .toNumber()
-              } catch (e) {
-                return 0
-              }
-            })
-            .value(),
+          in: toDisplay(activity.in, poolAssetDecimals),
+          out: toDisplay(activity.out, poolAssetDecimals),
         }
       })
       .map((point) => ({

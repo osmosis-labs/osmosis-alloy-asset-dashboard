@@ -1,10 +1,7 @@
 import { Suspense } from "react"
-import {
-  getAssetMap,
-  getAssetPrice,
-  getFrontendAssetSymbolsSafe,
-} from "@/services/asset"
+import { getAssetPrice } from "@/services/asset"
 import { getContractNamesSafe } from "@/services/contracts"
+import { getDenomMetaSafe } from "@/services/denom-meta"
 import { ACTIVITY_MAX_SWAPS, getPoolSwaps } from "@/services/pool"
 import _ from "lodash"
 import { Loader2 } from "lucide-react"
@@ -12,7 +9,6 @@ import { Loader2 } from "lucide-react"
 import { PoolOverview } from "@/types/pool"
 import { PoolSwap } from "@/types/tx"
 import { variantDenom } from "@/lib/pool-sources"
-import { getAssetImageUrl } from "@/lib/utils"
 import {
   Card,
   CardContent,
@@ -44,34 +40,25 @@ const getExtraDenomMeta = async (
     swaps.flatMap((s) => [s.in.denom, s.out.denom])
   ).filter((d) => !known.has(d))
   if (missing.length === 0) return {}
-  try {
-    const [assetMap, symbols, prices] = await Promise.all([
-      getAssetMap(),
-      getFrontendAssetSymbolsSafe(),
-      Promise.all(missing.map((d) => getAssetPrice(d))),
-    ])
-    return _.fromPairs(
-      _.compact(
-        missing.map((denom, i) => {
-          const asset = assetMap[denom]
-          if (!asset) return null
-          const price = Number(prices[i]?.amount)
-          return [
-            denom,
-            {
-              symbol: symbols[denom] ?? asset.symbol,
-              decimals: asset.decimal,
-              image: getAssetImageUrl(asset),
-              price: Number.isFinite(price) && price > 0 ? price : undefined,
-            },
-          ]
-        })
-      )
+  const [meta, prices] = await Promise.all([
+    getDenomMetaSafe(missing),
+    Promise.all(missing.map((d) => getAssetPrice(d))),
+  ])
+  return _.fromPairs(
+    _.compact(
+      missing.map((denom, i) => {
+        if (!meta[denom]) return null
+        const price = Number(prices[i]?.amount)
+        return [
+          denom,
+          {
+            ...meta[denom],
+            price: Number.isFinite(price) && price > 0 ? price : undefined,
+          },
+        ]
+      })
     )
-  } catch (e) {
-    console.error(`Error resolving swap denoms for pool ${pool.id}: ${e}`)
-    return {}
-  }
+  )
 }
 
 const TransactionTable = ({ pool }: { pool: PoolOverview }) => {

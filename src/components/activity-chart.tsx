@@ -1,6 +1,7 @@
 "use client"
 
 import { POOL_STATUS } from "@/constants/status"
+import type { DenomMeta } from "@/services/denom-meta"
 import type { PoolActivity } from "@/services/pool"
 import { Loader2, Snowflake } from "lucide-react"
 import useSWR from "swr"
@@ -30,7 +31,9 @@ const Message = ({ children }: { children: React.ReactNode }) => (
   </div>
 )
 
-const fetchActivity = async (url: string): Promise<PoolActivity> => {
+type ActivityResponse = PoolActivity & { denoms?: Record<string, DenomMeta> }
+
+const fetchActivity = async (url: string): Promise<ActivityResponse> => {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`activity ${res.status}`)
   return res.json()
@@ -111,6 +114,7 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
             )}
             <ActivityChartContent
               activities={data.activities}
+              denoms={data.denoms ?? {}}
               className="h-[300px]"
               pool={pool}
             />
