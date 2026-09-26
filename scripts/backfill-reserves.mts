@@ -4,12 +4,17 @@
 //
 //   pnpm reserves:backfill --env ~/.claude/alloy-dashboard.env [--days 365]
 //                          [--hourly-days 7] [--pool 3497]
+//                          [--host https://lcd.archive.osmosis.zone]
 //
 // For each target time, finds the block height once (shared by all pools),
 // then queries each pool's get_total_pool_liquidity at that height on the
 // archive LCD. Targets already stored are skipped, so it resumes on re-run.
 // Targets walk newest first, so once a pool's contract is missing at a height
 // the pool is dropped from all earlier targets.
+//
+// --host defaults to the Osmosis archive. For recent targets any LCD that
+// keeps enough state and serves historical smart queries works too (several
+// public ones keep a few weeks), which helps when the archive is down.
 import os from "node:os"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
@@ -22,6 +27,7 @@ const { values: args } = parseArgs({
     days: { type: "string", default: "365" },
     "hourly-days": { type: "string", default: "7" },
     pool: { type: "string", multiple: true },
+    host: { type: "string", multiple: true },
   },
 })
 if (args.env) {
@@ -62,6 +68,9 @@ const withBackoff = async <T,>(
   }
 }
 
+const hosts: string[] = args.host?.length
+  ? args.host
+  : ["https://lcd.archive.osmosis.zone"]
 const db = getPrisma()
 const poolIds: string[] = args.pool?.length
   ? args.pool
@@ -70,12 +79,14 @@ const poolIds: string[] = args.pool?.length
       .then((pools: { id: string }[]) => pools.map((p) => p.id))
 const contracts = Object.fromEntries(
   await Promise.all(
-    poolIds.map(async (id) => [id, await poolContractAddress(id)] as const)
+    poolIds.map(
+      async (id) => [id, await poolContractAddress(id, hosts)] as const
+    )
   )
 )
 
 const days = Number(args.days)
-const tip = await chainTip()
+const tip = await chainTip(hosts)
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
 const hourlyDays = Number(args["hourly-days"])
@@ -117,11 +128,11 @@ for (const { time: targetTime, window } of targets) {
 
   const { height, time } = await withBackoff(
     `height @${target.toISOString()}`,
-    () => heightAtTime(target, { tip })
+    () => heightAtTime(target, { tip, hosts })
   )
   for (const poolId of pending) {
     const liquidity = await withBackoff(`pool ${poolId} @${height}`, () =>
-      poolLiquidityAt(contracts[poolId], height)
+      poolLiquidityAt(contracts[poolId], height, hosts)
     )
     if (liquidity === null) {
       beforeCreation.add(poolId) // contract not instantiated yet
