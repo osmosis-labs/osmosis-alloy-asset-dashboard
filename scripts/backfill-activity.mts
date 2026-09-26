@@ -116,12 +116,16 @@ const PRUNE_TAIL_MS = 30 * 60_000
 
 // First height at which the pool's contract exists (bisection on the
 // archive), so a long backfill does not walk empty blocks before the pool.
+// Resolution of the bisection: the result is within this many blocks below
+// the contract's first height.
+const CREATION_PRECISION = 2000
+
 const creationHeight = async (poolId: string, hi: number) => {
   const address = await withBackoff(`pool ${poolId} contract`, () =>
     poolContractAddress(poolId, hosts)
   )
   let lo = 1
-  while (hi - lo > 2000) {
+  while (hi - lo > CREATION_PRECISION) {
     const mid = Math.floor((lo + hi) / 2)
     const liquidity = await withBackoff(`pool ${poolId} exists @${mid}`, () =>
       poolLiquidityAt(address, mid, hosts)
@@ -178,16 +182,24 @@ for (const poolId of poolIds) {
     heightAtTime(cursor.coveredFrom, { tip: chain, hosts })
   )
   const end = Math.min(Number(cursor.height), coverageStart.height + 2000)
-  const poolStart = Math.max(start, await creationHeight(poolId, end))
+  const created = await creationHeight(poolId, end)
+  const poolStart = Math.max(start, created)
 
-  // Resume a previous run over the same (or a wider) range.
-  let from =
+  // Resume a previous run over the same (or a wider) range. Which height the
+  // creation bisection lands on depends on its upper bound (`end`), so a re-run
+  // can start up to CREATION_PRECISION blocks earlier than the run it resumes;
+  // those blocks precede the contract and hold no swaps, so a stored range
+  // starting within that margin still covers the pool. (The margin does not
+  // apply when the start comes from --days: those blocks are real history.)
+  const startMargin = created >= start ? CREATION_PRECISION : 0
+  const resumable =
     cursor.backfillFrom !== null &&
     cursor.backfillTo !== null &&
-    Number(cursor.backfillFrom) <= poolStart
-      ? Math.max(Number(cursor.backfillTo), poolStart)
-      : poolStart
-  if (cursor.backfillFrom === null || Number(cursor.backfillFrom) > poolStart) {
+    Number(cursor.backfillFrom) <= poolStart + startMargin
+  let from = resumable
+    ? Math.max(Number(cursor.backfillTo), poolStart)
+    : poolStart
+  if (!resumable) {
     await db.activityCursor.update({
       where: { poolId },
       data: { backfillFrom: BigInt(poolStart), backfillTo: BigInt(poolStart) },
