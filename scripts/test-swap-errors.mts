@@ -18,18 +18,31 @@ const allUsdt = {
 }
 const assets = [usdtAtom, allUsdt]
 
+// Chain errors reach the wallet wrapped in the message path, e.g.:
+const wrapped = (inner: string) =>
+  `failed to execute message; message index: 0: dispatch: submessages: ${inner}: execute wasm contract failed`
+
 test("JSON error bodies are unwrapped", () => {
   assert.equal(unwrapErrorMessage('{"message":"boom"}'), "boom")
   assert.equal(unwrapErrorMessage("plain text"), "plain text")
   assert.equal(unwrapErrorMessage('{"code":3}'), '{"code":3}')
 })
 
-test("pool liquidity error is shown in display units", () => {
+test("SQS pool shortfall, raw form with the denom in parentheses", () => {
   const raw =
-    '{"message":"insufficient balance of token USDT.eth.atom, balance (2700332), amount (10000000)"}'
+    '{"message":"insufficient balance of token (ibc/USDTATOM), balance (2700332), amount (10000000)"}'
   assert.equal(
     describeSwapError(raw, assets),
     "The pool only holds 2.700332 USDT.eth.atom, and this swap needs 10. Try a smaller amount or another variant."
+  )
+})
+
+test("SQS pool shortfall naming the token by symbol", () => {
+  const raw =
+    '{"message":"insufficient balance of token USDT.eth.atom, balance (2700332), amount (10000000)"}'
+  assert.match(
+    describeSwapError(raw, assets),
+    /only holds 2\.700332 USDT\.eth\.atom/
   )
 })
 
@@ -43,6 +56,56 @@ test("unfamiliar token symbol falls back to the quoted output asset", () => {
   assert.equal(
     describeSwapError(raw, assets),
     "The pool does not hold enough USDT for this swap."
+  )
+})
+
+test("transmuter pool shortfall in a failed transaction", () => {
+  const raw = wrapped(
+    "Insufficient pool asset: required: 10000000ibc/USDTATOM, available: 2700332ibc/USDTATOM"
+  )
+  assert.match(
+    describeSwapError(raw, assets),
+    /only holds 2\.700332 USDT\.eth\.atom, and this swap needs 10\./
+  )
+})
+
+test("frozen pool", () => {
+  assert.equal(
+    describeSwapError(wrapped("The pool is currently inactive"), assets),
+    "This pool is frozen: swaps and Force Exit are disabled until it is reactivated."
+  )
+})
+
+test("corrupted asset deposit", () => {
+  assert.equal(
+    describeSwapError(
+      wrapped(
+        "Corrupted asset: ibc/USDTATOM must not increase in amount or weight"
+      ),
+      assets
+    ),
+    "USDT.eth.atom is marked as corrupted in this pool: it can only be taken out, not deposited."
+  )
+})
+
+test("rate limiter, transmuter and SQS forms", () => {
+  const expected =
+    "This swap would take USDT.eth.atom to 62% of the pool, above its 50% limit. Try a smaller amount."
+  assert.equal(
+    describeSwapError(
+      wrapped(
+        "Upper limit exceeded for `ibc/USDTATOM`, upper limit is 0.5, but the resulted weight is 0.620000000000000000"
+      ),
+      assets
+    ),
+    expected
+  )
+  assert.equal(
+    describeSwapError(
+      '{"message":"invalid upper limit (0.500000000000000000) for weight (0.62) and denom (ibc/USDTATOM)"}',
+      assets
+    ),
+    expected
   )
 })
 

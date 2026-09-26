@@ -22,10 +22,22 @@ export const unwrapErrorMessage = (raw: string): string => {
 const displayAmount = (base: string, asset: ErrorAsset) =>
   new BigNumber(base).shiftedBy(-asset.decimal).toFormat()
 
+// Pool weights arrive as decimals ("0.62"); show them as percentages.
+const percent = (weight: string) =>
+  `${new BigNumber(weight).times(100).decimalPlaces(2).toFormat()}%`
+
+// A denom or coin denom as written in an error: bare, in parentheses or in
+// backticks.
+const DENOM = String.raw`[(\x60]?([a-zA-Z][^\s,()\x60]*)[)\x60]?`
+
 // A readable version of a quote or transaction error for the swap form:
 // amounts in display units with symbols instead of base units and denoms.
 // `quotedOut` is the asset the quote pays out, the only one a pool can run
 // short of, used when the error names a token by an unfamiliar symbol.
+//
+// Covers the transmuter's (v3.2) errors for frozen pools, corrupted assets,
+// pool shortfalls and rate limiters as they surface in a failed transaction,
+// and SQS's quote-time equivalents.
 export const describeSwapError = (
   raw: string,
   assets: ErrorAsset[],
@@ -34,21 +46,69 @@ export const describeSwapError = (
   const message = unwrapErrorMessage(raw)
   const find = (token: string) =>
     assets.find((a) => a.symbol === token || a.denom === token)
+  const label = (token: string) => find(token)?.symbol ?? token
 
-  // SQS quote: the pool's reserve of the output token cannot cover the swap,
-  // e.g. "insufficient balance of token USDT.eth.atom, balance (2700332),
-  // amount (10000000)".
-  const pool = message.match(
-    /insufficient balance of token (\S+?),? balance \((\d+)\),? amount \((\d+)\)/i
+  // Frozen pool (transmuter InactivePool): every swap and exit is rejected.
+  if (/the pool is currently inactive/i.test(message)) {
+    return "This pool is frozen: swaps and Force Exit are disabled until it is reactivated."
+  }
+
+  // Corrupted asset (transmuter CorruptedAssetRelativelyIncreased): it may
+  // only leave the pool.
+  const corrupted = message.match(
+    new RegExp(`corrupted asset: ${DENOM} must not increase`, "i")
   )
-  if (pool) {
-    const [, token, balance, amount] = pool
+  if (corrupted) {
+    return `${label(corrupted[1])} is marked as corrupted in this pool: it can only be taken out, not deposited.`
+  }
+
+  // Pool shortfall. SQS quote: "insufficient balance of token (ibc/...),
+  // balance (2700332), amount (10000000)"; transmuter: "Insufficient pool
+  // asset: required: 10000000ibc/..., available: 2700332ibc/...".
+  const quoteShortfall = message.match(
+    new RegExp(
+      String.raw`insufficient balance of token ${DENOM},? balance \((\d+)\),? amount \((\d+)\)`,
+      "i"
+    )
+  )
+  const txShortfall = message.match(
+    /insufficient pool asset: required: (\d+)([a-zA-Z][\w/.:-]*), available: (\d+)[a-zA-Z][\w/.:-]*/i
+  )
+  if (quoteShortfall || txShortfall) {
+    const [token, balance, amount] = quoteShortfall
+      ? [quoteShortfall[1], quoteShortfall[2], quoteShortfall[3]]
+      : [txShortfall![2], txShortfall![3], txShortfall![1]]
     const asset = find(token) ?? quotedOut
     if (!asset) return `The pool does not hold enough ${token} for this swap.`
     return (
       `The pool only holds ${displayAmount(balance, asset)} ${asset.symbol}, ` +
       `and this swap needs ${displayAmount(amount, asset)}. ` +
       `Try a smaller amount or another variant.`
+    )
+  }
+
+  // Rate limiter. Transmuter: "Upper limit exceeded for `ibc/...`, upper
+  // limit is 0.5, but the resulted weight is 0.62"; SQS: "invalid upper limit
+  // (0.5) for weight (0.62) and denom (ibc/...)".
+  const txLimit = message.match(
+    new RegExp(
+      String.raw`upper limit exceeded for ${DENOM},? upper limit is ([\d.]+),? but the resulted weight is ([\d.]+)`,
+      "i"
+    )
+  )
+  const quoteLimit = message.match(
+    new RegExp(
+      String.raw`invalid upper limit \(([\d.]+)\) for weight \(([\d.]+)\) and denom ${DENOM}`,
+      "i"
+    )
+  )
+  if (txLimit || quoteLimit) {
+    const [token, limit, weight] = txLimit
+      ? [txLimit[1], txLimit[2], txLimit[3]]
+      : [quoteLimit![3], quoteLimit![1], quoteLimit![2]]
+    return (
+      `This swap would take ${label(token)} to ${percent(weight)} of the ` +
+      `pool, above its ${percent(limit)} limit. Try a smaller amount.`
     )
   }
 
