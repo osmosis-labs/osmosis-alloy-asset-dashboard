@@ -8,10 +8,15 @@ import { pathToFileURL } from "node:url"
 const { swapEventsFromTx, bucketFlows, flowPointsFromSwaps } = await import(
   pathToFileURL(path.resolve("src/services/swap-rows.ts")).href
 )
-const { selectCompleteHeights, bucketRange, isLastPage, trimToBucketBoundary } =
-  await import(
-    pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
-  )
+const {
+  selectCompleteHeights,
+  bucketRange,
+  isLastPage,
+  trimToBucketBoundary,
+  cronRunStatus,
+} = await import(
+  pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
+)
 
 const swapped = (
   poolId: string,
@@ -185,6 +190,39 @@ test("slice trim reports no progress when every event is in the last bucket", ()
   })
   assert.equal(r.events.length, 0)
   assert.equal(r.coveredTo, 7)
+})
+
+test("cron run fails when every due snapshot fails", () => {
+  const archiveDown = { error: "archive unavailable" }
+  assert.equal(
+    cronRunStatus([
+      { snapshot: archiveDown },
+      { snapshot: archiveDown },
+      { snapshot: "not due" },
+    ]).failed,
+    true
+  )
+})
+
+test("cron run succeeds with partial snapshot failures or none due", () => {
+  assert.equal(
+    cronRunStatus([{ snapshot: { error: "x" } }, { snapshot: 12 }]).failed,
+    false
+  )
+  assert.equal(
+    cronRunStatus([{ snapshot: "not due" }, { snapshot: "not due" }]).failed,
+    false
+  )
+})
+
+test("cron run fails when every ingest fails", () => {
+  assert.equal(
+    cronRunStatus([
+      { error: "lcd down", snapshot: 5 },
+      { error: "lcd down", snapshot: 5 },
+    ]).failed,
+    true
+  )
 })
 
 test("bucket range is aligned to 15 minutes and covers every event", () => {

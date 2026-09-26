@@ -148,6 +148,30 @@ export const trimToBucketBoundary = (
   }
 }
 
+// Pure: whether an activity cron run failed as a whole (so it returns 502 and
+// status-based monitoring sees it): every pool's ingest failed, or every
+// reserve snapshot that was due failed. Partial failures are not a failed run;
+// their errors are in the response body. Exported for tests.
+export const cronRunStatus = (
+  results: { error?: unknown; snapshot?: unknown }[]
+) => {
+  const ingestFailed = results.filter((r) => "error" in r).length
+  const snapshotsDue = results.filter((r) => r.snapshot !== "not due").length
+  const snapshotFailed = results.filter(
+    (r) =>
+      typeof r.snapshot === "object" &&
+      r.snapshot !== null &&
+      "error" in r.snapshot
+  ).length
+  return {
+    failed:
+      (ingestFailed > 0 && ingestFailed === results.length) ||
+      (snapshotFailed > 0 && snapshotFailed === snapshotsDue),
+    ingestFailed,
+    snapshotFailed,
+  }
+}
+
 // Pure: the 15-minute bucket range [start, end) that fully contains `events`.
 export const bucketRange = (events: SwapEvent[]) => {
   const times = events.map((e) => new Date(e.timestamp).getTime() / 1000)

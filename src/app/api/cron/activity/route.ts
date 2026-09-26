@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import {
   blockTime,
+  cronRunStatus,
   ingestPool,
   latestHeight,
   pruneSwaps,
@@ -90,9 +91,9 @@ export async function GET(request: Request) {
     console.error(`[cron/activity] snapshot thinning failed: ${e}`)
   }
 
-  const failed = results.filter((r) => "error" in r).length
+  const { failed, ingestFailed, snapshotFailed } = cronRunStatus(results)
   return NextResponse.json(
-    { upTo, results, pruned, thinned },
-    { status: failed === results.length && failed > 0 ? 502 : 200 }
+    { upTo, results, pruned, thinned, ingestFailed, snapshotFailed },
+    { status: failed ? 502 : 200 }
   )
 }
