@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import dayjs from "dayjs"
 import _ from "lodash"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
@@ -24,14 +24,10 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
-const PERIOD_OPTIONS = ["7", "30", "60", "90", "365"] as const
+  dateRangeDays,
+  DateRangeSelect,
+  useDateRange,
+} from "@/components/date-range"
 
 // Hardcoded color mappings for alloy assets by pool ID. Add more pool IDs and their hex colors as needed
 const POOL_COLORS: Record<string, string> = {
@@ -48,46 +44,40 @@ const OverviewChart = ({
   title,
   description,
   className,
+  fillHeight = false,
 }: {
   pools: PoolOverview[]
   title?: string
   description?: string
   className?: string
+  // Grow the chart to fill the card when a grid row makes the card taller
+  // than its content (pool page, next to Asset Sources). Only from md up:
+  // below that the grid is one column, the card has no set height, and a
+  // percentage height would collapse the chart to nothing.
+  fillHeight?: boolean
 }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<string>(
-    PERIOD_OPTIONS[4]
-  )
+  // Shared with the other charts on the pool page; the home page (no
+  // provider) keeps its own range, defaulting to a year as before.
+  const { range, setRange } = useDateRange("1y")
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn("flex w-full flex-col", className)}>
       <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>{title || "Liquidity Overview"}</CardTitle>
           <CardDescription>
-            {description || "Showing Liquidity For All Pools"}
+            {description || "Historical liquidity of all alloyed pools in USD"}
           </CardDescription>
         </div>
-        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger
-            className="w-[160px] rounded-lg sm:ml-auto"
-            aria-label="Select a value"
-          >
-            <SelectValue>{selectedPeriod} Days</SelectValue>
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            {PERIOD_OPTIONS.map((v) => (
-              <SelectItem key={v} value={v} className="rounded-lg">
-                {v} Days
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <DateRangeSelect range={range} setRange={setRange} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-1 flex-col">
         <OverviewChartContent
           pools={pools}
-          period={selectedPeriod}
-          className="h-[250px]"
+          period={dateRangeDays(range) ?? undefined}
+          className={
+            fillHeight ? "h-[250px] md:h-full md:min-h-[250px]" : "h-[250px]"
+          }
         />
       </CardContent>
     </Card>

@@ -4,7 +4,7 @@ import "@interchain-ui/react/styles"
 import "@/styles/wallet.css"
 
 import { getAssetListUncached } from "@/services/asset"
-import { getPoolsFromAPI } from "@/services/pool"
+import { getPoolsFromAPI } from "@/services/pools-api"
 import _ from "lodash"
 import { Loader2 } from "lucide-react"
 import useSWRImmutable from "swr/immutable"

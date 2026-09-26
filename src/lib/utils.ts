@@ -82,9 +82,20 @@ const waitForLcdSlot = async () => {
  */
 export const fetchLcd = async (
   input: string | URL,
-  init?: RequestInit & { retries?: number; timeoutMs?: number }
+  init?: RequestInit & {
+    retries?: number
+    timeoutMs?: number
+    // Return a 5xx response instead of retrying and throwing, for callers
+    // that need its body (e.g. the archive's "no such contract" is a 500).
+    returnServerErrors?: boolean
+  }
 ): Promise<Response> => {
-  const { retries = 1, timeoutMs = 15000, ...rest } = init ?? {}
+  const {
+    retries = 1,
+    timeoutMs = 15000,
+    returnServerErrors = false,
+    ...rest
+  } = init ?? {}
 
   let lastError: unknown
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -96,7 +107,7 @@ export const fetchLcd = async (
         ...rest,
         signal: rest.signal ?? controller.signal,
       })
-      if (response.status >= 500) {
+      if (response.status >= 500 && !returnServerErrors) {
         lastError = new Error(`Upstream returned ${response.status}`)
       } else {
         return response

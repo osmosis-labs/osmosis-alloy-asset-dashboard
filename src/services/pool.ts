@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js"
 import _ from "lodash"
 
 import { env } from "@/env.mjs"
-import { AssetStatus, AssetWithDecimal } from "@/types/asset"
+import { AssetStatus, AssetWithDecimal, CurrencyAmount } from "@/types/asset"
 import {
   MinimalPool,
   NotSupportedPoolOverview,
@@ -13,9 +13,21 @@ import {
   RawPoolOverview,
 } from "@/types/pool"
 import { PoolSwap } from "@/types/tx"
+import {
+  ACTIVITY_MAX_SWAPS,
+  ACTIVITY_RANGE_DAYS,
+  PoolActivitySource,
+} from "@/lib/activity"
 import dayjs from "@/lib/dayjs"
+import { reserveAmount } from "@/lib/pool-sources"
 import { fetchLcd, fetchWithRetry } from "@/lib/utils"
 
+import {
+  getStoreCoverage,
+  isStoreReady,
+  readFlowPoints,
+  readSwaps,
+} from "./activity-store"
 import {
   getAssetMap,
   getAssetPrice,
@@ -25,6 +37,12 @@ import {
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
 import { getVariantProvenanceSafe, Provenance } from "./provenance"
+import {
+  bucketFlows,
+  flowPointsFromSwaps,
+  SwapEvent,
+  swapEventsFromTx,
+} from "./swap-rows"
 import { getPoolContractStatus } from "./transmuter"
 
 const MIN_LIQUIDITY = 10
@@ -97,6 +115,11 @@ const dropRedundantLiveSnapshot = (
 // Variants carry the frontend's display name ("USDC (Noble)"); the
 // chain-registry name is only the fallback. Only reserve coins are renamed:
 // the alloy keeps its registry name.
+// Variants ordered from most to least prevalent in the pool. The variants of
+// one alloy share a unit, so display amounts compare directly.
+const byPrevalence = <T extends { currency: CurrencyAmount }>(coins: T[]) =>
+  _.sortBy(coins, (c) => -reserveAmount(c.currency))
+
 const withFrontendName = (
   asset: AssetWithDecimal | undefined,
   frontendName: string | undefined
@@ -144,23 +167,25 @@ const fillPoolOverview = async (
       type: pool.type,
       codeId: pool.raw.code_id,
       contractAddress: pool.raw.contract_address,
-      reserveCoins: pool.reserveCoins.map((coin) => {
-        const c = JSON.parse(coin)
-        return {
-          asset: withFrontendName(
-            assetMap[c.currency.coinMinimalDenom],
-            frontendNames[c.currency.coinMinimalDenom]
-          ),
-          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
-          currency: {
-            ...c,
+      reserveCoins: byPrevalence(
+        pool.reserveCoins.map((coin) => {
+          const c = JSON.parse(coin)
+          return {
+            asset: withFrontendName(
+              assetMap[c.currency.coinMinimalDenom],
+              frontendNames[c.currency.coinMinimalDenom]
+            ),
+            provenance: provenance[c.currency.coinMinimalDenom] ?? null,
             currency: {
-              ...c.currency,
-              coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+              ...c,
+              currency: {
+                ...c.currency,
+                coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+              },
             },
-          },
-        }
-      }),
+          }
+        })
+      ),
       spreadFactor: JSON.parse(pool.spreadFactor),
       totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
       poolNameByDenom: pool.poolNameByDenom,
@@ -287,23 +312,25 @@ const fillPoolOverview = async (
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
-    reserveCoins: pool.reserveCoins.map((coin) => {
-      const c = JSON.parse(coin)
-      return {
-        asset: withFrontendName(
-          assetMap[c.currency.coinMinimalDenom],
-          frontendNames[c.currency.coinMinimalDenom]
-        ),
-        provenance: provenance[c.currency.coinMinimalDenom] ?? null,
-        currency: {
-          ...c,
+    reserveCoins: byPrevalence(
+      pool.reserveCoins.map((coin) => {
+        const c = JSON.parse(coin)
+        return {
+          asset: withFrontendName(
+            assetMap[c.currency.coinMinimalDenom],
+            frontendNames[c.currency.coinMinimalDenom]
+          ),
+          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
           currency: {
-            ...c.currency,
-            coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+            ...c,
+            currency: {
+              ...c.currency,
+              coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+            },
           },
-        },
-      }
-    }),
+        }
+      })
+    ),
     spreadFactor: JSON.parse(pool.spreadFactor),
     totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
     poolNameByDenom: pool.poolNameByDenom,
@@ -586,12 +613,6 @@ export const getPoolOverview = async (poolId: string) => {
   return pools.pools.find((p) => p.id === poolId)
 }
 
-export const getPoolsFromAPI = async () => {
-  const res = await fetch("/api/pools")
-  if (!res.ok) throw new Error(`Pools unavailable (${res.status})`)
-  return (await res.json()) as MinimalPool[]
-}
-
 const calculdateAlloyAssetDenom = (
   contractAddress: string,
   instantiateMsg: string
@@ -601,10 +622,7 @@ const calculdateAlloyAssetDenom = (
   return `factory/${contractAddress}/alloyed/${decoded.alloyed_asset_subdenom}`
 }
 
-// The activity chart covers the last 24h but only fetches this many of the
-// most recent swaps: each 100-swap LCD page is ~3MB and 10-20s, so busy pools
-// are truncated to their latest few hours. The chart copy states this cap.
-export const ACTIVITY_MAX_SWAPS = 1000
+export { ACTIVITY_MAX_SWAPS }
 
 export const getPoolInOutTxs = cache(async (poolId: string) => {
   // Determine the block height ~24h ago from the LCD's latest block.
@@ -696,189 +714,103 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
   }
 })
 
-const ASSET_AMOUNT_REGEX = /([0-9]+)(.+)/
-// Bucket sizes the activity chart can use. The fetched swaps span anything
-// from ~5h (a busy pool's latest ACTIVITY_MAX_SWAPS) to the full 24h, so the
-// bucket is chosen from the actual span to keep roughly MAX_ACTIVITY_BUCKETS
-// columns instead of a fixed 2h that left busy pools with 3-4 columns.
-const ACTIVITY_BUCKET_MINUTES = [5, 10, 15, 30, 60, 120]
-const MAX_ACTIVITY_BUCKETS = 24
+// Activity for a date range, and where it came from: "store" is the Postgres
+// activity store (used once it is fresh and covers at least the last 24h; a
+// longer range returns what has been collected, from `coveredFrom`), "live"
+// the LCD fallback (latest ACTIVITY_MAX_SWAPS swaps only, whatever the range).
+const DAY_MS = 24 * 60 * 60 * 1000
+export type PoolActivity = {
+  source: PoolActivitySource
+  activities: PoolInOutAssets[]
+  coveredFrom?: string
+}
 
-const pickActivityBucketMinutes = (spanMinutes: number) =>
-  ACTIVITY_BUCKET_MINUTES.find(
-    (step) => Math.floor(spanMinutes / step) + 1 <= MAX_ACTIVITY_BUCKETS
-  ) ?? _.last(ACTIVITY_BUCKET_MINUTES)!
+// The live LCD fallback has its own 30-minute cache, so the 5-minute refresh
+// of store reads below does not multiply LCD load (and fail2ban risk) while
+// the store is unavailable.
+const LIVE_REVALIDATE_SECONDS = 1800
+const STORE_REVALIDATE_SECONDS = 300
 
-export const getPoolInOutAssets = unstable_cache(
-  async (poolId: string): Promise<PoolInOutAssets[]> => {
+const getLiveActivity = unstable_cache(
+  async (poolId: string): Promise<PoolActivity> => {
     const { txs } = await getPoolInOutTxs(poolId)
-    const swaps = _.flatMap(txs, (tx) =>
-      _.chain(tx?.events)
-        .filter(
-          (e: any) =>
-            e.type === "token_swapped" &&
-            _.some(
-              e.attributes,
-              (a: any) => a.key === "pool_id" && a.value === poolId
-            )
-        )
-        .map((e: any) => {
-          const [, amountIn, denomIn] = (
-            _.find(e.attributes, ["key", "tokens_in"]).value as string
-          ).match(ASSET_AMOUNT_REGEX)!
-
-          const [, amountOut, denomOut] = (
-            _.find(e.attributes, ["key", "tokens_out"]).value as string
-          ).match(ASSET_AMOUNT_REGEX)!
-
-          return {
-            time: dayjs.utc(tx.timestamp).valueOf(),
-            in: {
-              amount: amountIn,
-              denom: denomIn,
-            },
-            out: {
-              amount: amountOut,
-              denom: denomOut,
-            },
-          }
-        })
-        .value()
-    )
-
-    if (swaps.length === 0) return []
-
-    const earliest = _.minBy(swaps, "time")!.time
-    const latest = _.maxBy(swaps, "time")!.time
-    const bucketMs =
-      pickActivityBucketMinutes((latest - earliest) / 60_000) * 60_000
-    const toBucket = (time: number) => Math.floor(time / bucketMs) * bucketMs
-
-    const byBucket = _.groupBy(swaps, (swap) => toBucket(swap.time))
-
-    // Every bucket between the first and last swap, including empty ones:
-    // the x-axis is categorical, so a missing bucket would silently squeeze
-    // time together.
-    return _.range(toBucket(earliest), toBucket(latest) + 1, bucketMs).map(
-      (bucket) => {
-        const v = byBucket[bucket] ?? []
-        return {
-          timestamp: new Date(bucket).toISOString(),
-          count: v.length,
-          in: _.chain(v)
-            .groupBy("in.denom")
-            .mapValues((v) =>
-              _.reduce(
-                v,
-                (sum, { in: { amount } }) => sum.plus(amount),
-                new BigNumber(0)
-              ).toString()
-            )
-            .value(),
-          out: _.chain(v)
-            .groupBy("out.denom")
-            .mapValues((v) =>
-              _.reduce(
-                v,
-                (sum, { out: { amount } }) => sum.plus(amount),
-                new BigNumber(0)
-              ).toString()
-            )
-            .value(),
-        }
-      }
-    )
+    const swaps = _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId))
+    return {
+      source: "live",
+      activities: bucketFlows(flowPointsFromSwaps(swaps)),
+    }
   },
-  ["pool-in-out-assets"],
-  {
-    revalidate: 1800,
-  }
+  ["pool-activity-live-v1"],
+  { revalidate: LIVE_REVALIDATE_SECONDS }
 )
 
-// Short message type ("/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn" ->
-// "SwapExactAmountIn"), unwrapping authz MsgExec to the message it ran.
-const shortMessageType = (message: any): string => {
-  if (message?.["@type"] === "/cosmos.authz.v1beta1.MsgExec") {
-    return shortMessageType(_.last(message.msgs as any[]))
-  }
-  const type = String(_.last(String(message?.["@type"] ?? "").split(".")))
-  return type.replace(/^Msg/, "") || "Unknown"
-}
-
-// The account behind a swap. The token_swapped `sender` attribute is whoever
-// executed the swap, which for routed swaps is a contract (e.g. Skip's swap
-// adapter executes every Skip router call and IBC-hooks swap), so unrelated
-// users collapse onto one address. Resolve from the message instead:
-//   - authz MsgExec: the inner message's sender (the granter, whose funds move)
-//   - MsgRecvPacket (IBC hooks): the packet's source-chain sender; the Osmosis
-//     signer is only the relayer
-//   - anything else with a sender (direct swaps, MsgExecuteContract): it
-//   - otherwise: the event attribute
-const swapAccount = (message: any, eventSender: string | undefined) => {
-  const type = message?.["@type"]
-  if (type === "/cosmos.authz.v1beta1.MsgExec") {
-    const inner = _.find(message.msgs as any[], (m) => m?.sender)
-    if (inner?.sender) return inner.sender as string
-  }
-  if (type === "/ibc.core.channel.v1.MsgRecvPacket") {
-    try {
-      const data = JSON.parse(atob(message.packet?.data ?? ""))
-      if (typeof data?.sender === "string" && data.sender) return data.sender
-    } catch {
-      // Not an ICS-20 packet; fall through to the event sender.
+// Cache key bumped with the return shape and the range argument: the Vercel
+// data cache is shared across deployments, and an old-shape entry must not be
+// read here. Store reads are cheap, so this refreshes every 5 minutes.
+export const getPoolInOutAssets = unstable_cache(
+  async (poolId: string, range: string = "24h"): Promise<PoolActivity> => {
+    const coverage = await getStoreCoverage(poolId)
+    if (coverage && coverage.coveredFrom.getTime() <= Date.now() - DAY_MS) {
+      try {
+        // null means "all" (from coveredFrom); `??` would turn it into 1 day.
+        const days =
+          range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+        const requested =
+          days === null
+            ? coverage.coveredFrom.getTime()
+            : Date.now() - days * DAY_MS
+        const from = Math.max(requested, coverage.coveredFrom.getTime())
+        const points = await readFlowPoints(poolId, new Date(from))
+        return {
+          source: "store",
+          activities: bucketFlows(points, {
+            minBucketMinutes: 15,
+            from,
+            to: Date.now(),
+          }),
+          coveredFrom: coverage.coveredFrom.toISOString(),
+        }
+      } catch (e) {
+        console.error(`[getPoolInOutAssets] store read failed: ${e}`)
+      }
     }
-  }
-  if (type !== "/ibc.core.channel.v1.MsgRecvPacket" && message?.sender) {
-    return message.sender as string
-  }
-  return eventSender ?? ""
-}
 
-// Swap rows for the pool's transaction table, from the same LCD fetch as the
-// activity chart (React cache() dedupes it within a render), so the table adds
-// no LCD requests. The raw tx pages (~3MB each) are too large for the data
-// cache, so the compact rows are cached here instead, on the same schedule.
-export const getPoolSwaps = unstable_cache(
+    return getLiveActivity(poolId)
+  },
+  ["pool-in-out-assets-v3"],
+  { revalidate: STORE_REVALIDATE_SECONDS }
+)
+
+const toPoolSwap = ({ msgIndex, eventIndex, ...swap }: SwapEvent): PoolSwap =>
+  swap
+
+// Live fallback rows, from the same LCD fetch as the live activity (React
+// cache() dedupes it within a render). The raw tx pages (~3MB each) are too
+// large for the data cache, so the compact rows are cached instead, on the
+// live 30-minute schedule.
+const getLiveSwaps = unstable_cache(
   async (poolId: string): Promise<PoolSwap[]> => {
     const { txs } = await getPoolInOutTxs(poolId)
-    return _.flatMap(txs, (tx) =>
-      _.chain(tx?.events)
-        .filter(
-          (e: any) =>
-            e.type === "token_swapped" &&
-            _.some(
-              e.attributes,
-              (a: any) => a.key === "pool_id" && a.value === poolId
-            )
-        )
-        .map((e: any) => {
-          const attr = (key: string) =>
-            _.find(e.attributes, ["key", key])?.value as string | undefined
-          const [, amountIn, denomIn] =
-            (attr("tokens_in") ?? "").match(ASSET_AMOUNT_REGEX) ?? []
-          const [, amountOut, denomOut] =
-            (attr("tokens_out") ?? "").match(ASSET_AMOUNT_REGEX) ?? []
-          const msgIndex = Number(attr("msg_index"))
-          const message = Number.isInteger(msgIndex)
-            ? tx.tx?.body?.messages?.[msgIndex]
-            : _.last(tx.tx?.body?.messages)
+    return _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId)).map(toPoolSwap)
+  },
+  ["pool-swaps-live-v1"],
+  { revalidate: LIVE_REVALIDATE_SECONDS }
+)
 
-          return {
-            hash: tx.txhash,
-            height: Number(tx.height),
-            timestamp: tx.timestamp,
-            success: tx.code === 0,
-            sender: swapAccount(message, attr("sender")),
-            action: shortMessageType(message),
-            in: { amount: amountIn ?? "0", denom: denomIn ?? "" },
-            out: { amount: amountOut ?? "0", denom: denomOut ?? "" },
-          }
-        })
-        .value()
-    )
+// Swap rows for the pool's transaction table: from the activity store when it
+// is fresh (refreshed every 5 minutes), otherwise the live fallback.
+export const getPoolSwaps = unstable_cache(
+  async (poolId: string): Promise<PoolSwap[]> => {
+    const windowStart = new Date(Date.now() - DAY_MS)
+    if (await isStoreReady(poolId, windowStart)) {
+      try {
+        return await readSwaps(poolId, ACTIVITY_MAX_SWAPS)
+      } catch (e) {
+        console.error(`[getPoolSwaps] store read failed: ${e}`)
+      }
+    }
+    return getLiveSwaps(poolId)
   },
   ["pool-swaps"],
-  {
-    revalidate: 1800,
-  }
+  { revalidate: STORE_REVALIDATE_SECONDS }
 )

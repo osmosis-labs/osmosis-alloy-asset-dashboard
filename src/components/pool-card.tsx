@@ -152,7 +152,9 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
             </div>
             <OverviewChartContent
               pools={[pool]}
-              className="aspect-auto h-[240px] rounded-md border p-2 md:h-auto md:max-h-[700px] md:min-h-[200px] md:flex-1"
+              // Fills the column: the variant list beside it sets the row
+              // height (five variants on allBTC outgrew the old 700px cap).
+              className="aspect-auto h-[240px] rounded-md border p-2 md:h-auto md:min-h-[200px] md:flex-1"
             />
           </div>
           {pool.reserveCoins && (

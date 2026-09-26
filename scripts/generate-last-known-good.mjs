@@ -314,6 +314,10 @@ const resolveProvenance = async (denoms, assetMap) => {
   }
 }
 
+// Mirror of byPrevalence in src/services/pool.ts: most prevalent variant
+// first (the variants of one alloy share a unit, so display amounts compare).
+const reserveDisplayAmount = (c) =>
+  Number(c.currency.amount) / 10 ** (c.currency.currency?.coinDecimals || 6)
 const mapReserveCoins = (pool, assetMap) =>
   pool.reserveCoins.map((coin) => {
     const c = JSON.parse(coin)
@@ -330,7 +334,7 @@ const mapReserveCoins = (pool, assetMap) =>
         },
       },
     }
-  })
+  }).sort((a, b) => reserveDisplayAmount(b) - reserveDisplayAmount(a))
 
 const market = (pool) => ({
   volume24hUsd: pool.market?.volume24hUsd
