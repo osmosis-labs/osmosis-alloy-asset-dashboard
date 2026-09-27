@@ -382,3 +382,32 @@ test("bucketFlows zero-fills up to `to` (a frozen pool runs on to the present)",
   assert.ok(now - last < 86_400_000, "runs to the present")
   assert.equal(buckets[buckets.length - 1].count, 0)
 })
+
+const { byPoolId } = await import(
+  pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
+)
+const { isSnapshotDue } = await import(
+  pathToFileURL(path.resolve("src/services/reserves.ts")).href
+)
+
+test("batched reads give every pool its row, or null when it has none", () => {
+  const rows = [
+    { poolId: "1868", height: 10n },
+    { poolId: "9999", height: 20n }, // not asked for
+  ]
+  const map = byPoolId(["1868", "1869"], rows)
+  assert.deepEqual([...map.keys()], ["1868", "1869"])
+  assert.equal(map.get("1868"), rows[0])
+  // null (read, none) is distinct from undefined (not read).
+  assert.equal(map.get("1869"), null)
+  assert.equal(map.get("9999"), undefined)
+})
+
+test("a snapshot is due with none yet, or 55 minutes after the last", () => {
+  const ts = new Date("2026-09-25T12:00:00Z")
+  const ago = (min: number) => new Date(ts.getTime() - min * 60_000)
+  assert.equal(isSnapshotDue(null, ts), true)
+  assert.equal(isSnapshotDue(ago(55), ts), true)
+  assert.equal(isSnapshotDue(ago(54), ts), false)
+  assert.equal(isSnapshotDue(ago(15), ts), false)
+})

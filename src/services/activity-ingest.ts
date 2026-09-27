@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client"
+import { ActivityCursor, Prisma, PrismaClient } from "@prisma/client"
 import _ from "lodash"
 
 import { fetchLcd } from "@/lib/utils"
@@ -238,14 +238,30 @@ export const writeEvents = async (
 // interactive-transaction timeout is too tight on Vercel.
 export const TX_OPTIONS = { timeout: 60_000, maxWait: 10_000 }
 
+// Pure: `rows` keyed by pool id, with an explicit null for every id in `ids`
+// that has no row. The cron batch-reads cursors and last snapshot times this
+// way (one query per run instead of one per pool) and hands each pool its
+// entry: null means "read, and there is none", as opposed to undefined (not
+// read, so the callee reads it itself). Exported for tests.
+export const byPoolId = <T extends { poolId: string }>(
+  ids: string[],
+  rows: T[]
+): Map<string, T | null> => {
+  const found = new Map(rows.map((r) => [r.poolId, r]))
+  return new Map(ids.map((id) => [id, found.get(id) ?? null]))
+}
+
 // Live ingest for one pool: from its cursor up to `upTo`, at most `maxPages`
 // pages per run. A pool with no cursor is seeded just behind the tip (the
 // backfill fills history); its coverage starts at the tip's block time.
+// `cursor` is the pool's cursor row when the caller already read it (null if
+// it has none); when omitted it is read here.
 export const ingestPool = async ({
   db,
   poolId,
   upTo,
   upToTime,
+  cursor: preRead,
   maxPages = 10,
   hosts = DEFAULT_LCD_HOSTS,
 }: {
@@ -253,10 +269,14 @@ export const ingestPool = async ({
   poolId: string
   upTo: number
   upToTime: Date
+  cursor?: ActivityCursor | null
   maxPages?: number
   hosts?: string[]
 }) => {
-  const cursor = await db.activityCursor.findUnique({ where: { poolId } })
+  const cursor =
+    preRead !== undefined
+      ? preRead
+      : await db.activityCursor.findUnique({ where: { poolId } })
   const from = cursor ? Number(cursor.height) : upTo - 750 // ~15 min seed
   if (from >= upTo) {
     return { poolId, rowsAdded: 0, cursor: from, lagBlocks: 0 }
@@ -276,23 +296,30 @@ export const ingestPool = async ({
     upToTime,
     events,
   })
-  const rowsAdded = await db.$transaction(async (tx) => {
-    const added = await writeEvents(tx, poolId, events)
-    await tx.activityCursor.upsert({
-      where: { poolId },
-      create: {
-        poolId,
-        height: BigInt(coveredTo),
-        coveredFrom: upToTime,
-        coveredThrough,
-      },
-      update: {
-        height: BigInt(coveredTo),
-        ...(coveredThrough ? { coveredThrough } : {}),
-      },
-    })
-    return added
-  }, TX_OPTIONS)
+  const cursorWrite = {
+    where: { poolId },
+    create: {
+      poolId,
+      height: BigInt(coveredTo),
+      coveredFrom: upToTime,
+      coveredThrough,
+    },
+    update: {
+      height: BigInt(coveredTo),
+      ...(coveredThrough ? { coveredThrough } : {}),
+    },
+  }
+  // The transaction keeps rows, rollups and cursor atomic. With no events the
+  // cursor is the only write, so it is a single statement on its own rather
+  // than an interactive transaction (begin, upsert, commit).
+  const rowsAdded =
+    events.length === 0
+      ? await db.activityCursor.upsert(cursorWrite).then(() => 0)
+      : await db.$transaction(async (tx) => {
+          const added = await writeEvents(tx, poolId, events)
+          await tx.activityCursor.upsert(cursorWrite)
+          return added
+        }, TX_OPTIONS)
 
   return { poolId, rowsAdded, cursor: coveredTo, lagBlocks: upTo - coveredTo }
 }
