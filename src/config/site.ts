@@ -8,15 +8,17 @@ export const siteConfig: SiteConfig = {
   author: "yoisha",
   // Current maintainer.
   maintainer: "Osmosis Labs",
-  description: "Dashboard for Osmosis Alloy Asset.",
-  keywords: [],
+  description:
+    "Live composition, backing and flows of Osmosis alloyed assets: allBTC, allUSDC, allETH, allUSDT and more.",
+  keywords: ["Osmosis", "alloyed assets", "allBTC", "transmuter"],
   url: {
     base: env.NEXT_PUBLIC_APP_URL,
     author: "https://x.com/yyyoisha",
     maintainer: "https://github.com/osmosis-labs",
   },
   links: {
-    github: "https://github.com/osmosis-labs",
+    github: "https://github.com/osmosis-labs/osmosis-alloy-asset-dashboard",
+    app: "https://app.osmosis.zone",
+    docs: "https://docs.osmosis.zone/learn/features/alloyed-assets",
   },
-  ogImage: `${env.NEXT_PUBLIC_APP_URL}/og.jpg`,
 }

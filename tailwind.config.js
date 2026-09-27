@@ -11,7 +11,8 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      // 1rem gutters on phones, 2rem from sm up.
+      padding: { DEFAULT: "1rem", sm: "2rem" },
       screens: {
         "2xl": "1400px",
       },

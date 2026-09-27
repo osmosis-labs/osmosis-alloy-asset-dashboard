@@ -9,6 +9,7 @@ import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/sonner"
 import { AutoRefresh } from "@/components/auto-refresh"
+import { Footer } from "@/components/footer"
 import { Nav } from "@/components/nav"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -43,31 +44,22 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: siteConfig.name,
-      },
-    ],
+    // Images come from the opengraph-image routes (site-wide and per pool).
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    images: [siteConfig.ogImage],
     creator: "@osmosiszone",
   },
-  icons: {
-    icon: "/osmo-logo-icon.svg",
-  },
+  // The icon is src/app/icon.svg.
 }
 
 export const viewport: Viewport = {
+  // The page backgrounds (--background in globals.css).
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
 }
 
@@ -96,9 +88,19 @@ export default function RootLayout({ children }: RootLayoutProps) {
             showSpinner={false}
           />
 
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:ring-2 focus:ring-ring"
+          >
+            Skip to content
+          </a>
           <div className="flex min-h-[100dvh] flex-col">
             <Nav />
-            {children}
+            {/* The skip link's target; each page renders its own <main>. */}
+            <div id="main" tabIndex={-1} className="flex flex-1 flex-col">
+              {children}
+            </div>
+            <Footer />
           </div>
         </ThemeProvider>
       </body>

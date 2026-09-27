@@ -1,56 +1,25 @@
+import Link from "next/link"
+
+import { buttonVariants } from "@/components/ui/button"
+
 export default function NotFound() {
   return (
-    <>
-      <title>404: This page could not be found.</title>
-      <div style={styles.error}>
-        <div>
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}`,
-            }}
-          />
-          <h1 className="next-error-h1" style={styles.h1}>
-            404
-          </h1>
-          <div style={styles.desc}>
-            <h2 style={styles.h2}>This page could not be found.</h2>
-          </div>
-        </div>
+    <main className="container flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
+      <p className="text-sm font-semibold text-primary">404</p>
+      <h1 className="text-2xl font-semibold">Page not found</h1>
+      <p className="max-w-md text-muted-foreground">
+        This page does not exist, or the pool is not one the dashboard lists.
+        Pools under $10,000 of liquidity are listed on the pools page without a
+        page of their own.
+      </p>
+      <div className="mt-2 flex flex-wrap justify-center gap-2">
+        <Link href="/" className={buttonVariants()}>
+          Overview
+        </Link>
+        <Link href="/pools" className={buttonVariants({ variant: "outline" })}>
+          All pools
+        </Link>
       </div>
-    </>
+    </main>
   )
 }
-
-const styles = {
-  error: {
-    fontFamily:
-      'system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
-    flex: "1 1 0%",
-    textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  desc: {
-    display: "inline-block",
-  },
-
-  h1: {
-    display: "inline-block",
-    margin: "0 20px 0 0",
-    padding: "0 23px 0 0",
-    fontSize: 24,
-    fontWeight: 500,
-    verticalAlign: "top",
-    lineHeight: "49px",
-  },
-
-  h2: {
-    fontSize: 14,
-    fontWeight: 400,
-    lineHeight: "49px",
-    margin: 0,
-  },
-} as const

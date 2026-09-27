@@ -22,6 +22,14 @@ export const NumberFormatter = {
       maximumFractionDigits: 1,
     }).format(value),
 
+  // Headline figures: 1.57M, 8.62M, 45.24K, 912.5. Pair with the full value
+  // (formatValue) in a title or tooltip.
+  formatCompactValue: (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      maximumFractionDigits: 2,
+    }).format(value),
+
   formatValueDecimal: (
     value: string | number,
     decimals: number,
