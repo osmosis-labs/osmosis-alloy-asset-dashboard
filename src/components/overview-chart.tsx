@@ -74,6 +74,9 @@ const OverviewChart = ({
       <CardContent className="flex flex-1 flex-col">
         <OverviewChartContent
           pools={pools}
+          label={`${title || "Liquidity overview"}: ${
+            description || "historical liquidity of all alloyed pools in USD"
+          }`}
           period={dateRangeDays(range) ?? undefined}
           className={
             fillHeight ? "h-[250px] md:h-full md:min-h-[250px]" : "h-[250px]"
@@ -87,10 +90,13 @@ OverviewChart.displayName = "OverviewChart"
 
 const OverviewChartContent = ({
   pools,
+  label,
   period,
   className,
 }: {
   pools: PoolOverview[]
+  // What the chart shows, for assistive technology (it is drawn as an image).
+  label: string
   period?: string | number
   className?: string
 }) => {
@@ -158,13 +164,16 @@ const OverviewChartContent = ({
       config,
     }
   }, [pools, period])
+  const showsYears = period === undefined || Number(period) > 90
 
   return (
     <ChartContainer
       className={cn("aspect-auto w-full", className)}
       config={config}
+      role="img"
+      aria-label={label}
     >
-      <AreaChart data={data}>
+      <AreaChart data={data} accessibilityLayer>
         <defs>
           {_.chain(config)
             .map((v, k) => (
@@ -206,12 +215,16 @@ const OverviewChartContent = ({
           axisLine={false}
           tickMargin={8}
           minTickGap={32}
+          // Past about three months the ticks span years, so they show the
+          // month and year instead of the day.
           tickFormatter={(value) => {
             const date = new Date(value)
-            return date.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })
+            return date.toLocaleDateString(
+              "en-US",
+              showsYears
+                ? { month: "short", year: "2-digit" }
+                : { month: "short", day: "numeric" }
+            )
           }}
         />
         <YAxis

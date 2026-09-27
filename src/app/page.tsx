@@ -1,5 +1,7 @@
+import Link from "next/link"
 import { getPoolsOverview, isMigrationPool } from "@/services/pool"
 
+import { siteConfig } from "@/config/site"
 import { DataFreshnessNotice } from "@/components/data-freshness"
 
 import { OverviewChart } from "../components/overview-chart"
@@ -22,6 +24,21 @@ export default async function Home() {
     <main className="flex items-center justify-center">
       <div className="container my-6 flex flex-col items-center gap-6 text-center">
         <DataFreshnessNotice {...overview} />
+        <div className="max-w-3xl space-y-2">
+          <h1 className="text-3xl font-bold">Osmosis Alloyed Assets</h1>
+          <p className="text-muted-foreground">
+            An alloyed asset (allBTC, allUSDC, ...) is one token backed 1:1 by
+            several bridged versions of the same asset, held in a transmuter
+            pool. This dashboard shows what backs each one, how that has
+            changed, and the limits on each variant.{" "}
+            <Link
+              href={siteConfig.links.docs}
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              Learn more
+            </Link>
+          </p>
+        </div>
         <OverviewChart pools={pools} />
         <div className="flex w-full flex-col gap-2 overflow-auto">
           {pools.map((pool) => (

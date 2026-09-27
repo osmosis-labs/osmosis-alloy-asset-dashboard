@@ -1,8 +1,8 @@
+import { ReactNode } from "react"
 import Link from "next/link"
 import { LIMITERS } from "@/constants/limiter"
 import { TooltipArrow } from "@radix-ui/react-tooltip"
 import BigNumber from "bignumber.js"
-import _ from "lodash"
 import { ChevronRight, ExternalLink, Info } from "lucide-react"
 
 import { Asset, AssetStatus, CurrencyAmount } from "@/types/asset"
@@ -10,6 +10,7 @@ import { Limiter } from "@/types/limiter"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
+import { isMigrationPool } from "@/lib/pool-build"
 import {
   reserveAmount,
   variantDenom,
@@ -47,6 +48,103 @@ const valueFormatter = reserveAmount
 const limitersFor = (pool: PoolOverview, denom: string) =>
   pool.limiters ? (pool.limiters[denom] ?? []) : null
 
+// A headline figure. `title` carries the exact value when `value` is
+// abbreviated ($1.57M).
+const StatTile = ({
+  label,
+  value,
+  title,
+}: {
+  label: string
+  value: ReactNode
+  title?: string
+}) => (
+  <div className="rounded-md border p-2">
+    <p className="text-xs text-muted-foreground md:text-sm">{label}</p>
+    <p
+      className="line-clamp-1 font-semibold tabular-nums md:text-lg"
+      title={title}
+    >
+      {value}
+    </p>
+  </div>
+)
+
+// Compact USD for a headline tile, with the exact value for its title; "-"
+// when unknown.
+const usdTile = (amount: number | string | null | undefined) =>
+  amount === null || amount === undefined || !Number.isFinite(Number(amount))
+    ? { value: "-" }
+    : {
+        value: `$${NumberFormatter.formatCompactValue(Number(amount))}`,
+        title: `$${NumberFormatter.formatValue(amount)}`,
+      }
+
+// The four headline figures of an alloy, shared by the overview cards and the
+// pool page. TVL is the value of the backing: price times the total amount.
+const PoolStats = ({
+  pool,
+  totalAmount,
+  className,
+}: {
+  pool: PoolOverview
+  totalAmount: number
+  className?: string
+}) => (
+  <div className={cn("grid gap-2 text-start", className)}>
+    <StatTile
+      label="Price"
+      value={
+        <SmallDecimals>
+          {pool.alloy.price
+            ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
+            : "-"}
+        </SmallDecimals>
+      }
+    />
+    <StatTile
+      label="Total Amount"
+      value={
+        <>
+          <SmallDecimals>
+            {NumberFormatter.formatValue(totalAmount)}
+          </SmallDecimals>{" "}
+          <span className="font-mono text-xs font-medium">
+            {pool.alloy.asset.symbol}
+          </span>
+        </>
+      }
+    />
+    <StatTile label="24h Volume" {...usdTile(pool.volume24hUsd?.amount)} />
+    <StatTile
+      label="TVL"
+      {...usdTile(
+        pool.alloy.price ? Number(pool.alloy.price.amount) * totalAmount : null
+      )}
+    />
+  </div>
+)
+
+// Links from a pool to trading it: the alloy's asset page on the Osmosis app,
+// and the transmuter swap form opened on this pool. Migration alloys have
+// neither: their token is not a listed asset, and the swap form only lists
+// alloys with assetlist metadata.
+const TradeLinks = ({ pool }: { pool: PoolOverview }) =>
+  isMigrationPool(pool) ? null : (
+    <>
+      <Link
+        href={OsmosisApp.asset(pool.alloy.asset.denom)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonVariants({ variant: "outline" })}
+      >
+        Trade {pool.alloy.asset.symbol}
+        <ExternalLink className="ml-2 size-4" aria-hidden />
+        <span className="sr-only"> on Osmosis (opens in a new tab)</span>
+      </Link>
+    </>
+  )
+
 const PoolCard = ({ pool }: { pool: PoolOverview }) => {
   const totalAmount =
     pool.reserveCoins?.reduce(
@@ -58,14 +156,11 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
     <Card className={poolTileClass(pool.status)}>
       <CardHeader className="flex-col gap-2 text-start md:flex-row md:items-center">
         <Avatar className="size-8 md:size-12">
-          <AvatarImage
-            src={getAssetImageUrl(pool.alloy.asset)}
-            alt={pool.alloy.asset.name}
-          />
+          <AvatarImage src={getAssetImageUrl(pool.alloy.asset)} alt="" />
         </Avatar>
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 md:mb-0">
-            <h1 className="text-lg font-semibold">{pool.alloy.asset.name}</h1>
+            <h2 className="text-lg font-semibold">{pool.alloy.asset.name}</h2>
             <Badge size="sm">{pool.alloy.asset.symbol}</Badge>
             <PoolStatusBadges pool={pool} />
             <Link
@@ -74,7 +169,11 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
               rel="noopener noreferrer"
             >
               <Badge size="sm" variant="secondary">
-                Pool <ExternalLink className="ml-1 size-3" />
+                Pool <ExternalLink className="ml-1 size-3" aria-hidden />
+                <span className="sr-only">
+                  {" "}
+                  {pool.id} on Osmosis (opens in a new tab)
+                </span>
               </Badge>
             </Link>
             <Link
@@ -83,7 +182,8 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
               rel="noopener noreferrer"
             >
               <Badge size="sm" variant="secondary">
-                Contract <ExternalLink className="ml-1 size-3" />
+                Contract <ExternalLink className="ml-1 size-3" aria-hidden />
+                <span className="sr-only"> (opens in a new tab)</span>
               </Badge>
             </Link>
           </div>
@@ -92,71 +192,26 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
               pool.alloy.asset.description}
           </p>
         </div>
-        <Link
-          href={`/pools/${pool.id}`}
-          className={cn(buttonVariants(), "md:ml-auto")}
-        >
-          View Details <ChevronRight className="ml-2 size-4" />
-        </Link>
+        <div className="flex flex-wrap gap-2 md:ml-auto md:flex-nowrap">
+          <TradeLinks pool={pool} />
+          <Link href={`/pools/${pool.id}`} className={buttonVariants()}>
+            View Details
+            <span className="sr-only"> of {pool.alloy.asset.symbol}</span>
+            <ChevronRight className="ml-2 size-4" aria-hidden />
+          </Link>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2 md:grid md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <div className="grid h-fit grid-cols-2 gap-2 text-start *:h-full">
-              <div className="rounded-md border p-2">
-                <p className="text-xs text-muted-foreground md:text-sm">
-                  Price
-                </p>
-                <h2 className="font-semibold md:text-lg">
-                  <SmallDecimals>
-                    {pool.alloy.price
-                      ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
-                      : "-"}
-                  </SmallDecimals>
-                </h2>
-              </div>
-              <div className="rounded-md border p-2">
-                <p className="text-xs text-muted-foreground md:text-sm">
-                  Total Asset Amount
-                </p>
-                <h2 className="font-semibold md:text-lg">
-                  <SmallDecimals>
-                    {NumberFormatter.formatValue(totalAmount)}
-                  </SmallDecimals>{" "}
-                  <span className="hidden font-mono text-xs font-medium md:inline">
-                    {pool.alloy.asset.symbol}
-                  </span>
-                </h2>
-              </div>
-              <div className="rounded-md border p-2">
-                <p className="text-xs text-muted-foreground md:text-sm">
-                  24h Trading Volume
-                </p>
-                <h2 className="line-clamp-1 font-semibold md:text-lg">
-                  <SmallDecimals>
-                    {pool.volume24hUsd
-                      ? `$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`
-                      : "-"}
-                  </SmallDecimals>
-                </h2>
-              </div>
-              <div className="rounded-md border p-2">
-                <p className="text-xs text-muted-foreground md:text-sm">
-                  Market Cap
-                </p>
-                <h2 className="line-clamp-1 font-semibold md:text-lg">
-                  <SmallDecimals>
-                    {pool.alloy.price
-                      ? `$${NumberFormatter.formatValue(
-                          Number(pool.alloy.price.amount) * totalAmount
-                        )}`
-                      : "-"}
-                  </SmallDecimals>
-                </h2>
-              </div>
-            </div>
+            <PoolStats
+              pool={pool}
+              totalAmount={totalAmount}
+              className="h-fit grid-cols-2 *:h-full"
+            />
             <OverviewChartContent
               pools={[pool]}
+              label={`Liquidity of ${pool.alloy.asset.symbol} in USD over time`}
               // Fills the column: the variant list beside it sets the row
               // height (five variants on allBTC outgrew the old 700px cap).
               className="aspect-auto h-[240px] rounded-md border p-2 md:h-auto md:min-h-[200px] md:flex-1"
@@ -225,7 +280,7 @@ const PoolAssetCard = ({
     >
       <div className="flex flex-col gap-2 p-2 md:flex-row md:items-center">
         <Avatar>
-          <AvatarImage src={getAssetImageUrl(c.asset)} alt={c.asset.name} />
+          <AvatarImage src={getAssetImageUrl(c.asset)} alt="" />
         </Avatar>
         <div className="mr-2 flex flex-col space-y-0.5">
           <div className="inline-flex flex-wrap items-center gap-2 font-semibold leading-none">
@@ -250,8 +305,8 @@ const PoolAssetCard = ({
                 rel="noopener noreferrer"
                 aria-label={`${variantSymbol(c)} on Osmosis`}
               >
-                <Badge size="xs" variant="secondary">
-                  Asset <ExternalLink className="ml-1 size-3" />
+                <Badge size="xs" variant="secondary" className="min-h-6">
+                  Asset <ExternalLink className="ml-1 size-3" aria-hidden />
                 </Badge>
               </Link>
             )}
@@ -262,11 +317,12 @@ const PoolAssetCard = ({
           </p>
         </div>
         <div className="text-center md:ml-auto md:text-end">
-          <h2 className="font-semibold">
+          <p className="font-semibold tabular-nums">
+            <span className="sr-only">Price </span>
             <SmallDecimals>
               {price ? `$${NumberFormatter.formatValue(price)}` : "-"}
             </SmallDecimals>
-          </h2>
+          </p>
           {
             //<p
             //className={cn(
@@ -287,44 +343,52 @@ const PoolAssetCard = ({
       {limiters?.map((limiter, i) => (
         <TooltipProvider key={i} delayDuration={200}>
           <Tooltip>
+            {/* A button so the explanation opens on keyboard focus too. */}
             <TooltipTrigger asChild>
-              <div className="rounded-md border p-2">
-                <div className="flex items-center gap-1 text-sm">
-                  <span className="font-bold">
-                    {_.startCase(limiter.type)} Limiter
-                  </span>
-                  <span className="font-medium">Enforced</span>
-                  <Info className="size-3" />
-                </div>
-                {limiter.type === "static" && (
-                  <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md border p-2 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {limiter.type === "static" ? (
+                  <>
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="font-semibold">
+                        Max share{" "}
+                        {(Number(limiter.upper_limit) * 100).toFixed(0)}%
+                      </span>
+                      <span className="text-muted-foreground">
+                        (now{" "}
+                        <DecimalSpan mantissa={1}>
+                          {percentage * 100}
+                        </DecimalSpan>
+                        %)
+                      </span>
+                      <Info className="size-3" aria-hidden />
+                    </div>
                     <Progress
-                      className="h-2.5 w-full"
+                      className="mt-1 h-2.5 w-full"
+                      aria-label={`${variantSymbol(c)} share of its limit`}
                       value={new BigNumber(percentage)
                         .multipliedBy(100)
                         .dividedBy(limiter.upper_limit)
                         .toNumber()}
                     />
-                    <div className="whitespace-nowrap font-mono text-xs">
-                      Limit{" "}
-                      <DecimalSpan mantissa={2}>{percentage * 100}</DecimalSpan>
-                      /{(Number(limiter.upper_limit) * 100).toFixed(2)}%
-                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-1 text-sm">
+                    <span className="font-semibold">Change limit enforced</span>
+                    <Info className="size-3" aria-hidden />
                   </div>
                 )}
-              </div>
+              </button>
             </TooltipTrigger>
-            {
-              <TooltipContent className="max-w-[350px]">
-                <TooltipArrow />
-                <h2 className="font-semibold">
-                  {LIMITERS[limiter.type].title}
-                </h2>
-                <span className="text-xs">
-                  {LIMITERS[limiter.type].description}
-                </span>
-              </TooltipContent>
-            }
+            <TooltipContent className="max-w-[350px]">
+              <TooltipArrow />
+              <p className="font-semibold">{LIMITERS[limiter.type].title}</p>
+              <span className="text-xs">
+                {LIMITERS[limiter.type].description}
+              </span>
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ))}
@@ -344,4 +408,11 @@ const PoolAssetCard = ({
   )
 }
 
-export { PoolCard, valueFormatter, limitersFor, PoolAssetCard }
+export {
+  PoolCard,
+  PoolStats,
+  TradeLinks,
+  valueFormatter,
+  limitersFor,
+  PoolAssetCard,
+}

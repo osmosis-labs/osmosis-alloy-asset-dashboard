@@ -11,6 +11,11 @@ import type { RawPoolOverview } from "../types/pool"
 
 const APP_URL = "https://app.osmosis.zone"
 
+// Migration alloys (src/constants/migration.ts) are listed apart from the
+// alloys; see PoolKind.
+export const isMigrationPool = (pool: { kind?: string }) =>
+  pool.kind === "migration"
+
 // Exponent of the display unit, matched by denom or alias; null if absent.
 export const displayExponent = (a: Asset): number | null => {
   const unit = a.denom_units.find(

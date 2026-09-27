@@ -6,7 +6,7 @@ export const POOL_STATUS = {
   frozen: {
     title: "Pool Frozen",
     description:
-      "The pool moderator has set the contract's active status to false. Joins, swaps in either direction and exits through this pool are all rejected until it is reactivated.",
+      "Swaps, deposits and withdrawals through this pool are all paused, so its alloyed token cannot be redeemed for a variant until the pool is reactivated. The pool moderator or governance froze it by setting the contract inactive.",
   },
   unknown: {
     title: "Status Unknown",
