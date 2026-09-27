@@ -40,3 +40,42 @@ export const quoteMatches = (
   quote.denomIn === current.denomIn &&
   quote.denomOut === current.denomOut &&
   quote.amountIn === current.amountIn
+
+// The parts of an SQS direct quote a swap transaction is built from.
+export type DirectQuote = {
+  amount_in: { denom: string; amount: string }
+  amount_out: string
+  route: { pools: { id: number | string; token_out_denom: string }[] }[]
+}
+
+// The route and minimum output of a direct swap through `input.poolId`,
+// built from what the form selected rather than taken from the quote. SQS
+// only supplies the output amount, and its answer must describe exactly the
+// requested swap: one route of one hop, through the selected pool, from the
+// selected input denom and amount to the selected output denom. Anything else
+// (a misbehaving or compromised quote service routing through another pool,
+// or into another token) throws before anything is signed.
+export const directSwapFromQuote = (quote: DirectQuote, input: QuoteInput) => {
+  const hops = quote.route?.length === 1 ? quote.route[0].pools : []
+  const matches =
+    hops.length === 1 &&
+    String(hops[0].id) === input.poolId &&
+    hops[0].token_out_denom === input.denomOut &&
+    quote.amount_in?.denom === input.denomIn &&
+    quote.amount_in?.amount === input.amountIn &&
+    /^[1-9]\d*$/.test(quote.amount_out ?? "")
+  if (!matches) {
+    throw new Error(
+      "The quote does not match the selected pool and assets. Refresh the page and try again."
+    )
+  }
+  return {
+    routes: [{ poolId: input.poolId, tokenOutDenom: input.denomOut }],
+    minAmountOut: quote.amount_out,
+  }
+}
+
+// The transmuter contract that issues an alloyed denom
+// (factory/{contract}/alloyed/{subdenom}), or null for any other denom.
+export const alloyContract = (denom: string) =>
+  /^factory\/(osmo1[02-9ac-hj-np-z]+)\/alloyed\/[^/]+$/.exec(denom)?.[1] ?? null
