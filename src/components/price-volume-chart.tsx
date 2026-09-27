@@ -73,8 +73,16 @@ const PriceVolumeChart = ({ denom }: { denom: string }) => {
         <DateRangeSelect range={range} setRange={setRange} />
       </CardHeader>
       <CardContent className="relative h-[300px] w-full">
-        {data.isValidating ? (
-          <Loader2 className="absolute left-0 right-0 top-1/3 m-auto size-8 animate-spin" />
+        {/* Only the first load shows the spinner: refreshes keep the
+            previous chart (keepPreviousData) instead of blanking it. */}
+        {data.isLoading ? (
+          <div
+            role="status"
+            className="absolute left-0 right-0 top-1/3 m-auto w-fit"
+          >
+            <Loader2 className="size-8 animate-spin" />
+            <span className="sr-only">Loading price and volume</span>
+          </div>
         ) : !data.data || !data.data.length ? (
           <div className="absolute left-0 right-0 top-1/3 m-auto">
             <p className="text-muted-foreground">No asset activity</p>
@@ -152,8 +160,10 @@ const PriceVolumeChartContent = ({
     <ChartContainer
       className={cn("aspect-auto w-full", className)}
       config={config}
+      role="img"
+      aria-label="Trading volume in USD and price of the alloy asset over time"
     >
-      <ComposedChart data={data}>
+      <ComposedChart data={data} accessibilityLayer>
         <CartesianGrid vertical={false} />
         <ChartLegend
           content={<ChartLegendContent />}

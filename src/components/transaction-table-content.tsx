@@ -377,12 +377,16 @@ const TransactionTableContent = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="ml-auto flex justify-end gap-2">
+          <div className="ml-auto flex items-center justify-end gap-2">
+            <span className="text-sm text-muted-foreground" aria-live="polite">
+              Page {page} of {Math.max(totalPage, 1)}
+            </span>
             <Button
               size="icon-sm"
               variant="ghost"
               disabled={page === 1}
               onClick={() => setPage(1)}
+              aria-label="First page"
             >
               <ChevronsLeft className="size-4" />
             </Button>
@@ -391,6 +395,7 @@ const TransactionTableContent = ({
               variant="ghost"
               disabled={page === 1}
               onClick={() => setPage((prev) => prev - 1)}
+              aria-label="Previous page"
             >
               <ChevronLeft className="size-4" />
             </Button>
@@ -399,6 +404,7 @@ const TransactionTableContent = ({
               variant="ghost"
               disabled={page >= totalPage}
               onClick={() => setPage((prev) => prev + 1)}
+              aria-label="Next page"
             >
               <ChevronRight className="size-4" />
             </Button>
@@ -407,6 +413,7 @@ const TransactionTableContent = ({
               variant="ghost"
               disabled={page >= totalPage}
               onClick={() => setPage(totalPage)}
+              aria-label="Last page"
             >
               <ChevronsRight className="size-4" />
             </Button>

@@ -3,12 +3,16 @@
 import { Copy } from "lucide-react"
 import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { badgeVariants } from "@/components/ui/badge"
 
+// A button showing the start of a denom; copies the whole denom.
 const CopyDenom = ({ denom }: { denom: string }) => (
-  <Badge
-    variant="secondary"
-    className="cursor-pointer"
+  <button
+    type="button"
+    className={cn(badgeVariants({ variant: "secondary" }), "min-h-6")}
+    aria-label={`Copy denom ${denom}`}
+    title={denom}
     onClick={() => {
       navigator.clipboard
         .writeText(denom)
@@ -18,8 +22,8 @@ const CopyDenom = ({ denom }: { denom: string }) => (
         )
     }}
   >
-    {denom.slice(0, 12)}... <Copy className="ml-1 size-3" />
-  </Badge>
+    {denom.slice(0, 12)}... <Copy className="ml-1 size-3" aria-hidden />
+  </button>
 )
 CopyDenom.displayName = "CopyDenom"
 

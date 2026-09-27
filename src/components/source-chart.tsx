@@ -94,8 +94,12 @@ const SourceChart = ({
         <ChartContainer
           className={cn("mx-auto aspect-square h-[250px] max-h-[250px] w-auto")}
           config={config}
+          role="img"
+          aria-label={`Share of the pool by ${grouping}: ${data
+            .map((d) => `${d.ty} ${Number(d.pct).toFixed(1)}%`)
+            .join(", ")}`}
         >
-          <PieChart>
+          <PieChart accessibilityLayer>
             <ChartTooltip content={<ChartTooltipContent hideLabel />} />
             <Pie data={data} dataKey="pct" nameKey="ty" innerRadius={40} />
             <ChartLegend

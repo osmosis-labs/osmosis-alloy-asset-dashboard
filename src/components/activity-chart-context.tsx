@@ -165,6 +165,8 @@ const ActivityChartContent = ({
     <ChartContainer
       className={cn("aspect-auto w-full", className)}
       config={config}
+      role="img"
+      aria-label="Amounts of each variant that entered and left the pool over time"
     >
       <ComposedChart data={data} stackOffset="sign" accessibilityLayer>
         <CartesianGrid vertical={false} />

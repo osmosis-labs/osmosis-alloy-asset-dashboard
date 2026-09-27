@@ -74,8 +74,12 @@ const TransactionTable = ({ pool }: { pool: PoolOverview }) => {
       <CardContent>
         <Suspense
           fallback={
-            <div className="flex h-[300px] w-full items-center justify-center">
+            <div
+              role="status"
+              className="flex h-[300px] w-full items-center justify-center"
+            >
               <Loader2 className="size-8 animate-spin" />
+              <span className="sr-only">Loading swaps</span>
             </div>
           }
         >

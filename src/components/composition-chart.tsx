@@ -179,8 +179,11 @@ const CompositionChart = ({
         <ChartContainer
           className="aspect-auto h-[300px] w-full"
           config={config}
+          role="img"
+          aria-label={`Backing of ${pool.alloy.asset.symbol} over time, by ${grouping}`}
         >
           <AreaChart
+            accessibilityLayer
             data={data}
             stackOffset={scale === "share" ? "expand" : "none"}
           >
