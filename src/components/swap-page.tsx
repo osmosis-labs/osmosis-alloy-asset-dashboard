@@ -12,10 +12,12 @@ import useSWRImmutable from "swr/immutable"
 import { buildSwapPools } from "@/lib/swap-pools"
 import { Button } from "@/components/ui/button"
 
-import { SwapCard } from "../../components/swap-card"
-import WalletProvider from "../../components/wallet-provider"
+import { SwapCard } from "./swap-card"
+import WalletProvider from "./wallet-provider"
 
-export default function Home() {
+// The swap form and its data. Client-only: the pools and the assetlist are
+// fetched in the browser, and the wallet provider needs window.
+export function SwapPage({ initialPoolId }: { initialPoolId?: string }) {
   const { data, error, isValidating, mutate } = useSWRImmutable(
     "/api/pools",
     async () => {
@@ -29,9 +31,9 @@ export default function Home() {
 
   return (
     <WalletProvider>
-      <main className="container my-6 flex flex-1 flex-col items-center justify-center gap-6 text-center">
+      <div className="flex w-full flex-1 flex-col items-center justify-center gap-6">
         {data && data.length > 0 ? (
-          <SwapCard pools={data} />
+          <SwapCard pools={data} initialPoolId={initialPoolId} />
         ) : error && !isValidating ? (
           <div className="flex flex-col items-center gap-3">
             <p className="text-muted-foreground">
@@ -42,9 +44,12 @@ export default function Home() {
             </Button>
           </div>
         ) : (
-          <Loader2 className="size-8 animate-spin" />
+          <div role="status">
+            <Loader2 className="size-8 animate-spin" />
+            <span className="sr-only">Loading pools</span>
+          </div>
         )}
-      </main>
+      </div>
     </WalletProvider>
   )
 }
