@@ -1,4 +1,6 @@
-import { getPoolsOverview } from "@/services/pool"
+import { getPoolsOverview, isMigrationPool } from "@/services/pool"
+
+import { DataFreshnessNotice } from "@/components/data-freshness"
 
 import { OverviewChart } from "../components/overview-chart"
 import { PoolCard } from "../components/pool-card"
@@ -12,11 +14,14 @@ export const revalidate = 300 // 5 minutes
 export const maxDuration = 60
 
 export default async function Home() {
-  const { pools } = await getPoolsOverview()
+  const overview = await getPoolsOverview()
+  // Migration alloys are listed on /pools, not here.
+  const pools = overview.pools.filter((pool) => !isMigrationPool(pool))
 
   return (
     <main className="flex items-center justify-center">
       <div className="container my-6 flex flex-col items-center gap-6 text-center">
+        <DataFreshnessNotice {...overview} />
         <OverviewChart pools={pools} />
         <div className="flex w-full flex-col gap-2 overflow-auto">
           {pools.map((pool) => (

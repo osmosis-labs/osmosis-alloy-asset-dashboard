@@ -11,10 +11,11 @@ type ReserveCoinLike = {
   asset?: { symbol?: string; base?: string } | null
 }
 
+// Display amount of a reserve coin. Pools whose coins lack decimals are
+// classified unsupported (src/services/pool.ts), so coinDecimals is always
+// set here; a real 0 is kept (it used to become 6).
 export const reserveAmount = (a: CurrencyAmount) => {
-  return new BigNumber(Number.isNaN(a.amount) ? 0 : a.amount)
-    .shiftedBy(-(a.currency?.coinDecimals || 6))
-    .toNumber()
+  return new BigNumber(a.amount).shiftedBy(-a.currency.coinDecimals).toNumber()
 }
 
 // The symbol the Osmosis frontend shows for a variant (USDC.noble,
