@@ -1,9 +1,10 @@
 import { Metadata } from "next"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import { getPoolComposition } from "@/services/composition"
 import { getPoolOverview, getPoolsOverview } from "@/services/pool"
 import _ from "lodash"
-import { ExternalLink, Frown } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
@@ -47,9 +48,7 @@ export const generateMetadata = async ({
   const { id } = await params
   const pool = await getPoolOverview(id)
 
-  if (!pool) {
-    return { title: "Not Found" }
-  }
+  if (!pool) notFound()
 
   return {
     title: `${pool.alloy.asset.name} Pool`,
@@ -70,20 +69,9 @@ export default async function Home({ params }: PoolPageProps) {
   const { id } = await params
   const pool = await getPoolOverview(id)
 
-  if (!pool) {
-    return (
-      <>
-        <title>Not Found</title>
-        <div className="flex flex-1 flex-col items-center justify-center gap-1">
-          <Frown className="mb-2 size-10" />
-          <h1 className="text-2xl font-semibold">Not Found</h1>
-          <p className="text-muted-foreground">
-            The pool is not found or is not supported.
-          </p>
-        </div>
-      </>
-    )
-  }
+  // A real 404 (not a 200 "Not Found" page), so links to a pool the
+  // dashboard does not list are reported as broken.
+  if (!pool) notFound()
 
   const totalAmount =
     pool.reserveCoins?.reduce(
