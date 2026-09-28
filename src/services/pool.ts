@@ -22,6 +22,7 @@ import {
 import dayjs from "@/lib/dayjs"
 import {
   appImageUrl,
+  isMigrationPool,
   marketFiat,
   migrationAlloyAsset,
   parseReserveCoins,
@@ -485,8 +486,7 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
   unsupportedPools: [],
 }
 
-export const isMigrationPool = (pool: Pick<PoolOverview, "kind">) =>
-  pool.kind === "migration"
+export { isMigrationPool }
 
 // A usable overview has at least one alloy. Migration pools alone do not
 // count: getMigrationRawPools can still build them while the pools API is

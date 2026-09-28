@@ -70,13 +70,10 @@ const columns: ColumnDef<PoolOverview>[] = [
       return (
         <div className="flex items-center gap-2">
           <Avatar className="size-5">
-            <AvatarImage
-              src={getAssetImageUrl(alloy.asset)}
-              alt={alloy.asset.symbol}
-            />
+            <AvatarImage src={getAssetImageUrl(alloy.asset)} alt="" />
             <AvatarFallback>{capitalName(alloy.asset.name)}</AvatarFallback>
           </Avatar>
-          <h3 className="font-semibold">{alloy.asset.name}</h3>
+          <span className="font-semibold">{alloy.asset.name}</span>
         </div>
       )
     },
@@ -114,9 +111,24 @@ const columns: ColumnDef<PoolOverview>[] = [
                 <AvatarFallback>{capitalName(asset.asset.name)}</AvatarFallback>
               </Avatar>
             )
+            // A button so the variant's details open on keyboard focus too;
+            // its name includes the status the ring color shows.
+            const statusText = corrupted
+              ? "corrupted"
+              : isFlagged(assetStatus)
+                ? "flagged in the assetlist"
+                : null
             return (
               <Tooltip key={asset.asset.denom}>
-                <TooltipTrigger asChild>{Image}</TooltipTrigger>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`${variantSymbol(asset)}${statusText ? ` (${statusText})` : ""}`}
+                  >
+                    {Image}
+                  </button>
+                </TooltipTrigger>
                 <TooltipContent className="max-w-[350px] space-y-1 text-start">
                   <div className="flex items-center gap-2 font-mono">
                     {Image} {variantSymbol(asset)}
@@ -144,18 +156,18 @@ const columns: ColumnDef<PoolOverview>[] = [
     cell: (row) => {
       const alloy = row.getValue() as PoolOverview["alloy"]
       return (
-        <h3>
+        <span className="tabular-nums">
           <SmallDecimals>
             {alloy.price?.amount
               ? NumberFormatter.formatValue(alloy.price?.amount)
               : "-"}
           </SmallDecimals>
-        </h3>
+        </span>
       )
     },
   },
   {
-    header: "Market Cap ($)",
+    header: "TVL ($)",
     accessorFn: (row) => ({
       price: row.alloy.price?.amount,
       totalAmount:
@@ -170,13 +182,13 @@ const columns: ColumnDef<PoolOverview>[] = [
         totalAmount: number
       }
       return (
-        <h3>
+        <span className="tabular-nums">
           <SmallDecimals>
             {price
               ? NumberFormatter.formatValue(Number(price) * totalAmount)
               : "-"}
           </SmallDecimals>
-        </h3>
+        </span>
       )
     },
   },
@@ -191,19 +203,26 @@ const columns: ColumnDef<PoolOverview>[] = [
               size: "icon-xs",
             })}
             href={`/pools/${row.original.id}`}
+            aria-label={`${row.original.alloy.asset.name} details`}
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4" aria-hidden />
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon-xs" variant="outline">
-                <EllipsisVertical className="size-3" />
+              <Button
+                size="icon-xs"
+                variant="outline"
+                aria-label={`${row.original.alloy.asset.name} actions`}
+              >
+                <EllipsisVertical className="size-3" aria-hidden />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-52">
-              <DropdownMenuItem>
-                <ChevronRight className="mr-2 size-4" />
-                <span>Go To Pool</span>
+              <DropdownMenuItem asChild>
+                <Link href={`/pools/${row.original.id}`}>
+                  <ChevronRight className="mr-2 size-4" />
+                  <span>Go To Pool</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>

@@ -22,6 +22,9 @@ export default async function Home() {
     <main className="flex items-center justify-center">
       <div className="container my-6 flex flex-col items-center gap-6 text-center">
         <DataFreshnessNotice {...overview} />
+        {/* The page's heading for assistive technology; the explanation of
+            alloys is the "About Alloyed Assets" link in the header. */}
+        <h1 className="sr-only">Osmosis Alloyed Assets</h1>
         <OverviewChart pools={pools} />
         <div className="flex w-full flex-col gap-2 overflow-auto">
           {pools.map((pool) => (

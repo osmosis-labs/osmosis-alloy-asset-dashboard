@@ -99,7 +99,10 @@ const ActivityChart = ({ pool }: { pool: PoolOverview }) => {
           </Message>
         ) : !data || isLoading ? (
           <Message>
-            <Loader2 className="size-8 animate-spin" />
+            <div role="status">
+              <Loader2 className="size-8 animate-spin" />
+              <span className="sr-only">Loading activity</span>
+            </div>
           </Message>
         ) : (
           <>

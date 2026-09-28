@@ -16,6 +16,7 @@ import { getPoolSources, SOURCE_GROUPINGS } from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -31,6 +32,8 @@ import { OverviewChart } from "@/components/overview-chart"
 import {
   limitersFor,
   PoolAssetCard,
+  PoolStats,
+  TradeLinks,
   valueFormatter,
 } from "@/components/pool-card"
 import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
@@ -110,10 +113,7 @@ export default async function Home({ params }: PoolPageProps) {
           )}
         >
           <Avatar className="size-24">
-            <AvatarImage
-              src={getAssetImageUrl(pool.alloy.asset)}
-              alt={pool.alloy.asset.symbol}
-            />
+            <AvatarImage src={getAssetImageUrl(pool.alloy.asset)} alt="" />
             <AvatarFallback>
               {capitalName(pool.alloy.asset.name)}
             </AvatarFallback>
@@ -126,21 +126,35 @@ export default async function Home({ params }: PoolPageProps) {
               {isMigration && <Badge variant="outline">Migration</Badge>}
               <PoolStatusBadges pool={pool} />
             </div>
-            <p className="line-clamp-1 break-all text-sm font-light italic text-muted-foreground">
-              {pool.poolNameByDenom}
-            </p>
+            {!isMigration && (
+              <p className="text-sm">
+                An alloyed asset: one {pool.alloy.asset.symbol} is backed 1:1 by
+                the variants below, held by this pool&apos;s transmuter
+                contract.
+              </p>
+            )}
             <p className="whitespace-pre-wrap text-sm leading-tight text-muted-foreground">
               {pool.alloy.asset.extended_description ||
                 pool.alloy.asset.description}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <TradeLinks pool={pool} />
+              {!isMigration && (
+                <Link
+                  href={`/swap?pool=${pool.id}`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Transmuter Swap
+                </Link>
+              )}
               <Link
                 href={OsmosisApp.pool(pool.id)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Badge variant="secondary">
-                  Pool <ExternalLink className="ml-1 size-3" />
+                <Badge variant="secondary" className="min-h-6">
+                  Pool <ExternalLink className="ml-1 size-3" aria-hidden />
+                  <span className="sr-only"> (opens in a new tab)</span>
                 </Badge>
               </Link>
               <Link
@@ -148,59 +162,20 @@ export default async function Home({ params }: PoolPageProps) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Badge variant="secondary">
-                  Contract <ExternalLink className="ml-1 size-3" />
+                <Badge variant="secondary" className="min-h-6">
+                  Contract <ExternalLink className="ml-1 size-3" aria-hidden />
+                  <span className="sr-only"> (opens in a new tab)</span>
                 </Badge>
               </Link>
               <CopyDenom denom={pool.alloy.asset.denom} />
             </div>
           </div>
         </div>
-        <div className="grid w-full grid-cols-2 gap-2 text-start md:grid-cols-4">
-          <div className="rounded-md border p-2">
-            <p className="text-sm text-muted-foreground">Price</p>
-            <h2 className="font-semibold md:text-lg">
-              <SmallDecimals>
-                {pool.alloy.price
-                  ? `$${NumberFormatter.formatValue(pool.alloy.price.amount)}`
-                  : "-"}
-              </SmallDecimals>
-            </h2>
-          </div>
-          <div className="rounded-md border p-2">
-            <p className="text-sm text-muted-foreground">Total Asset Amount</p>
-            <h2 className="font-semibold md:text-lg">
-              <SmallDecimals>
-                {NumberFormatter.formatValue(totalAmount)}
-              </SmallDecimals>{" "}
-              <span className="font-mono text-xs font-medium">
-                {pool.alloy.asset.symbol}
-              </span>
-            </h2>
-          </div>
-          <div className="rounded-md border p-2">
-            <p className="text-sm text-muted-foreground">24h Trading Volume</p>
-            <h2 className="line-clamp-1 font-semibold md:text-lg">
-              <SmallDecimals>
-                {pool.volume24hUsd
-                  ? `$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`
-                  : "-"}
-              </SmallDecimals>
-            </h2>
-          </div>
-          <div className="rounded-md border p-2">
-            <p className="text-sm text-muted-foreground">Market Cap</p>
-            <h2 className="line-clamp-1 font-semibold md:text-lg">
-              <SmallDecimals>
-                {pool.alloy.price
-                  ? `$${NumberFormatter.formatValue(
-                      Number(pool.alloy.price.amount) * totalAmount
-                    )}`
-                  : "-"}
-              </SmallDecimals>
-            </h2>
-          </div>
-        </div>
+        <PoolStats
+          pool={pool}
+          totalAmount={totalAmount}
+          className="w-full grid-cols-2 md:grid-cols-4"
+        />
 
         <DateRangeProvider>
           <div className="grid w-full gap-6 md:grid-cols-10">
@@ -258,9 +233,9 @@ export default async function Home({ params }: PoolPageProps) {
                     {groupedSources[grouping].map((v, i) => (
                       <div key={i} className="flex flex-col gap-2">
                         <div className="flex items-center text-start">
-                          <h2 className="text-lg font-semibold md:text-xl">
+                          <h3 className="text-lg font-semibold md:text-xl">
                             {v.label}
-                          </h2>
+                          </h3>
                           <div className="ml-auto text-end">
                             <DecimalSpan
                               className="font-semibold"
@@ -306,8 +281,18 @@ export default async function Home({ params }: PoolPageProps) {
 
           <ActivityChart pool={pool} />
 
-          {composition && (
+          {composition ? (
             <CompositionChart pool={pool} composition={composition} />
+          ) : (
+            <Card className="w-full text-start">
+              <CardHeader>
+                <CardTitle>Backing Over Time</CardTitle>
+                <CardDescription>
+                  The pool&apos;s backing history is still being collected: it
+                  appears here once there are at least two hourly snapshots.
+                </CardDescription>
+              </CardHeader>
+            </Card>
           )}
 
           {/* A migration alloy's token is not a listed asset, so it has no

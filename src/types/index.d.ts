@@ -11,6 +11,7 @@ export type SiteConfig = {
   }
   links: {
     github: string
+    app: string
+    docs: string
   }
-  ogImage: string
 }

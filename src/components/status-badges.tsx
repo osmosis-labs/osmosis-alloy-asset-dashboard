@@ -25,8 +25,9 @@ type Size = BadgeProps["size"]
 
 // Every badge carries its own provider so it renders identically whether the
 // parent (server component card, client table) has one or not. The trigger is
-// wrapped in a span because Badge does not forward refs, and Radix needs the
-// ref to anchor the tooltip.
+// wrapped in a button: Badge does not forward refs, and Radix needs the ref to
+// anchor the tooltip, and a button can take keyboard focus, so the
+// explanation opens on focus as well as on hover.
 const StatusTooltip = ({
   title,
   trigger,
@@ -39,11 +40,16 @@ const StatusTooltip = ({
   <TooltipProvider delayDuration={200}>
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex">{trigger}</span>
+        <button
+          type="button"
+          className="inline-flex rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {trigger}
+        </button>
       </TooltipTrigger>
       <TooltipContent className="max-w-[350px] space-y-1 text-start">
         <TooltipArrow />
-        <h2 className="font-semibold">{title}</h2>
+        <p className="font-semibold">{title}</p>
         {children}
       </TooltipContent>
     </Tooltip>
@@ -138,7 +144,7 @@ const PoolStatusBadges = ({
           title={POOL_STATUS.frozen.title}
           trigger={
             <Badge size={size} variant="destructive" className="gap-1">
-              <Snowflake className="size-3" /> Frozen
+              <Snowflake className="size-3" aria-hidden /> Frozen
             </Badge>
           }
         >

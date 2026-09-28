@@ -100,19 +100,29 @@ export const variantColor = (index: number) =>
     ? sourceColor(index)
     : `color-mix(in srgb, ${sourceColor(index)} 60%, black)`
 
-// Per-variant color: one palette color per variant, most prevalent first, so
-// variants from the same provider (e.g. cbBTC.axl and WBTC.eth.axl) are as
-// easy to tell apart as any others. The palette has five colors; a sixth or
-// later variant reuses them, darkened.
-export const getVariantStyles = (pool: PoolOverview) =>
-  _.chain(getPoolSources(pool, "variant"))
-    .flatMap((source, index) =>
+// Per-variant color: one palette color per variant, so variants from the same
+// provider (e.g. cbBTC.axl and WBTC.eth.axl) are as easy to tell apart as any
+// others. Colors follow the variants' denoms in sorted order, not their share
+// of the pool, so a variant keeps its color when a rebalance changes which
+// holds the most. The palette has five colors; a sixth or later variant
+// reuses them, darkened.
+export const getVariantStyles = (pool: PoolOverview) => {
+  const denoms = _.sortBy(
+    _.uniq(pool.reserveCoins.map((c) => variantDenom(c)).filter(Boolean))
+  ) as string[]
+  return _.chain(getPoolSources(pool, "variant"))
+    .flatMap((source) =>
       source.assets.map((a) => {
+        const denom = variantDenom(a)!
         return [
-          variantDenom(a),
-          { symbol: variantSymbol(a), color: variantColor(index) },
+          denom,
+          {
+            symbol: variantSymbol(a),
+            color: variantColor(denoms.indexOf(denom)),
+          },
         ]
       })
     )
     .fromPairs()
     .value() as Record<string, { symbol: string; color: string }>
+}
