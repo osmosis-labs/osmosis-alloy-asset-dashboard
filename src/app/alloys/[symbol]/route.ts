@@ -5,7 +5,10 @@ import { getPoolsOverview } from "@/services/pool"
 // pool page of the pool that currently issues it, so a link keeps working if
 // an alloy moves to a new pool (allUSDC moved from pool 2321 to 3497). A full
 // alloyed denom (factory/{contract}/alloyed/{symbol}, URL-encoded) works too.
-// Temporary redirects, since the pool behind an alloy can change.
+// An alloy without a page of its own (under the listing cutoff, or not an
+// alloy at all) goes to /pools, which lists every alloyed pool, so links from
+// app.osmosis.zone for any alloy land somewhere useful. Temporary redirects,
+// since the pool behind an alloy can change.
 export const revalidate = 300
 export const maxDuration = 60
 
@@ -21,8 +24,6 @@ export async function GET(
     const denom = p.alloy.asset.denom.toLowerCase()
     return denom === wanted || denom.split("/").at(-1) === wanted
   })
-  if (!pool) {
-    return NextResponse.json({ error: "not found" }, { status: 404 })
-  }
-  return NextResponse.redirect(new URL(`/pools/${pool.id}`, request.url), 307)
+  const target = pool ? `/pools/${pool.id}` : "/pools"
+  return NextResponse.redirect(new URL(target, request.url), 307)
 }
