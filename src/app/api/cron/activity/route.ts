@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto"
 import { NextResponse } from "next/server"
 import {
   blockTime,
@@ -43,13 +44,21 @@ const SWAP_RETENTION_DAYS = 31
 // Reserve snapshots stay hourly this long, then one per day is kept.
 const HOURLY_SNAPSHOT_DAYS = 7
 
+// Constant-time comparison, so response timing does not reveal how much of a
+// guessed token matched.
+const bearerMatches = (header: string | null, secret: string) => {
+  const given = Buffer.from(header ?? "")
+  const expected = Buffer.from(`Bearer ${secret}`)
+  return given.length === expected.length && timingSafeEqual(given, expected)
+}
+
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret) {
     console.error("[cron/activity] CRON_SECRET is not set; refusing to run")
     return NextResponse.json({ error: "not configured" }, { status: 500 })
   }
-  if (request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+  if (!bearerMatches(request.headers.get("authorization"), cronSecret)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
   if (!isDatabaseEnabled()) {
