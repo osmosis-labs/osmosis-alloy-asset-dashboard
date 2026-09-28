@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { siteConfig } from "@/config/site"
+
 import { ModeToggle } from "./mode-toggle"
 import { NavItem } from "./nav-item"
 
@@ -34,6 +36,18 @@ const Nav = () => {
                 <span className="sm:hidden">Swap</span>
                 <span className="hidden sm:inline">Transmuter Swap</span>
               </NavItem>
+            </li>
+            <li>
+              <Link
+                href={siteConfig.links.docs}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <span className="sm:hidden">About</span>
+                <span className="hidden sm:inline">About Alloyed Assets</span>
+                <span className="sr-only"> (opens in a new tab)</span>
+              </Link>
             </li>
           </ul>
         </nav>

@@ -7,10 +7,22 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { Copy, EllipsisVertical, ExternalLink } from "lucide-react"
+import { toast } from "sonner"
 
 import { NotSupportedPoolOverview } from "@/types/pool"
+import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { capitalName } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Table,
   TableBody,
@@ -62,6 +74,61 @@ const UnsupportedPoolsTable = ({
             </div>
           )
         },
+      },
+      {
+        // The pool actions menu, without the details link: these pools have
+        // no page on the dashboard.
+        id: "options",
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon-xs"
+                  variant="outline"
+                  aria-label={`Pool ${row.original.id} actions`}
+                >
+                  <EllipsisVertical className="size-3" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-52" align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(row.original.contractAddress)
+                      .then(() => toast.success("Copied Pool Address"))
+                  }}
+                >
+                  <Copy className="mr-2 size-4" />
+                  <span>Copy Pool Address</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      window.open(OsmosisApp.pool(row.original.id), "_blank")
+                    }}
+                  >
+                    <ExternalLink className="mr-2 size-4" />
+                    <span>View Pool</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      window.open(
+                        BlockExplorer.contract(row.original.contractAddress),
+                        "_blank"
+                      )
+                    }}
+                  >
+                    <ExternalLink className="mr-2 size-4" />
+                    <span>View Contract</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
+        size: 40,
       },
     ],
     []
