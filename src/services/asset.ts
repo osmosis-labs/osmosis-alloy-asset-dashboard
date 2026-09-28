@@ -12,6 +12,7 @@ import {
   FiatAmount,
 } from "@/types/asset"
 import { collectKeyPages } from "@/lib/paginate"
+import { displayExponent } from "@/lib/pool-build"
 import { fetchJsonWithRetry } from "@/lib/utils"
 
 const BASE_ASSET_WITH_PRICE_URL =
@@ -85,11 +86,18 @@ const fetchAssetList = async (): Promise<AssetWithDecimal[]> => {
     throw new Error("Asset list fetch returned no assets")
   }
 
-  return data.map((a) => ({
-    ...a,
-    denom: _.first(a.denom_units)!.denom,
-    decimal: _.last(a.denom_units)!.exponent || 6,
-  })) as AssetWithDecimal[]
+  // Decimals are the exponent of the asset's display unit. An asset whose
+  // display unit is not among its denom units has unknown decimals and is
+  // left out, rather than scaled by a guessed exponent (a real exponent of 0
+  // used to become 6).
+  return data.flatMap((a) => {
+    const decimal = displayExponent(a)
+    if (decimal === null) {
+      console.warn(`Asset ${a.base} has no display unit; skipped`)
+      return []
+    }
+    return [{ ...a, denom: _.first(a.denom_units)!.denom, decimal }]
+  }) as AssetWithDecimal[]
 }
 
 export const getAssetList = unstable_cache(fetchAssetList, ["asset-list"], {

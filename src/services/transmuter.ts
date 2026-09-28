@@ -59,3 +59,16 @@ export const getPoolContractStatus = async (
       : null,
   }
 }
+
+// The pool's accounted reserves (`get_total_pool_liquidity`), or null when the
+// query failed.
+export const getTotalPoolLiquidity = async (
+  contractAddress: string
+): Promise<{ denom: string; amount: string }[] | null> => {
+  const data = await smartQuery<{
+    total_pool_liquidity: { denom: string; amount: string }[]
+  }>(contractAddress, { get_total_pool_liquidity: {} })
+  return Array.isArray(data?.total_pool_liquidity)
+    ? data.total_pool_liquidity
+    : null
+}

@@ -1,14 +1,15 @@
 import { cache } from "react"
 import { unstable_cache } from "next/cache"
+import { MIGRATION_ALLOYS } from "@/constants/migration"
 import BigNumber from "bignumber.js"
 import _ from "lodash"
 
 import { env } from "@/env.mjs"
 import { AssetStatus, AssetWithDecimal, CurrencyAmount } from "@/types/asset"
 import {
-  MinimalPool,
   NotSupportedPoolOverview,
   PoolInOutAssets,
+  PoolKind,
   PoolOverview,
   RawPoolOverview,
 } from "@/types/pool"
@@ -19,8 +20,14 @@ import {
   PoolActivitySource,
 } from "@/lib/activity"
 import dayjs from "@/lib/dayjs"
+import {
+  appImageUrl,
+  marketFiat,
+  migrationAlloyAsset,
+  parseReserveCoins,
+} from "@/lib/pool-build"
 import { reserveAmount } from "@/lib/pool-sources"
-import { fetchLcd, fetchWithRetry } from "@/lib/utils"
+import { fetchLcd, fetchWithRetry, getAssetImageUrl } from "@/lib/utils"
 
 import {
   getStoreCoverage,
@@ -33,6 +40,7 @@ import {
   getAssetPrice,
   getAssetStatusMapSafe,
   getFrontendAssetNamesSafe,
+  getFrontendAssetSymbolsSafe,
 } from "./asset"
 import lastKnownGoodPoolsSnapshot from "./last-known-good-pools.json"
 import { getLimiters } from "./limiter"
@@ -43,17 +51,23 @@ import {
   SwapEvent,
   swapEventsFromTx,
 } from "./swap-rows"
-import { getPoolContractStatus } from "./transmuter"
+import { getPoolContractStatus, getTotalPoolLiquidity } from "./transmuter"
 
 const MIN_LIQUIDITY = 10
 // Alloys with less than this much value locked are treated as unsupported
-// (surfaced in the Not Supported table, not hidden). Dust/near-empty alloys.
-const MIN_SUPPORTED_TVL_USD = 1000
+// (surfaced in the Not Supported table, not hidden). Migration alloys are
+// exempt: they are listed for as long as the migration runs.
+const MIN_SUPPORTED_TVL_USD = 10_000
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
-const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
-const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
+// The same SQS deployment the Osmosis frontend reads.
+const BASE_PRICE_URL =
+  "https://sqsprod.osmosis.zone/tokens/prices?base={denoms}"
+const BASE_SQS_POOLS_URL = "https://sqsprod.osmosis.zone/pools?IDs={ids}"
+// Same LCD the contract queries use (src/services/transmuter.ts).
+const BASE_POOLMANAGER_POOL_URL =
+  "https://osmosis-rest.publicnode.com/osmosis/poolmanager/v1beta1/pools/{poolId}"
 // Numia returns the liquidity series newest-first: element 0 is a live "now"
 // snapshot with a sub-day timestamp, followed by one point per UTC day. The
 // "now" point duplicates the head of the daily series, so it is normally
@@ -62,28 +76,6 @@ const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
 // chart on the last aggregated day. Keep it once the gap exceeds this many
 // hours so the chart still runs to the present during an upstream stall.
 const LIVE_SNAPSHOT_KEEP_AFTER_HOURS = 36
-
-const ZERO_FIAT = {
-  fiat: {
-    currency: "usd",
-    symbol: "$",
-    maxDecimals: 2,
-    locale: "en-US",
-  },
-  options: {
-    maxDecimals: 2,
-    trim: true,
-    shrink: true,
-    ready: true,
-    locale: "en-US",
-    inequalitySymbol: true,
-    inequalitySymbolSeparator: " ",
-    separator: "",
-    upperCase: false,
-    lowerCase: false,
-  },
-  amount: "0",
-}
 
 type RawLiquidityPoint = { timestamp: string; liquidity_usd: number }
 
@@ -141,67 +133,64 @@ const fillPoolOverview = async (
     pool.raw.instantiate_msg
   )
 
-  const alloyAssetDetail = assetMap[alloyDenom]
+  const migration = MIGRATION_ALLOYS[pool.id]
+  const kind: PoolKind = migration ? "migration" : "alloy"
+  const alloyAssetDetail = migration
+    ? migrationAlloyAsset(pool, alloyDenom, migration, assetMap)
+    : assetMap[alloyDenom]
+
+  const reserveCoins = byPrevalence(
+    parseReserveCoins(pool).map((c) => ({
+      asset: withFrontendName(
+        assetMap[c.currency.coinMinimalDenom],
+        frontendNames[c.currency.coinMinimalDenom]
+      ),
+      provenance: provenance[c.currency.coinMinimalDenom] ?? null,
+      currency: {
+        ...c,
+        currency: {
+          ...c.currency,
+          coinImageUrl: appImageUrl(c.currency.coinImageUrl),
+        },
+      } as CurrencyAmount,
+    }))
+  )
+  const market = {
+    spreadFactor: JSON.parse(pool.spreadFactor),
+    totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
+    poolNameByDenom: pool.poolNameByDenom,
+    coinNames: pool.coinNames,
+    volume24hUsd: marketFiat(pool.market?.volume24hUsd),
+    volume7dUsd: marketFiat(pool.market?.volume7dUsd),
+    feesSpent24hUsd: marketFiat(pool.market?.feesSpent24hUsd),
+    feesSpent7dUsd: marketFiat(pool.market?.feesSpent7dUsd),
+  }
 
   // A pool is a supported alloy iff its computed alloyed denom resolves to a
-  // listed chain-registry asset. Assets with no chain-registry entry (ghost
-  // denoms used only for transmuter plumbing, e.g. allSTARS / allDGN) fall
-  // through to the unsupported branch here because alloyAssetDetail is absent.
+  // listed chain-registry asset (or it is a configured migration alloy, see
+  // src/constants/migration.ts). Other assets with no chain-registry entry
+  // fall through to the unsupported branch because alloyAssetDetail is absent.
+  // Single-variant alloys (allSOL, allLINK, ...) are supported like any other.
   //
-  // Two further demotions to the unsupported table:
-  //   1. Single-asset alloys: exactly one reserve coin. Whether it is a pure
-  //      18 -> lower decimal wrapper (allOP, allPEPE, allLINK, ...) or the last
-  //      remaining variant after alloy simplification (allSOL, allTRX, ...),
-  //      there is nothing multi-source to show, matching the "pools with 1
-  //      asset" wording on the Not Supported section.
-  //   2. Dust alloys: less than MIN_SUPPORTED_TVL_USD of value locked.
-  const isSingleAsset = pool.reserveCoins.length === 1
-
-  const tvlUsd = Number(JSON.parse(pool.totalFiatValueLocked).amount)
+  // Further demotions to the unsupported table:
+  //   1. Dust alloys: less than MIN_SUPPORTED_TVL_USD of value locked
+  //      (migration alloys are exempt).
+  //   2. Any variant without decimals: its amounts cannot be shown.
+  const tvlUsd = Number(market.totalFiatValueLocked.amount)
   const isBelowMinTvl =
-    Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
+    !migration && Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
+  const hasUnknownDecimals = reserveCoins.some(
+    (c) => typeof c.currency.currency.coinDecimals !== "number"
+  )
 
-  if (!alloyAssetDetail || isSingleAsset || isBelowMinTvl) {
+  if (!alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals) {
     return {
       id: pool.id,
       type: pool.type,
       codeId: pool.raw.code_id,
       contractAddress: pool.raw.contract_address,
-      reserveCoins: byPrevalence(
-        pool.reserveCoins.map((coin) => {
-          const c = JSON.parse(coin)
-          return {
-            asset: withFrontendName(
-              assetMap[c.currency.coinMinimalDenom],
-              frontendNames[c.currency.coinMinimalDenom]
-            ),
-            provenance: provenance[c.currency.coinMinimalDenom] ?? null,
-            currency: {
-              ...c,
-              currency: {
-                ...c.currency,
-                coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
-              },
-            },
-          }
-        })
-      ),
-      spreadFactor: JSON.parse(pool.spreadFactor),
-      totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
-      poolNameByDenom: pool.poolNameByDenom,
-      coinNames: pool.coinNames,
-      volume24hUsd: pool.market?.volume24hUsd
-        ? JSON.parse(pool.market?.volume24hUsd)
-        : ZERO_FIAT,
-      volume7dUsd: pool.market?.volume7dUsd
-        ? JSON.parse(pool.market?.volume7dUsd)
-        : ZERO_FIAT,
-      feesSpent24hUsd: pool.market?.feesSpent24hUsd
-        ? JSON.parse(pool.market.feesSpent24hUsd)
-        : ZERO_FIAT,
-      feesSpent7dUsd: pool.market?.feesSpent7dUsd
-        ? JSON.parse(pool.market.feesSpent7dUsd)
-        : ZERO_FIAT,
+      reserveCoins,
+      ...market,
       prices: {},
       liquidityChart: [],
       assets: null,
@@ -214,8 +203,8 @@ const fillPoolOverview = async (
     } as NotSupportedPoolOverview
   }
 
-  const reserveDenoms = pool.reserveCoins.map(
-    (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
+  const reserveDenoms = reserveCoins.map(
+    (c) => c.currency.currency.coinMinimalDenom
   )
 
   const [liquidityChart, prices, limiters, contractStatus] = await Promise.all([
@@ -245,14 +234,7 @@ const fillPoolOverview = async (
         console.error(`Error fetching liquidity chart: ${e}`)
         return []
       }),
-    fetchWithRetry(
-      BASE_PRICE_URL.replace(
-        "{denoms}",
-        pool.reserveCoins
-          .map((coin) => JSON.parse(coin).currency.coinMinimalDenom)
-          .join(",")
-      )
-    )
+    fetchWithRetry(BASE_PRICE_URL.replace("{denoms}", reserveDenoms.join(",")))
       .then(async (d) => {
         if (!d.ok) {
           console.warn(`Failed to fetch prices: ${d.status} ${d.statusText}`)
@@ -265,9 +247,11 @@ const fillPoolOverview = async (
           return {}
         }
       })
+      // SQS quotes each price in one stablecoin (allUSDC), taken as USD.
       .then((d) =>
         _.chain(d)
-          .mapValues((v) => _.values(v)[0])
+          .mapValues((v) => Number(_.values(v)[0]))
+          .pickBy((v) => Number.isFinite(v) && v > 0)
           .value()
       )
       .catch((e) => {
@@ -309,50 +293,14 @@ const fillPoolOverview = async (
 
   return {
     id: pool.id,
+    kind,
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
-    reserveCoins: byPrevalence(
-      pool.reserveCoins.map((coin) => {
-        const c = JSON.parse(coin)
-        return {
-          asset: withFrontendName(
-            assetMap[c.currency.coinMinimalDenom],
-            frontendNames[c.currency.coinMinimalDenom]
-          ),
-          provenance: provenance[c.currency.coinMinimalDenom] ?? null,
-          currency: {
-            ...c,
-            currency: {
-              ...c.currency,
-              coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
-            },
-          },
-        }
-      })
-    ),
-    spreadFactor: JSON.parse(pool.spreadFactor),
-    totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
-    poolNameByDenom: pool.poolNameByDenom,
-    coinNames: pool.coinNames,
-    volume24hUsd: pool.market?.volume24hUsd
-      ? JSON.parse(pool.market?.volume24hUsd)
-      : ZERO_FIAT,
-    volume7dUsd: pool.market?.volume7dUsd
-      ? JSON.parse(pool.market?.volume7dUsd)
-      : ZERO_FIAT,
-    feesSpent24hUsd: pool.market?.feesSpent24hUsd
-      ? JSON.parse(pool.market.feesSpent24hUsd)
-      : ZERO_FIAT,
-    feesSpent7dUsd: pool.market?.feesSpent7dUsd
-      ? JSON.parse(pool.market.feesSpent7dUsd)
-      : ZERO_FIAT,
+    reserveCoins,
+    ...market,
     liquidityChart,
     prices,
-    //assets: assets?.map((a: any) => ({
-    //...a,
-    //asset: assetMap[a.denom],
-    //})),
     alloy: {
       asset: alloyAssetDetail,
       price: alloyAssetPrice,
@@ -364,6 +312,102 @@ const fillPoolOverview = async (
       reserves: _.pick(statusMap, reserveDenoms),
     },
   } as PoolOverview
+}
+
+// Migration pools the pools API leaves out (it drops pools it cannot price,
+// such as allMARS), built from chain data instead: the pool from the pool
+// manager, its reserves from the contract, symbols and names from the
+// frontend assetlist, decimals and images from the chain-registry list, and
+// its value from SQS. There is no market data, so volumes stay unknown. A
+// pool any of these fail for is left out of this build.
+const getMigrationRawPools = async (
+  poolIds: string[],
+  assetMap: _.Dictionary<AssetWithDecimal>,
+  symbols: Record<string, string>,
+  names: Record<string, string>
+): Promise<RawPoolOverview[]> => {
+  if (poolIds.length === 0) return []
+  let caps: Record<string, string> = {}
+  try {
+    const res = await fetchWithRetry(
+      BASE_SQS_POOLS_URL.replace("{ids}", poolIds.join(","))
+    )
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+    const data = (await res.json()) as {
+      chain_model?: { pool_id?: number | string }
+      liquidity_cap?: string
+    }[]
+    caps = _.fromPairs(
+      data.flatMap((p) =>
+        p.chain_model?.pool_id !== undefined && p.liquidity_cap !== undefined
+          ? [[String(p.chain_model.pool_id), p.liquidity_cap]]
+          : []
+      )
+    )
+  } catch (e) {
+    console.error(`[getMigrationRawPools] SQS pools unavailable: ${e}`)
+    return []
+  }
+
+  const pools = await Promise.all(
+    poolIds.map(async (poolId): Promise<RawPoolOverview | null> => {
+      try {
+        const res = await fetchWithRetry(
+          BASE_POOLMANAGER_POOL_URL.replace("{poolId}", poolId)
+        )
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+        const { pool } = (await res.json()) as {
+          pool: {
+            contract_address: string
+            code_id: string
+            pool_id: string
+            instantiate_msg: string
+          }
+        }
+        const liquidity = await getTotalPoolLiquidity(pool.contract_address)
+        const cap = caps[poolId]
+        if (!liquidity || cap === undefined) {
+          throw new Error("reserves or value unavailable")
+        }
+        const reserveCoins = liquidity.map(({ denom, amount }) => {
+          const asset = assetMap[denom]
+          if (!asset) throw new Error(`no assetlist entry for ${denom}`)
+          return JSON.stringify({
+            currency: {
+              coinDenom: symbols[denom] ?? asset.symbol,
+              coinName: names[denom] ?? asset.name,
+              coinMinimalDenom: denom,
+              coinDecimals: asset.decimal,
+              coinImageUrl: getAssetImageUrl(asset) ?? "",
+            },
+            amount,
+          })
+        })
+        return {
+          id: poolId,
+          type: "cosmwasm",
+          raw: {
+            contract_address: pool.contract_address,
+            code_id: pool.code_id,
+            pool_id: pool.pool_id,
+            instantiate_msg: pool.instantiate_msg,
+          },
+          reserveCoins,
+          spreadFactor: JSON.stringify({ rate: "0" }),
+          totalFiatValueLocked: JSON.stringify({
+            fiat: { currency: "usd", symbol: "$", maxDecimals: 2 },
+            amount: cap,
+          }),
+          poolNameByDenom: "",
+          coinNames: [],
+        }
+      } catch (e) {
+        console.error(`[getMigrationRawPools] pool ${poolId}: ${e}`)
+        return null
+      }
+    })
+  )
+  return _.compact(pools)
 }
 
 // Pool types the dashboard is designed to surface. Used as the safety-net
@@ -424,9 +468,16 @@ export const getRawPoolsOverview = async () => {
   }
 }
 
-type PoolsOverviewResult = {
+// `pools` holds both kinds of supported pool (see PoolOverview.kind): the
+// overview shows the alloys, /pools lists the migration alloys apart.
+// `source` says which tier this came from (see resolvePoolsOverview) and
+// `builtAt` when its data was fetched, so pages can say when they are showing
+// old data. Both are absent on entries cached before they existed.
+export type PoolsOverviewResult = {
   pools: PoolOverview[]
   unsupportedPools: NotSupportedPoolOverview[]
+  source?: "live" | "runtime" | "snapshot"
+  builtAt?: string
 }
 
 const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
@@ -434,22 +485,26 @@ const EMPTY_POOLS_OVERVIEW: PoolsOverviewResult = {
   unsupportedPools: [],
 }
 
+export const isMigrationPool = (pool: Pick<PoolOverview, "kind">) =>
+  pool.kind === "migration"
+
+// A usable overview has at least one alloy. Migration pools alone do not
+// count: getMigrationRawPools can still build them while the pools API is
+// down, and caching that as a healthy result would blank the overview.
+const hasAlloys = (result: PoolsOverviewResult) =>
+  result.pools.some((p) => !isMigrationPool(p))
+
 // Builds the overview from live upstream data. No caching here so the caller
 // controls when a rebuild happens and can decide whether to accept the result.
 const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
-  const [data, assetMap, statusMap, frontendNames] = await Promise.all([
-    getRawPoolsOverview(),
-    getAssetMap(),
-    getAssetStatusMapSafe(),
-    getFrontendAssetNamesSafe(),
-  ])
-  const provenance = await getVariantProvenanceSafe(
-    data.flatMap((p) =>
-      p.reserveCoins.map(
-        (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
-      )
-    )
-  )
+  const [data, assetMap, statusMap, frontendNames, frontendSymbols] =
+    await Promise.all([
+      getRawPoolsOverview(),
+      getAssetMap(),
+      getAssetStatusMapSafe(),
+      getFrontendAssetNamesSafe(),
+      getFrontendAssetSymbolsSafe(),
+    ])
 
   // The asset map gates every supported/unsupported decision. If it is empty
   // (assetlist upstream failed), EVERY pool would be misclassified as
@@ -461,8 +516,25 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
     throw new Error("asset map is empty; refusing to build all-unsupported set")
   }
 
+  const listed = new Set(data.map((p) => p.id))
+  const supplemented = await getMigrationRawPools(
+    Object.keys(MIGRATION_ALLOYS).filter((id) => !listed.has(id)),
+    assetMap,
+    frontendSymbols,
+    frontendNames
+  )
+  const rawPools = [...data, ...supplemented]
+
+  const provenance = await getVariantProvenanceSafe(
+    rawPools.flatMap((p) =>
+      p.reserveCoins.map(
+        (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
+      )
+    )
+  )
+
   const pools = await Promise.all(
-    data.map((p) =>
+    rawPools.map((p) =>
       fillPoolOverview(p, assetMap, statusMap, frontendNames, provenance)
     )
   )
@@ -472,6 +544,8 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
     unsupportedPools: pools.filter(
       (p) => !p.alloy.asset
     ) as NotSupportedPoolOverview[],
+    source: "live",
+    builtAt: new Date().toISOString(),
   }
 }
 
@@ -492,16 +566,20 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
 // Reading (never revalidateTag) is deliberate: `revalidateTag` is unsupported
 // inside an `unstable_cache` function, and a plain read already gives seed-once
 // then serve-from-cache semantics, which is exactly last-known-good.
+//
+// Cache keys carry a version: the Vercel data cache is shared across
+// deployments, and entries from before migration kinds, nullable volumes and
+// the $10k cutoff must not be read.
 const getLastKnownGoodPools = unstable_cache(
   async (): Promise<PoolsOverviewResult> => {
     const fresh = await buildPoolsOverview()
-    if (fresh.pools.length === 0) {
+    if (!hasAlloys(fresh)) {
       // Do not let an empty build poison the long-lived entry.
       throw new Error("last-known-good rebuild produced no pools")
     }
     return fresh
   },
-  ["pools-overview-last-good"],
+  ["pools-overview-last-good-v2"],
   {
     revalidate: 604800, // 7 days
   }
@@ -543,7 +621,7 @@ const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
   // tier so it gets seeded while upstream is confirmed healthy. On the first
   // healthy cycle this is a cache miss that builds and stores the snapshot;
   // afterwards it is a cache hit (no upstream call).
-  if (result.pools.length > 0) {
+  if (hasAlloys(result)) {
     try {
       await getLastKnownGoodPools()
     } catch (e) {
@@ -561,8 +639,8 @@ const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
   )
   try {
     const cached = await getLastKnownGoodPools()
-    if (cached.pools.length > 0) {
-      return cached
+    if (hasAlloys(cached)) {
+      return { ...cached, source: "runtime" }
     }
   } catch (e) {
     // No good snapshot has ever been cached, or its scheduled rebuild failed.
@@ -573,11 +651,11 @@ const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
 
   // Runtime tiers both empty (e.g. first cold build after a deploy failing).
   // Fall back to the committed snapshot shipped in the repo.
-  if (COMMITTED_SNAPSHOT.pools.length > 0) {
+  if (hasAlloys(COMMITTED_SNAPSHOT)) {
     console.warn(
       "[getPoolsOverview] Falling back to committed last-known-good snapshot"
     )
-    return COMMITTED_SNAPSHOT
+    return { ...COMMITTED_SNAPSHOT, source: "snapshot" }
   }
 
   return result
@@ -594,7 +672,7 @@ export const getPoolsOverview = unstable_cache(
     // request rather than cached. With the committed snapshot always present
     // this branch is effectively unreachable, but the guard is the invariant
     // that keeps an empty set from ever being served from cache.
-    if (result.pools.length === 0) {
+    if (!hasAlloys(result)) {
       throw new Error(
         "[getPoolsOverview] all tiers produced no pools; refusing to cache empty"
       )
@@ -602,12 +680,13 @@ export const getPoolsOverview = unstable_cache(
 
     return result
   },
-  ["pools-overview"],
+  ["pools-overview-v2"],
   {
     revalidate: 1800,
   }
 )
 
+// Any supported pool, alloy or migration alloy.
 export const getPoolOverview = async (poolId: string) => {
   const pools = await getPoolsOverview()
   return pools.pools.find((p) => p.id === poolId)

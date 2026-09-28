@@ -9,15 +9,18 @@
 // sync: if the shape produced by fillPoolOverview changes, update this script
 // and re-run it. It is intentionally dependency-free (plain Node fetch) so it
 // can run without the Next runtime, and produces output shaped exactly like a
-// PoolsOverviewResult ({ pools, unsupportedPools }).
+// PoolsOverviewResult ({ pools, unsupportedPools, builtAt }).
 //
 // Usage:  node scripts/generate-last-known-good.mjs
+// (Node 22.18 or later: it imports the migration list from a .ts file.)
 //
 // It writes the JSON next to the service that consumes it and prints a summary.
 
 import { writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+
+import { MIGRATION_ALLOYS } from "../src/constants/migration.ts"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT_PATH = join(
@@ -30,12 +33,16 @@ const OUT_PATH = join(
 
 // --- Mirror of the constants in src/services/pool.ts ---
 const MIN_LIQUIDITY = 10
-const MIN_SUPPORTED_TVL_USD = 1000
+const MIN_SUPPORTED_TVL_USD = 10_000
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
-const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
+const BASE_PRICE_URL =
+  "https://sqsprod.osmosis.zone/tokens/prices?base={denoms}"
+const BASE_SQS_POOLS_URL = "https://sqsprod.osmosis.zone/pools?IDs={ids}"
+const BASE_POOLMANAGER_POOL_URL =
+  "https://osmosis-rest.publicnode.com/osmosis/poolmanager/v1beta1/pools/{poolId}"
 const BASE_ASSET_LIST =
   "https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/generated/chain_registry/assetlist.json"
 const BASE_FRONTEND_ASSET_LIST =
@@ -45,24 +52,18 @@ const BASE_SMART_QUERY_URL =
 const BASE_ASSET_PRICE =
   "https://app.osmosis.zone/api/edge-trpc-assets/assets.getAssetPrice?input=%7B%22json%22:%7B%22coinMinimalDenom%22:%22{denom}%22%7D%7D"
 
-const ZERO_FIAT = {
-  fiat: { currency: "usd", symbol: "$", maxDecimals: 2, locale: "en-US" },
-  options: {
-    maxDecimals: 2,
-    trim: true,
-    shrink: true,
-    ready: true,
-    locale: "en-US",
-    inequalitySymbol: true,
-    inequalitySymbolSeparator: " ",
-    separator: "",
-    upperCase: false,
-    lowerCase: false,
-  },
-  amount: "0",
+const FIAT_OPTS = {
+  maxDecimals: 2,
+  trim: true,
+  shrink: true,
+  ready: true,
+  locale: "en-US",
+  inequalitySymbol: true,
+  inequalitySymbolSeparator: " ",
+  separator: "",
+  upperCase: false,
+  lowerCase: false,
 }
-
-const FIAT_OPTS = ZERO_FIAT.options
 
 const fetchJson = async (url, { timeoutMs = 20000 } = {}) => {
   const controller = new AbortController()
@@ -86,17 +87,22 @@ const getAssets = async () => {
   if (!Array.isArray(assets) || assets.length === 0) {
     throw new Error("Asset list fetch returned no assets")
   }
-  return assets.map((a) => ({
-    ...a,
-    denom: a.denom_units[0].denom,
-    decimal: a.denom_units[a.denom_units.length - 1].exponent || 6,
-  }))
+  // Decimals from the display unit; assets without one are skipped.
+  return assets.flatMap((a) => {
+    const unit = a.denom_units.find(
+      (u) => u.denom === a.display || u.aliases?.includes(a.display)
+    )
+    if (typeof unit?.exponent !== "number") return []
+    return [{ ...a, denom: a.denom_units[0].denom, decimal: unit.exponent }]
+  })
 }
 
-// Frontend display names by minimal denom, filled by getAssetStatusMap from
-// the same download. Mirrors withFrontendName in src/services/pool.ts:
-// reserve coins take the frontend name, the alloy keeps its registry name.
+// Frontend display names and symbols by minimal denom, filled by
+// getAssetStatusMap from the same download. Mirrors withFrontendName in
+// src/services/pool.ts: reserve coins take the frontend name, the alloy keeps
+// its registry name.
 const frontendNames = {}
+const frontendSymbols = {}
 
 // Mirror of fetchFrontendAssetMeta in src/services/asset.ts: frontend-assetlist
 // operational flags keyed by minimal denom, flagged assets only. Non-fatal:
@@ -109,6 +115,8 @@ const getAssetStatusMap = async () => {
     const map = {}
     for (const a of assets) {
       if (a.coinMinimalDenom && a.name) frontendNames[a.coinMinimalDenom] = a.name
+      if (a.coinMinimalDenom && a.symbol)
+        frontendSymbols[a.coinMinimalDenom] = a.symbol
       const status = {
         unstable: a.unstable === true,
         unstableReason: a.unstableReason ?? null,
@@ -171,25 +179,29 @@ const calcAlloyDenom = (contractAddress, instantiateMsg) => {
   return `factory/${contractAddress}/alloyed/${decoded.alloyed_asset_subdenom}`
 }
 
-// Mirror of getLimiters in src/services/limiter.ts (list_limiters smart query).
+// Mirror of getLimiters in src/services/limiter.ts (list_limiters smart query):
+// a list per denom, null when the query failed.
 const getLimiters = async (contractAddress) => {
   try {
     const res = await fetch(
       `https://osmosis-rest.publicnode.com/cosmwasm/wasm/v1/contract/${contractAddress}/smart/ewogICJsaXN0X2xpbWl0ZXJzIjoge30KfQ==`
     )
-    if (!res.ok) return {}
+    if (!res.ok) return null
     const response = await res.json()
     const limiters = response.data.limiters
     const out = {}
     for (const [[k], v] of limiters) {
-      if ("static_limiter" in v)
-        out[k] = { type: "static", ...v.static_limiter }
-      else if ("change_limiter" in v)
-        out[k] = { type: "change", ...v.change_limiter }
+      const limiter =
+        "static_limiter" in v
+          ? { type: "static", ...v.static_limiter }
+          : "change_limiter" in v
+            ? { type: "change", ...v.change_limiter }
+            : null
+      if (limiter) (out[k] ??= []).push(limiter)
     }
     return out
   } catch {
-    return {}
+    return null
   }
 }
 
@@ -232,7 +244,10 @@ const getPrices = async (denoms) => {
     if (!res.ok) return {}
     const d = await res.json()
     const out = {}
-    for (const [k, v] of Object.entries(d)) out[k] = Object.values(v)[0]
+    for (const [k, v] of Object.entries(d)) {
+      const price = Number(Object.values(v)[0])
+      if (Number.isFinite(price) && price > 0) out[k] = price
+    }
     return out
   } catch {
     return {}
@@ -317,7 +332,9 @@ const resolveProvenance = async (denoms, assetMap) => {
 // Mirror of byPrevalence in src/services/pool.ts: most prevalent variant
 // first (the variants of one alloy share a unit, so display amounts compare).
 const reserveDisplayAmount = (c) =>
-  Number(c.currency.amount) / 10 ** (c.currency.currency?.coinDecimals || 6)
+  Number(c.currency.amount) / 10 ** c.currency.currency.coinDecimals
+const appImageUrl = (url) =>
+  url?.startsWith("/") ? `${BASE_ASSET_URL}${url}` : (url ?? "")
 const mapReserveCoins = (pool, assetMap) =>
   pool.reserveCoins.map((coin) => {
     const c = JSON.parse(coin)
@@ -330,26 +347,121 @@ const mapReserveCoins = (pool, assetMap) =>
         ...c,
         currency: {
           ...c.currency,
-          coinImageUrl: `${BASE_ASSET_URL}${c.currency.coinImageUrl}`,
+          coinImageUrl: appImageUrl(c.currency.coinImageUrl),
         },
       },
     }
   }).sort((a, b) => reserveDisplayAmount(b) - reserveDisplayAmount(a))
 
+const marketFiat = (value) => (value ? JSON.parse(value) : null)
 const market = (pool) => ({
-  volume24hUsd: pool.market?.volume24hUsd
-    ? JSON.parse(pool.market.volume24hUsd)
-    : ZERO_FIAT,
-  volume7dUsd: pool.market?.volume7dUsd
-    ? JSON.parse(pool.market.volume7dUsd)
-    : ZERO_FIAT,
-  feesSpent24hUsd: pool.market?.feesSpent24hUsd
-    ? JSON.parse(pool.market.feesSpent24hUsd)
-    : ZERO_FIAT,
-  feesSpent7dUsd: pool.market?.feesSpent7dUsd
-    ? JSON.parse(pool.market.feesSpent7dUsd)
-    : ZERO_FIAT,
+  volume24hUsd: marketFiat(pool.market?.volume24hUsd),
+  volume7dUsd: marketFiat(pool.market?.volume7dUsd),
+  feesSpent24hUsd: marketFiat(pool.market?.feesSpent24hUsd),
+  feesSpent7dUsd: marketFiat(pool.market?.feesSpent7dUsd),
 })
+
+// Mirror of migrationAlloyAsset in src/services/pool.ts.
+const migrationAlloyAsset = (pool, alloyDenom, migration, assetMap) => {
+  const coins = pool.reserveCoins.map((c) => JSON.parse(c).currency)
+  const from = coins.find((c) => c.coinMinimalDenom === migration.from)
+  const to = coins.find((c) => c.coinMinimalDenom === migration.to)
+  if (!from || !to || from.coinDecimals !== to.coinDecimals) return undefined
+  const symbol = alloyDenom.split("/").at(-1)
+  const toName =
+    to.coinName ?? assetMap[to.coinMinimalDenom]?.name ?? to.coinDenom
+  const fromName =
+    from.coinName ?? assetMap[from.coinMinimalDenom]?.name ?? from.coinDenom
+  return {
+    base: alloyDenom,
+    denom: alloyDenom,
+    display: symbol,
+    symbol,
+    name: `${toName} Migration`,
+    description: `Swaps ${from.coinDenom} (${fromName}) for ${to.coinDenom} 1:1. This pool exists for the token migration: its alloyed token, ${symbol}, is not a listed asset.`,
+    denom_units: [
+      { denom: alloyDenom, exponent: 0 },
+      { denom: symbol, exponent: to.coinDecimals },
+    ],
+    decimal: to.coinDecimals,
+    type_asset: "sdk.coin",
+    address: pool.raw.contract_address,
+    traces: [],
+    images: assetMap[to.coinMinimalDenom]?.images ?? [],
+    keywords: [],
+  }
+}
+
+// Mirror of getMigrationRawPools in src/services/pool.ts.
+const getMigrationRawPools = async (poolIds, assetMap) => {
+  if (poolIds.length === 0) return []
+  let caps = {}
+  try {
+    const data = await fetchJson(
+      BASE_SQS_POOLS_URL.replace("{ids}", poolIds.join(","))
+    )
+    for (const p of data) {
+      if (p.chain_model?.pool_id !== undefined && p.liquidity_cap !== undefined)
+        caps[String(p.chain_model.pool_id)] = p.liquidity_cap
+    }
+  } catch (e) {
+    console.warn(`  SQS pools unavailable, no migration supplements: ${e}`)
+    return []
+  }
+  const pools = await Promise.all(
+    poolIds.map(async (poolId) => {
+      try {
+        const { pool } = await fetchJson(
+          BASE_POOLMANAGER_POOL_URL.replace("{poolId}", poolId)
+        )
+        const liquidity = (
+          await smartQuery(pool.contract_address, {
+            get_total_pool_liquidity: {},
+          })
+        )?.total_pool_liquidity
+        const cap = caps[poolId]
+        if (!Array.isArray(liquidity) || cap === undefined)
+          throw new Error("reserves or value unavailable")
+        const reserveCoins = liquidity.map(({ denom, amount }) => {
+          const asset = assetMap[denom]
+          if (!asset) throw new Error(`no assetlist entry for ${denom}`)
+          return JSON.stringify({
+            currency: {
+              coinDenom: frontendSymbols[denom] ?? asset.symbol,
+              coinName: frontendNames[denom] ?? asset.name,
+              coinMinimalDenom: denom,
+              coinDecimals: asset.decimal,
+              coinImageUrl: asset.images?.[0]?.svg || asset.images?.[0]?.png || "",
+            },
+            amount,
+          })
+        })
+        return {
+          id: poolId,
+          type: "cosmwasm",
+          raw: {
+            contract_address: pool.contract_address,
+            code_id: pool.code_id,
+            pool_id: pool.pool_id,
+            instantiate_msg: pool.instantiate_msg,
+          },
+          reserveCoins,
+          spreadFactor: JSON.stringify({ rate: "0" }),
+          totalFiatValueLocked: JSON.stringify({
+            fiat: { currency: "usd", symbol: "$", maxDecimals: 2 },
+            amount: cap,
+          }),
+          poolNameByDenom: "",
+          coinNames: [],
+        }
+      } catch (e) {
+        console.warn(`  migration pool ${poolId} unavailable: ${e}`)
+        return null
+      }
+    })
+  )
+  return pools.filter(Boolean)
+}
 
 // Mirror of fillPoolOverview in src/services/pool.ts.
 const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
@@ -357,15 +469,19 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
     pool.raw.contract_address,
     pool.raw.instantiate_msg
   )
-  const alloyAssetDetail = assetMap[alloyDenom]
-
-  const isSingleAsset = pool.reserveCoins.length === 1
+  const migration = MIGRATION_ALLOYS[pool.id]
+  const alloyAssetDetail = migration
+    ? migrationAlloyAsset(pool, alloyDenom, migration, assetMap)
+    : assetMap[alloyDenom]
 
   const tvlUsd = Number(JSON.parse(pool.totalFiatValueLocked).amount)
   const isBelowMinTvl =
-    Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
+    !migration && Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
+  const hasUnknownDecimals = pool.reserveCoins.some(
+    (c) => typeof JSON.parse(c).currency.coinDecimals !== "number"
+  )
 
-  if (!alloyAssetDetail || isSingleAsset || isBelowMinTvl) {
+  if (!alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals) {
     return {
       id: pool.id,
       type: pool.type,
@@ -413,6 +529,7 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
 
   return {
     id: pool.id,
+    kind: migration ? "migration" : "alloy",
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
@@ -454,8 +571,18 @@ const main = async () => {
   // generation we intentionally take ALL alloyed/transmuter pools so the
   // committed fallback is not tied to a possibly-stale allowlist.
   const ALLOYED_POOL_TYPES = ["cosmwasm-alloyed", "cosmwasm-transmuter"]
-  const data = allPools.filter((p) => ALLOYED_POOL_TYPES.includes(p.type))
-  console.log(`  ${data.length} alloyed/transmuter pools to classify`)
+  const listedPools = allPools.filter((p) =>
+    ALLOYED_POOL_TYPES.includes(p.type)
+  )
+  const listedIds = new Set(listedPools.map((p) => p.id))
+  const supplemented = await getMigrationRawPools(
+    Object.keys(MIGRATION_ALLOYS).filter((id) => !listedIds.has(id)),
+    assetMap
+  )
+  const data = [...listedPools, ...supplemented]
+  console.log(
+    `  ${data.length} alloyed/transmuter pools to classify (${supplemented.length} migration pools built from chain data)`
+  )
 
   await resolveProvenance(
     [
@@ -475,17 +602,17 @@ const main = async () => {
   const pools = built.filter((p) => p.alloy.asset)
   const unsupportedPools = built.filter((p) => !p.alloy.asset)
 
-  if (pools.length === 0) {
+  if (!pools.some((p) => p.kind !== "migration")) {
     throw new Error(
       "Refusing to write snapshot: classification produced 0 supported pools"
     )
   }
 
-  const result = { pools, unsupportedPools }
+  const result = { pools, unsupportedPools, builtAt: new Date().toISOString() }
   writeFileSync(OUT_PATH, JSON.stringify(result, null, 2) + "\n")
 
   console.log(
-    `\nWrote ${OUT_PATH}\n  supported: ${pools.length}\n  unsupported: ${unsupportedPools.length}`
+    `\nWrote ${OUT_PATH}\n  supported: ${pools.length} (${pools.filter((p) => p.kind === "migration").length} migration)\n  unsupported: ${unsupportedPools.length}`
   )
   const frozen = pools.filter((p) => p.status.isActive === false)
   const unknown = pools.filter((p) => p.status.isActive === null)

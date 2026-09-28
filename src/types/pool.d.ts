@@ -53,8 +53,17 @@ export type PoolStatus = {
   reserves: Record<string, AssetStatus>
 }
 
+// "alloy": an alloyed asset listed on the overview. "migration": an alloy that
+// only converts a legacy token into its replacement 1:1 (allSTARS: STARS.og to
+// STARS); its alloyed denom is plumbing, not a listed asset. Migration alloys
+// have pool pages and their own section on /pools, but are not on the
+// overview.
+export type PoolKind = "alloy" | "migration"
+
 export type PoolOverview = {
   id: string
+  // Absent on overviews cached before kinds existed: treat as "alloy".
+  kind?: PoolKind
   type: "cosmwasm-transmuter" | "cosmwasm"
   contractAddress: string
   codeId: string
@@ -69,10 +78,12 @@ export type PoolOverview = {
   totalFiatValueLocked: FiatAmount
   poolNameByDenom: string
   coinNames: string[][]
-  volume24hUsd: FiatAmount
-  volume7dUsd: FiatAmount
-  feesSpent24hUsd: FiatAmount
-  feesSpent7dUsd: FiatAmount
+  // null when the pools API has no market data for the pool: unknown, which
+  // must not be shown as $0.
+  volume24hUsd: FiatAmount | null
+  volume7dUsd: FiatAmount | null
+  feesSpent24hUsd: FiatAmount | null
+  feesSpent7dUsd: FiatAmount | null
   liquidityChart: {
     time: string
     value: number
@@ -82,7 +93,9 @@ export type PoolOverview = {
     asset: AssetWithDecimal
     price: FiatAmount | null
   }
-  limiters: _.Dictionary<Limiter>
+  // Limiters by variant denom (a denom can have several); null when the
+  // limiter query failed (unknown, not "no limiters").
+  limiters: _.Dictionary<Limiter[]> | null
   status: PoolStatus
 }
 

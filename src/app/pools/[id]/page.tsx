@@ -2,7 +2,11 @@ import { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getPoolComposition } from "@/services/composition"
-import { getPoolOverview, getPoolsOverview } from "@/services/pool"
+import {
+  getPoolOverview,
+  getPoolsOverview,
+  isMigrationPool,
+} from "@/services/pool"
 import _ from "lodash"
 import { ExternalLink } from "lucide-react"
 
@@ -20,10 +24,15 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DataFreshnessNotice } from "@/components/data-freshness"
 import { DateRangeProvider } from "@/components/date-range"
 import { DecimalSpan, SmallDecimals } from "@/components/decimal-span"
 import { OverviewChart } from "@/components/overview-chart"
-import { PoolAssetCard, valueFormatter } from "@/components/pool-card"
+import {
+  limitersFor,
+  PoolAssetCard,
+  valueFormatter,
+} from "@/components/pool-card"
 import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
 
 import { ActivityChart } from "../../../components/activity-chart"
@@ -81,6 +90,9 @@ export default async function Home({ params }: PoolPageProps) {
   // Reserve history for Backing Over Time; null (chart hidden) until the
   // activity store has at least two snapshots for this pool.
   const composition = await getPoolComposition(pool.id)
+  // Cached: the same overview getPoolOverview read, for its data freshness.
+  const { source, builtAt } = await getPoolsOverview()
+  const isMigration = isMigrationPool(pool)
   const groupedSources = {
     issuer: getPoolSources(pool, "issuer"),
     origin: getPoolSources(pool, "origin"),
@@ -89,6 +101,7 @@ export default async function Home({ params }: PoolPageProps) {
   return (
     <main className="flex items-center justify-center">
       <div className="container my-6 flex flex-col items-center gap-6 text-center">
+        <DataFreshnessNotice source={source} builtAt={builtAt} />
         <div
           className={cn(
             "flex w-full flex-col gap-4 text-start md:flex-row",
@@ -110,6 +123,7 @@ export default async function Home({ params }: PoolPageProps) {
               <h1 className="text-2xl font-semibold">
                 {pool.alloy.asset.name}
               </h1>
+              {isMigration && <Badge variant="outline">Migration</Badge>}
               <PoolStatusBadges pool={pool} />
             </div>
             <p className="line-clamp-1 break-all text-sm font-light italic text-muted-foreground">
@@ -168,7 +182,9 @@ export default async function Home({ params }: PoolPageProps) {
             <p className="text-sm text-muted-foreground">24h Trading Volume</p>
             <h2 className="line-clamp-1 font-semibold md:text-lg">
               <SmallDecimals>
-                {`$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`}
+                {pool.volume24hUsd
+                  ? `$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`
+                  : "-"}
               </SmallDecimals>
             </h2>
           </div>
@@ -224,7 +240,7 @@ export default async function Home({ params }: PoolPageProps) {
                         asset={a}
                         price={pool.prices[a.asset.base]}
                         totalAmount={totalAmount}
-                        limiter={pool.limiters[a.asset.base]}
+                        limiters={limitersFor(pool, a.asset.base)}
                         status={pool.status?.reserves?.[a.asset.base]}
                         corrupted={pool.status?.corruptedDenoms?.includes(
                           a.asset.base
@@ -272,7 +288,7 @@ export default async function Home({ params }: PoolPageProps) {
                               asset={a}
                               price={pool.prices[a.asset.base]}
                               totalAmount={totalAmount}
-                              limiter={pool.limiters[a.asset.base]}
+                              limiters={limitersFor(pool, a.asset.base)}
                               status={pool.status?.reserves?.[a.asset.base]}
                               corrupted={pool.status?.corruptedDenoms?.includes(
                                 a.asset.base
@@ -294,7 +310,9 @@ export default async function Home({ params }: PoolPageProps) {
             <CompositionChart pool={pool} composition={composition} />
           )}
 
-          <PriceVolumeChart denom={pool.alloy.asset.denom} />
+          {/* A migration alloy's token is not a listed asset, so it has no
+              price history. */}
+          {!isMigration && <PriceVolumeChart denom={pool.alloy.asset.denom} />}
 
           <TransactionTable pool={pool} />
         </DateRangeProvider>

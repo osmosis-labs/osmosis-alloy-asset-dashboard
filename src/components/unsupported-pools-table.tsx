@@ -7,9 +7,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import _ from "lodash"
 
-import { AssetWithDecimal } from "@/types/asset"
 import { NotSupportedPoolOverview } from "@/types/pool"
 import { capitalName } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -24,10 +22,8 @@ import {
 
 const UnsupportedPoolsTable = ({
   pools,
-  assets,
 }: {
   pools: NotSupportedPoolOverview[]
-  assets: _.Dictionary<AssetWithDecimal>
 }) => {
   const columns: ColumnDef<NotSupportedPoolOverview>[] = useMemo(
     () => [
@@ -68,7 +64,7 @@ const UnsupportedPoolsTable = ({
         },
       },
     ],
-    [assets]
+    []
   )
 
   const table = useReactTable({

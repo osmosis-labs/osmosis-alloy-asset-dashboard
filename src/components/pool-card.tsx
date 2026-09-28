@@ -11,6 +11,7 @@ import { PoolOverview } from "@/types/pool"
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
 import {
+  reserveAmount,
   variantDenom,
   variantIssuer,
   variantOrigin,
@@ -38,11 +39,13 @@ import {
 
 import { OverviewChartContent } from "./overview-chart"
 
-const valueFormatter = (a: CurrencyAmount) => {
-  return new BigNumber(Number.isNaN(a.amount) ? 0 : a.amount)
-    .shiftedBy(-(a.currency?.coinDecimals || 6))
-    .toNumber()
-}
+// Display amount of a reserve coin, from its own decimals.
+const valueFormatter = reserveAmount
+
+// A variant's limiters: an empty list when it has none, null when the pool's
+// limiters could not be read.
+const limitersFor = (pool: PoolOverview, denom: string) =>
+  pool.limiters ? (pool.limiters[denom] ?? []) : null
 
 const PoolCard = ({ pool }: { pool: PoolOverview }) => {
   const totalAmount =
@@ -131,7 +134,9 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                 </p>
                 <h2 className="line-clamp-1 font-semibold md:text-lg">
                   <SmallDecimals>
-                    {`$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`}
+                    {pool.volume24hUsd
+                      ? `$${NumberFormatter.formatValue(pool.volume24hUsd.amount)}`
+                      : "-"}
                   </SmallDecimals>
                 </h2>
               </div>
@@ -164,7 +169,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   key={i}
                   asset={c}
                   totalAmount={totalAmount}
-                  limiter={pool.limiters[c.asset.base]}
+                  limiters={limitersFor(pool, c.asset.base)}
                   price={pool.prices[c.asset.base]}
                   status={pool.status?.reserves?.[c.asset.base]}
                   corrupted={pool.status?.corruptedDenoms?.includes(
@@ -185,7 +190,7 @@ const PoolAssetCard = ({
   asset: c,
   totalAmount,
   className,
-  limiter,
+  limiters,
   price,
   status,
   corrupted = false,
@@ -197,7 +202,8 @@ const PoolAssetCard = ({
   }
   totalAmount: number
   className?: string
-  limiter?: Limiter
+  // null when the pool's limiters could not be read.
+  limiters: Limiter[] | null
   price?: number
   // Assetlist flags for this constituent (undefined/null = none).
   status?: AssetStatus | null
@@ -273,8 +279,13 @@ const PoolAssetCard = ({
           }
         </div>
       </div>
-      {limiter && (
-        <TooltipProvider delayDuration={200}>
+      {limiters === null && (
+        <p className="rounded-md border p-2 text-sm text-muted-foreground">
+          Limits unavailable
+        </p>
+      )}
+      {limiters?.map((limiter, i) => (
+        <TooltipProvider key={i} delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="rounded-md border p-2">
@@ -316,7 +327,7 @@ const PoolAssetCard = ({
             }
           </Tooltip>
         </TooltipProvider>
-      )}
+      ))}
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-md border p-2">
           <p className="text-xs text-muted-foreground">Amount</p>
@@ -333,4 +344,4 @@ const PoolAssetCard = ({
   )
 }
 
-export { PoolCard, valueFormatter, PoolAssetCard }
+export { PoolCard, valueFormatter, limitersFor, PoolAssetCard }

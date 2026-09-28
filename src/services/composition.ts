@@ -39,9 +39,17 @@ const fetchPoolComposition = async (
     getFrontendAssetSymbolsSafe(),
     getVariantProvenanceSafe(denomList),
   ])
-  const decimals = (denom: string) => assetMap[denom]?.decimal ?? 6
+  // A denom without assetlist decimals cannot be converted to display units,
+  // so it is left out of the chart rather than scaled by a guess.
+  const unknown = denomList.filter((d) => assetMap[d]?.decimal === undefined)
+  if (unknown.length > 0) {
+    console.warn(`[getPoolComposition] ${poolId}: no decimals for ${unknown}`)
+  }
+  const known = denomList.filter((d) => !unknown.includes(d))
+  if (known.length === 0) return null
+  const decimals = (denom: string) => assetMap[denom].decimal
 
-  const points = _.chain(rows)
+  const points = _.chain(rows.filter((r) => !unknown.includes(r.denom)))
     .groupBy((r) => r.height.toString())
     .map((group) => ({
       time: group[0].ts.getTime(),
@@ -60,7 +68,7 @@ const fetchPoolComposition = async (
 
   return {
     points,
-    denoms: denomList.map((denom) => ({
+    denoms: known.map((denom) => ({
       denom,
       symbol: symbols[denom] ?? assetMap[denom]?.symbol ?? denom,
       issuer: provenance[denom]?.issuer ?? null,
@@ -73,7 +81,7 @@ const fetchPoolComposition = async (
 // soon after it lands.
 const getCachedPoolComposition = unstable_cache(
   fetchPoolComposition,
-  ["pool-composition-v1"],
+  ["pool-composition-v2"],
   { revalidate: 900 }
 )
 
