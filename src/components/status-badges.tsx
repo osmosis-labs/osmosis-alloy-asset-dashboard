@@ -1,5 +1,6 @@
 import { ReactNode } from "react"
 import {
+  appStatusMessages,
   HALT_REASONS,
   POOL_STATUS,
   reasonLabel,
@@ -73,8 +74,11 @@ const assetFlagLabel = (status: AssetStatus) => {
   return "Unstable"
 }
 
-// The assetlist tooltip: the free-text message written by the assetlist
-// maintainers first, then the structured reason codes it was flagged with.
+// The assetlist tooltip, worded as app.osmosis.zone words it: the free-text
+// message written by the assetlist maintainers, or, when there is none (most
+// low-activity assets), the app's sentence for each flag. With a maintainer
+// message, the structured reason codes follow it, since the message may not
+// name every flag.
 const AssetStatusLines = ({ status }: { status: AssetStatus }) => {
   const unstable = reasonLabel(UNSTABLE_REASONS, status.unstableReason)
   const deposit = reasonLabel(HALT_REASONS, status.depositHaltReason)
@@ -85,20 +89,26 @@ const AssetStatusLines = ({ status }: { status: AssetStatus }) => {
 
   return (
     <div className="space-y-1 text-xs">
-      {status.tooltipMessage && (
-        <p className="whitespace-pre-wrap break-words">
-          {status.tooltipMessage}
+      {appStatusMessages(status).map((message) => (
+        <p key={message} className="whitespace-pre-wrap break-words">
+          {message}
         </p>
-      )}
+      ))}
       <ul className="list-inside list-disc text-muted-foreground">
-        {status.unstable && <li>Unstable{unstable ? `: ${unstable}` : ""}</li>}
-        {status.haltDeposits && (
-          <li>Deposits halted{deposit ? `: ${deposit}` : ""}</li>
+        {status.tooltipMessage && (
+          <>
+            {status.unstable && (
+              <li>Unstable{unstable ? `: ${unstable}` : ""}</li>
+            )}
+            {status.haltDeposits && (
+              <li>Deposits halted{deposit ? `: ${deposit}` : ""}</li>
+            )}
+            {status.haltWithdrawals && (
+              <li>Withdrawals halted{withdrawal ? `: ${withdrawal}` : ""}</li>
+            )}
+            {status.disabled && <li>Disabled on app.osmosis.zone</li>}
+          </>
         )}
-        {status.haltWithdrawals && (
-          <li>Withdrawals halted{withdrawal ? `: ${withdrawal}` : ""}</li>
-        )}
-        {status.disabled && <li>Disabled on app.osmosis.zone</li>}
         {since && <li>Flagged since {since}</li>}
       </ul>
       <p className="text-muted-foreground">Source: Osmosis assetlist</p>

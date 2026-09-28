@@ -55,7 +55,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^17.4.2",
     "geist": "^1.3.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "lucide-react": "^0.438.0",
     "next": "15.5.26",
     "next-themes": "^0.4.6",
@@ -72,7 +72,6 @@
     "swr": "^2.5.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
-    "wrangler": "^3.73.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -93,7 +92,8 @@
     "tailwindcss": "^3.4.10",
     "tsx": "^4.23.15",
     "typescript": "^5.5.4",
-    "vercel": "39.1.1"
+    "vercel": "39.1.1",
+    "wrangler": "^3.114.17"
   },
   "overrides": {
     "vercel": "$vercel"
@@ -103,7 +103,31 @@
       "elliptic": "^6.6.1",
       "ws@7": "^7.5.11",
       "ws@8": "^8.21.0",
-      "glob@10": "^10.5.0"
+      "glob@10": "^10.5.0",
+      "axios@1": "^1.18.0",
+      "form-data@4": "^4.0.6",
+      "follow-redirects@1": "^1.16.0",
+      "@protobufjs/utf8@1": "^1.1.1",
+      "pbkdf2@3": "^3.1.3",
+      "sha.js@2": "^2.4.12",
+      "cipher-base@1": "^1.0.5",
+      "bn.js@4": "^4.12.3",
+      "bn.js@5": "^5.2.3",
+      "node-forge@1": "^1.4.0",
+      "h3@1": "^1.15.9",
+      "cross-spawn@7": "^7.0.5",
+      "picomatch@2": "^2.3.2",
+      "minimatch@9": "^9.0.7",
+      "brace-expansion@2": "^2.1.4",
+      "nanoid@3": "^3.3.18",
+      "postcss@8": "^8.5.23",
+      "postcss-selector-parser@6": "^6.1.3",
+      "browserslist@4": "^4.28.7",
+      "yaml@2": "^2.8.3",
+      "mysql2@3": "^3.23.1",
+      "@babel/core@7": "^7.29.6",
+      "@babel/helpers@7": "^7.26.10",
+      "@babel/runtime@7": "^7.26.10"
     }
   }
 }

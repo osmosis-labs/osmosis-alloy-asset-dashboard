@@ -172,25 +172,56 @@ export const writeSnapshot = async (
 // instead of drifting to every 75 minutes.
 const SNAPSHOT_INTERVAL_MS = 55 * 60 * 1000
 
+// Pure: whether a snapshot at `ts` is due, given the pool's newest snapshot
+// time (null when it has none). Exported for tests.
+export const isSnapshotDue = (lastTs: Date | null, ts: Date) =>
+  !lastTs || ts.getTime() - lastTs.getTime() >= SNAPSHOT_INTERVAL_MS
+
+// Newest snapshot time of each of `poolIds`, in one query (the cron reads
+// these once per run rather than once per pool). Pools with no snapshot are
+// absent.
+export const latestSnapshotTimes = async (
+  db: PrismaClient,
+  poolIds: string[]
+): Promise<{ poolId: string; ts: Date }[]> => {
+  const rows = await db.poolReserveSnapshot.groupBy({
+    by: ["poolId"],
+    where: { poolId: { in: poolIds } },
+    _max: { ts: true },
+  })
+  return rows.flatMap((r) =>
+    r._max.ts ? [{ poolId: r.poolId, ts: r._max.ts }] : []
+  )
+}
+
+// `lastTs` is the pool's newest snapshot time when the caller already read it
+// (null if it has none); when omitted it is read here.
 export const snapshotPoolIfDue = async ({
   db,
   poolId,
   contractAddress,
   height,
   ts,
+  lastTs: preRead,
 }: {
   db: PrismaClient
   poolId: string
   contractAddress: string
   height: number
   ts: Date
+  lastTs?: Date | null
 }) => {
-  const last = await db.poolReserveSnapshot.findFirst({
-    where: { poolId },
-    orderBy: { ts: "desc" },
-    select: { ts: true },
-  })
-  if (last && ts.getTime() - last.ts.getTime() < SNAPSHOT_INTERVAL_MS) {
+  const lastTs =
+    preRead !== undefined
+      ? preRead
+      : ((
+          await db.poolReserveSnapshot.findFirst({
+            where: { poolId },
+            orderBy: { ts: "desc" },
+            select: { ts: true },
+          })
+        )?.ts ?? null)
+  if (!isSnapshotDue(lastTs, ts)) {
     return { poolId, snapshot: "not due" as const }
   }
   const liquidity = await poolLiquidityAt(contractAddress, height)

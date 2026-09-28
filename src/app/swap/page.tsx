@@ -1,50 +1,42 @@
-"use client"
+import { Metadata } from "next"
+import Link from "next/link"
 
-import "@interchain-ui/react/styles"
-import "@/styles/wallet.css"
+import { SwapPage } from "@/components/swap-page"
 
-import { getAssetListUncached } from "@/services/asset"
-import { getPoolsFromAPI } from "@/services/pools-api"
-import _ from "lodash"
-import { Loader2 } from "lucide-react"
-import useSWRImmutable from "swr/immutable"
+export const metadata: Metadata = {
+  title: "Transmuter Swap",
+  description:
+    "Swap 1:1 between an Osmosis alloyed asset and its variants, directly through the alloy's pool contract.",
+}
 
-import { buildSwapPools } from "@/lib/swap-pools"
-import { Button } from "@/components/ui/button"
+// Next 15: search params arrive as a Promise.
+type SwapRouteProps = {
+  searchParams: Promise<{ pool?: string | string[] }>
+}
 
-import { SwapCard } from "../../components/swap-card"
-import WalletProvider from "../../components/wallet-provider"
-
-export default function Home() {
-  const { data, error, isValidating, mutate } = useSWRImmutable(
-    "/api/pools",
-    async () => {
-      const [pools, assets] = await Promise.all([
-        getPoolsFromAPI(),
-        getAssetListUncached().then((d) => _.keyBy(d, "denom")),
-      ])
-      return buildSwapPools(pools, assets)
-    }
-  )
+// ?pool={id} opens the form on that pool (links from the pool pages).
+export default async function Swap({ searchParams }: SwapRouteProps) {
+  const { pool } = await searchParams
+  const initialPoolId = typeof pool === "string" ? pool : undefined
 
   return (
-    <WalletProvider>
-      <main className="container my-6 flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        {data && data.length > 0 ? (
-          <SwapCard pools={data} />
-        ) : error && !isValidating ? (
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-muted-foreground">
-              Unable to load pools: {String(error.message ?? error)}
-            </p>
-            <Button variant="secondary" onClick={() => mutate()}>
-              Retry
-            </Button>
-          </div>
-        ) : (
-          <Loader2 className="size-8 animate-spin" />
-        )}
-      </main>
-    </WalletProvider>
+    <main className="container my-6 flex flex-1 flex-col items-center gap-6 text-center">
+      <div className="max-w-[500px] space-y-2">
+        <h1 className="text-2xl font-semibold">Transmuter Swap</h1>
+        <p className="text-sm text-muted-foreground">
+          Swap 1:1 between an alloyed asset and one of its variants, directly
+          through the alloy&apos;s pool contract, up to the amount of that
+          variant the pool holds. To trade other assets, use the{" "}
+          <Link
+            href="https://app.osmosis.zone/swap"
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            Osmosis app
+          </Link>
+          .
+        </p>
+      </div>
+      <SwapPage initialPoolId={initialPoolId} />
+    </main>
   )
 }

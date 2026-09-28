@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getDenomMetaSafe } from "@/services/denom-meta"
-import { getPoolInOutAssets } from "@/services/pool"
+import { getPoolInOutAssets, getPoolOverview } from "@/services/pool"
 import _ from "lodash"
 
 import { ACTIVITY_RANGE_DAYS } from "@/lib/activity"
@@ -23,6 +23,13 @@ export async function GET(
   const range = new URL(request.url).searchParams.get("range") ?? "24h"
   if (!(range in ACTIVITY_RANGE_DAYS) || !/^\d+$/.test(id)) {
     return NextResponse.json({ error: "bad request" }, { status: 400 })
+  }
+  // Only pools the dashboard lists. Any other id would send the live
+  // fallback's LCD tx search (up to 11 requests) to an arbitrary pool, and a
+  // loop over ids could get the deployment's IP banned by the LCD. Ids are
+  // matched exactly, so "0001868" is not an alias for "1868".
+  if (!(await getPoolOverview(id))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 })
   }
   try {
     const activity = await getPoolInOutAssets(id, range)

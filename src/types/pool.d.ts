@@ -130,22 +130,26 @@ export type MinimalPoolStatus = Pick<PoolStatus, "isActive" | "corruptedDenoms">
 
 export type MinimalPool = {
   id: string
+  // The pool's transmuter contract (Force Exit is sent to it).
+  contractAddress: string
   assets: string[]
   assetSymbols?: Record<string, string>
   assetNames?: Record<string, string>
   alloy: {
     asset: string
-    price: string
+    // USD price, or null when unknown.
+    price: string | null
   }
   status: MinimalPoolStatus
 }
 
 export type MinimalAssetPool = {
   id: string
+  contractAddress: string
   assets: AssetWithDecimal[]
   alloy: {
     asset: AssetWithDecimal
-    price: string
+    price: string | null
   }
   status: MinimalPoolStatus
 }

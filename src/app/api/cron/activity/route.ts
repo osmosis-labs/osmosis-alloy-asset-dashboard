@@ -1,20 +1,29 @@
+import { timingSafeEqual } from "node:crypto"
 import { NextResponse } from "next/server"
 import {
   blockTime,
+  byPoolId,
   cronRunStatus,
   ingestPool,
   latestHeight,
   pruneSwaps,
 } from "@/services/activity-ingest"
 import { getPoolsOverview } from "@/services/pool"
-import { pruneReserveSnapshots, snapshotPoolIfDue } from "@/services/reserves"
+import {
+  latestSnapshotTimes,
+  pruneReserveSnapshots,
+  snapshotPoolIfDue,
+} from "@/services/reserves"
+import { ActivityCursor } from "@prisma/client"
 
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
 // Activity store ingest. Triggered by Vercel Cron (see vercel.json) every 15
-// minutes: for each supported pool, reads token_swapped events from its cursor
-// up to the current tip and writes them to Postgres (rows, 15-minute rollups,
-// then the cursor, in one transaction per pool), takes the pool's hourly
+// minutes: reads every supported pool's cursor and newest reserve snapshot
+// time up front (one query each), then for each pool reads token_swapped
+// events from its cursor up to the current tip and writes them to Postgres
+// (rows, 15-minute rollups, then the cursor, in one transaction per pool; a
+// pool with no new events only moves its cursor), takes the pool's hourly
 // reserve snapshot when due, then prunes old swap rows and thins reserve
 // snapshots older than a week to daily.
 // The pool page reads the store once a pool's history is fresh and covers the
@@ -35,13 +44,21 @@ const SWAP_RETENTION_DAYS = 31
 // Reserve snapshots stay hourly this long, then one per day is kept.
 const HOURLY_SNAPSHOT_DAYS = 7
 
+// Constant-time comparison, so response timing does not reveal how much of a
+// guessed token matched.
+const bearerMatches = (header: string | null, secret: string) => {
+  const given = Buffer.from(header ?? "")
+  const expected = Buffer.from(`Bearer ${secret}`)
+  return given.length === expected.length && timingSafeEqual(given, expected)
+}
+
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret) {
     console.error("[cron/activity] CRON_SECRET is not set; refusing to run")
     return NextResponse.json({ error: "not configured" }, { status: 500 })
   }
-  if (request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+  if (!bearerMatches(request.headers.get("authorization"), cronSecret)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
   if (!isDatabaseEnabled()) {
@@ -54,11 +71,38 @@ export async function GET(request: Request) {
   const upToTime = await blockTime(upTo)
   const { pools } = await getPoolsOverview()
 
+  // Cursors and newest snapshot times for every pool in one query each,
+  // instead of one of each per pool (the free tier bills per operation). If a
+  // batched read fails, its map stays empty and each pool reads its own.
+  const ids = pools.map((p) => p.id)
+  let cursors = new Map<string, ActivityCursor | null>()
+  try {
+    cursors = byPoolId(
+      ids,
+      await db.activityCursor.findMany({ where: { poolId: { in: ids } } })
+    )
+  } catch (e) {
+    console.error(`[cron/activity] cursor read failed: ${e}`)
+  }
+  let lastSnapshots = new Map<string, Date | null>()
+  try {
+    const latest = byPoolId(ids, await latestSnapshotTimes(db, ids))
+    lastSnapshots = new Map(ids.map((id) => [id, latest.get(id)?.ts ?? null]))
+  } catch (e) {
+    console.error(`[cron/activity] snapshot time read failed: ${e}`)
+  }
+
   const results = []
   for (const pool of pools) {
     let ingest: object
     try {
-      ingest = await ingestPool({ db, poolId: pool.id, upTo, upToTime })
+      ingest = await ingestPool({
+        db,
+        poolId: pool.id,
+        upTo,
+        upToTime,
+        cursor: cursors.get(pool.id),
+      })
     } catch (e) {
       console.error(`[cron/activity] pool ${pool.id} ingest failed: ${e}`)
       ingest = { error: String(e) }
@@ -73,6 +117,7 @@ export async function GET(request: Request) {
           contractAddress: pool.contractAddress,
           height: upTo,
           ts: upToTime,
+          lastTs: lastSnapshots.get(pool.id),
         })
       ).snapshot
     } catch (e) {

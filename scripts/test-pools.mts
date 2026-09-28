@@ -1,5 +1,5 @@
-// Tests for the pool overview's pure helpers: assetlist decimals, market
-// figures, image URLs and migration alloy assets.
+// Tests for the pool overview's pure helpers (assetlist decimals, market
+// figures, image URLs, migration alloy assets) and the assetlist status text.
 //
 //   node scripts/test-pools.mts
 import assert from "node:assert/strict"
@@ -124,4 +124,79 @@ test("every configured migration pairs two different full denoms", () => {
     assert.match(to, /^ibc\/[0-9A-F]{64}$/, poolId)
     assert.notEqual(from, to, poolId)
   }
+})
+
+const { appStatusMessages } = await import(
+  pathToFileURL(path.resolve("src/constants/status.ts")).href
+)
+const flags = (over: object) => ({
+  unstable: false,
+  unstableReason: null,
+  disabled: false,
+  haltDeposits: false,
+  haltWithdrawals: false,
+  depositHaltReason: null,
+  withdrawalHaltReason: null,
+  tooltipMessage: null,
+  ...over,
+})
+
+test("status text matches the app: the maintainers' message when set", () => {
+  assert.deepEqual(
+    appStatusMessages(
+      flags({
+        unstable: true,
+        unstableReason: "manual",
+        tooltipMessage: "Paused.",
+      })
+    ),
+    ["Paused."]
+  )
+})
+
+test("without a message, one app sentence per flag (PEPE.axl, SHIB.axl, MARS.old, SUI.wh)", () => {
+  assert.deepEqual(
+    appStatusMessages(flags({ unstable: true, unstableReason: "market" })),
+    [
+      "This asset has had very low liquidity and trading volume for an extended period.",
+    ]
+  )
+  assert.deepEqual(
+    appStatusMessages(
+      flags({ unstable: true, unstableReason: "market", haltDeposits: true })
+    ),
+    [
+      "This asset has had very low liquidity and trading volume for an extended period.",
+      "Deposits halted.",
+    ]
+  )
+  assert.deepEqual(
+    appStatusMessages(
+      flags({
+        unstable: true,
+        unstableReason: "source_chain_killed",
+        disabled: true,
+        haltDeposits: true,
+        depositHaltReason: "source_chain_killed",
+        haltWithdrawals: true,
+        withdrawalHaltReason: "source_chain_killed",
+      })
+    ),
+    [
+      "Source chain for this asset has ceased operation.",
+      "Deposits halted. Source chain has ceased operation.",
+      "Withdrawals halted. Source chain has ceased operation.",
+      "Disabled: this asset is hidden on app.osmosis.zone.",
+    ]
+  )
+  assert.deepEqual(appStatusMessages(flags({ disabled: true })), [
+    "Disabled: this asset is hidden on app.osmosis.zone.",
+  ])
+})
+
+test("an unmapped reason code gets the app's generic sentence", () => {
+  assert.deepEqual(
+    appStatusMessages(flags({ unstable: true, unstableReason: "new_code" })),
+    ["Unstable, exercise caution."]
+  )
 })

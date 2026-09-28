@@ -14,6 +14,7 @@ export async function GET() {
   return NextResponse.json(
     pools.map((pool) => ({
       id: pool.id,
+      contractAddress: pool.contractAddress,
       assets: pool.reserveCoins?.map(
         (asset) => asset.currency.currency.coinMinimalDenom
       ),
@@ -31,7 +32,8 @@ export async function GET() {
       ),
       alloy: {
         asset: pool.alloy.asset?.denom,
-        price: pool.alloy.price?.amount || "0",
+        // null when unknown: a client must not treat a missing price as $0.
+        price: pool.alloy.price?.amount ?? null,
       },
       // Unknown stays unknown: an overview built before this field existed
       // must not be reported as active.
