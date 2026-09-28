@@ -25,7 +25,8 @@ export default async function Swap({ searchParams }: SwapRouteProps) {
         <h1 className="text-2xl font-semibold">Transmuter Swap</h1>
         <p className="text-sm text-muted-foreground">
           Swap 1:1 between an alloyed asset and one of its variants, directly
-          through the alloy&apos;s pool contract. To trade other assets, use the{" "}
+          through the alloy&apos;s pool contract, up to the amount of that
+          variant the pool holds. To trade other assets, use the{" "}
           <Link
             href="https://app.osmosis.zone/swap"
             className="font-medium text-foreground underline underline-offset-4"

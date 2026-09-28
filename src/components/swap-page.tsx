@@ -31,7 +31,9 @@ export function SwapPage({ initialPoolId }: { initialPoolId?: string }) {
 
   return (
     <WalletProvider>
-      <div className="flex w-full flex-1 flex-col items-center justify-center gap-6">
+      {/* Sits directly under the page heading, not centred in the space
+          left below it. */}
+      <div className="flex w-full flex-col items-center gap-6">
         {data && data.length > 0 ? (
           <SwapCard pools={data} initialPoolId={initialPoolId} />
         ) : error && !isValidating ? (

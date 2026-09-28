@@ -635,10 +635,6 @@ const SwapCard = ({
           </Button>
         )}
       </div>
-      <div className="max-w-[300px] self-center text-xs text-muted-foreground">
-        Swaps go directly through this alloy pool at 1:1, up to the amount of
-        the variant it holds.
-      </div>
     </div>
   )
 }
