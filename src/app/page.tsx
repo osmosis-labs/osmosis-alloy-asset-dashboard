@@ -24,13 +24,12 @@ export default async function Home() {
     <main className="flex items-center justify-center">
       <div className="container my-6 flex flex-col items-center gap-6 text-center">
         <DataFreshnessNotice {...overview} />
-        <div className="max-w-3xl space-y-2">
+        <div className="w-full space-y-1">
           <h1 className="text-3xl font-bold">Osmosis Alloyed Assets</h1>
           <p className="text-muted-foreground">
-            An alloyed asset (allBTC, allUSDC, ...) is one token backed 1:1 by
-            several bridged versions of the same asset, held in a transmuter
-            pool. This dashboard shows what backs each one, how that has
-            changed, and the limits on each variant.{" "}
+            Each alloyed asset is one token backed 1:1 by several bridged
+            versions of the same asset. See what backs each one and how it
+            changes.{" "}
             <Link
               href={siteConfig.links.docs}
               className="font-medium text-foreground underline underline-offset-4"

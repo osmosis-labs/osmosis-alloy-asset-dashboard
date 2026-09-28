@@ -133,7 +133,7 @@ const PoolStatusBadges = ({
         <StatusTooltip
           title={POOL_STATUS.frozen.title}
           trigger={
-            <Badge size={size} variant="frozen" className="gap-1">
+            <Badge size={size} variant="destructive" className="gap-1">
               <Snowflake className="size-3" aria-hidden /> Frozen
             </Badge>
           }
