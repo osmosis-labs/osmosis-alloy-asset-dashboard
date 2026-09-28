@@ -34,6 +34,7 @@ export const buildSwapPools = (
     return [
       {
         id: pool.id,
+        contractAddress: pool.contractAddress,
         assets: variants,
         alloy: { asset: alloy, price: pool.alloy.price },
         status: pool.status ?? { isActive: null, corruptedDenoms: null },

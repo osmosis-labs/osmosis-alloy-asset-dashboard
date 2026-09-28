@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/popover"
 
 const AssetShow = ({
+  label,
   balance,
   asset,
   onAssetChange,
@@ -30,6 +31,8 @@ const AssetShow = ({
   disabledDenoms = [],
   pools,
 }: {
+  // What the picker chooses ("Token to swap"), for its accessible name.
+  label: string
   balance?: _.Dictionary<Coin>
   asset: AssetWithDecimal
   onAssetChange: (asset: AssetWithDecimal, pool: MinimalAssetPool) => void
@@ -41,30 +44,36 @@ const AssetShow = ({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
-        <div className="flex cursor-pointer items-center gap-2">
+        <button
+          type="button"
+          aria-label={`${label}: ${asset.symbol}. Change`}
+          className="flex items-center gap-2 rounded-md text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <Avatar className="size-8 md:size-10">
             <AvatarImage src={getAssetImageUrl(asset)} alt={asset.symbol} />
             <AvatarFallback>{capitalName(asset.name)}</AvatarFallback>
           </Avatar>
           <div className="max-w-1/2 truncate">
-            <h1 className="inline-flex items-center font-mono font-semibold md:text-lg">
+            <span className="inline-flex items-center font-mono font-semibold md:text-lg">
               {asset.symbol}{" "}
               <ChevronDown className="ml-2 size-4 text-muted-foreground" />
-            </h1>
+            </span>
             <p className="text-xs text-muted-foreground md:text-sm">
               {asset.name}
             </p>
           </div>
-        </div>
+        </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[350px] p-0">
+      <PopoverContent className="w-[min(350px,calc(100vw-2rem))] p-0">
         <Command>
           <CommandInput placeholder="Search asset" />
           <CommandEmpty>No asset found.</CommandEmpty>
           <CommandList>
             {_.chain(pools)
               .map((pool) => {
-                const alloyPrice = Number(pool.alloy.price)
+                // null when the price is unknown: no USD value is shown.
+                const alloyPrice =
+                  pool.alloy.price === null ? null : Number(pool.alloy.price)
                 return (
                   <CommandGroup
                     key={pool.id}
@@ -79,7 +88,10 @@ const AssetShow = ({
                               -a.decimal
                             )
                           : null
-                        const total = b ? b.multipliedBy(alloyPrice) : null
+                        const total =
+                          b && alloyPrice !== null
+                            ? b.multipliedBy(alloyPrice)
+                            : null
                         return (
                           <CommandItem
                             key={a.denom}

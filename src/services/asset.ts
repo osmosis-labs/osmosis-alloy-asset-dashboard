@@ -312,7 +312,9 @@ export const getUserAssets = async (address: string) => {
       }
     })
   } catch (e) {
+    // Rethrown: an empty list would show every balance as 0 and the form
+    // would say "Insufficient Balance" instead of "unavailable".
     console.error(`Error fetching user assets: ${e}`)
-    return []
+    throw e
   }
 }
