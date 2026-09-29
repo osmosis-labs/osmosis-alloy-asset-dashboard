@@ -57,7 +57,8 @@ model PoolSwap {
 }
 
 // 15-minute per-denom rollups, recomputed from pool_swap for touched buckets.
-// Kept after old pool_swap rows are pruned, so history outlives the rows.
+// Kept after old pool_swap rows are pruned, so history outlives the rows, and
+// folded into pool_flow_daily once they are 8 days old.
 model PoolFlow15m {
   poolId    String   @map("pool_id")
   bucket    DateTime
@@ -69,6 +70,23 @@ model PoolFlow15m {
 
   @@id([poolId, bucket, denom])
   @@map("pool_flow_15m")
+}
+
+// Daily per-denom rollups: pool_flow_15m folded into UTC days once they are
+// more than 8 days old (foldFlowsToDaily in src/services/activity-ingest.ts).
+// The charts that reach back that far bucket by a day or more, so nothing is
+// lost from them, and a busy pool's day is one row per denom instead of 96.
+model PoolFlowDaily {
+  poolId    String   @map("pool_id")
+  // Midnight UTC of the day.
+  day       DateTime
+  denom     String
+  amountIn  Decimal  @default(0) @map("amount_in") @db.Decimal(78, 0)
+  amountOut Decimal  @default(0) @map("amount_out") @db.Decimal(78, 0)
+  swaps     Int      @default(0)
+
+  @@id([poolId, day, denom])
+  @@map("pool_flow_daily")
 }
 
 // A pool's accounted reserves per denom at a block height, from the

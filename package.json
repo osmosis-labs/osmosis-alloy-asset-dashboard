@@ -17,6 +17,9 @@
     "db:push": "prisma db push",
     "activity:backfill": "tsx --tsconfig tsconfig.json scripts/backfill-activity.mts",
     "test:activity": "tsx --tsconfig tsconfig.json --test scripts/test-activity.mts",
+    "test:store": "tsx --tsconfig tsconfig.json --test scripts/test-store.mts",
+    "store:thin": "tsx --tsconfig tsconfig.json scripts/thin-store.mts",
+    "store:sync": "tsx --tsconfig tsconfig.json scripts/sync-store.mts",
     "reserves:backfill": "tsx --tsconfig tsconfig.json scripts/backfill-reserves.mts"
   },
   "dependencies": {

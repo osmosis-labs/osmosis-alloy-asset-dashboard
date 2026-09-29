@@ -1,6 +1,7 @@
 import { PoolSwap } from "@/types/tx"
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
+import { dailyFlowCutoff } from "./activity-ingest"
 import { floorToStoreBucket, FlowPoint } from "./swap-rows"
 
 // Read side of the activity store. The pool page uses it only when the store
@@ -55,26 +56,57 @@ export const getStoreCoverage = async (
   }
 }
 
+// Flows from `from`: 15-minute rollups for recent buckets, and daily ones for
+// days folded into pool_flow_daily (older than DAILY_FLOW_AFTER_DAYS). A day is
+// in one table or the other, never both (foldFlowsToDaily moves it in one
+// transaction), so the two reads never double count. The daily read is
+// skipped when `from` is too recent for any folded day to reach it.
 export const readFlowPoints = async (
   poolId: string,
-  from: Date
+  from: Date,
+  now = Date.now()
 ): Promise<FlowPoint[]> => {
-  // From the bucket containing `from`, so the straddling bucket is kept
-  // (bucket keys are 15-minute starts, `from` an exact time).
-  const rows = await getPrisma().poolFlow15m.findMany({
-    where: {
-      poolId,
-      bucket: { gte: new Date(floorToStoreBucket(from.getTime())) },
-    },
-    orderBy: { bucket: "asc" },
-  })
-  return rows.map((r) => ({
-    time: r.bucket.getTime(),
+  const db = getPrisma()
+  // From the bucket (or day) containing `from`, so the straddling one is kept
+  // (bucket keys are 15-minute or day starts, `from` an exact time).
+  const [daily, recent] = await Promise.all([
+    from.getTime() < dailyFlowCutoff(now).getTime() + 86_400_000
+      ? db.poolFlowDaily.findMany({
+          where: { poolId, day: { gte: startOfUtcDay(from) } },
+          orderBy: { day: "asc" },
+        })
+      : [],
+    db.poolFlow15m.findMany({
+      where: {
+        poolId,
+        bucket: { gte: new Date(floorToStoreBucket(from.getTime())) },
+      },
+      orderBy: { bucket: "asc" },
+    }),
+  ])
+  const point = (
+    time: Date,
+    r: Pick<
+      (typeof recent)[number],
+      "denom" | "amountIn" | "amountOut" | "swaps"
+    >
+  ) => ({
+    time: time.getTime(),
     denom: r.denom,
     amountIn: r.amountIn.toFixed(0),
     amountOut: r.amountOut.toFixed(0),
     swaps: r.swaps,
-  }))
+  })
+  return [
+    ...daily.map((r) => point(r.day, r)),
+    ...recent.map((r) => point(r.bucket, r)),
+  ]
+}
+
+const startOfUtcDay = (d: Date) => {
+  const day = new Date(d)
+  day.setUTCHours(0, 0, 0, 0)
+  return day
 }
 
 export const readSwaps = async (
