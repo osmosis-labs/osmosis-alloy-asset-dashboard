@@ -167,6 +167,34 @@ export const writeSnapshot = async (
   return count
 }
 
+// Several pools' snapshots in one insert (the cron writes all due pools at
+// once).
+export const writeSnapshots = async (
+  db: PrismaClient,
+  snapshots: {
+    poolId: string
+    height: number
+    ts: Date
+    liquidity: { denom: string; amount: string }[]
+  }[]
+) => {
+  const data = snapshots.flatMap((s) =>
+    s.liquidity.map((l) => ({
+      poolId: s.poolId,
+      height: BigInt(s.height),
+      ts: s.ts,
+      denom: l.denom,
+      amount: new Prisma.Decimal(l.amount),
+    }))
+  )
+  if (data.length === 0) return 0
+  const { count } = await db.poolReserveSnapshot.createMany({
+    data,
+    skipDuplicates: true,
+  })
+  return count
+}
+
 // Cron step: one snapshot per pool per hour, at the run's tip. The cron runs
 // every 15 minutes, so a slightly short interval keeps snapshots on the hour
 // instead of drifting to every 75 minutes.
@@ -231,18 +259,21 @@ export const snapshotPoolIfDue = async ({
   return { poolId, snapshot: rows }
 }
 
-// Snapshots older than `days` are thinned to one per UTC day, so recent
-// history stays hourly while the table grows by one snapshot per pool per
-// day. Timestamps are stored as UTC. Days are bucketed 30 minutes early
-// because a "00:00" snapshot is taken at the last block before midnight
-// (heightAtTime lands at or before its target), which would otherwise count
-// towards the previous day.
+// Snapshots older than `days` are thinned to one per UTC day, and those older
+// than `weeklyDays` to one per week (ISO weeks, starting Monday), so recent
+// history stays hourly while old history costs one snapshot per pool per
+// week. The Backing Over Time chart's long ranges show weeks. Timestamps are
+// stored as UTC. Days are bucketed 30 minutes early because a "00:00"
+// snapshot is taken at the last block before midnight (heightAtTime lands at
+// or before its target), which would otherwise count towards the previous
+// day.
 export const pruneReserveSnapshots = async (
   db: PrismaClient,
-  days: number
+  days: number,
+  weeklyDays = Infinity
 ): Promise<number> => {
   const cutoff = new Date(Date.now() - days * 86_400_000)
-  return db.$executeRaw`
+  const daily = await db.$executeRaw`
     DELETE FROM pool_reserve_snapshot s
     WHERE s.ts < ${cutoff}
       AND s.height NOT IN (
@@ -251,4 +282,16 @@ export const pruneReserveSnapshots = async (
         WHERE pool_id = s.pool_id
         ORDER BY pool_id, date_trunc('day', ts + interval '30 minutes'), ts
       )`
+  if (!Number.isFinite(weeklyDays)) return daily
+  const weeklyCutoff = new Date(Date.now() - weeklyDays * 86_400_000)
+  const weekly = await db.$executeRaw`
+    DELETE FROM pool_reserve_snapshot s
+    WHERE s.ts < ${weeklyCutoff}
+      AND s.height NOT IN (
+        SELECT DISTINCT ON (pool_id, date_trunc('week', ts + interval '30 minutes')) height
+        FROM pool_reserve_snapshot
+        WHERE pool_id = s.pool_id
+        ORDER BY pool_id, date_trunc('week', ts + interval '30 minutes'), ts
+      )`
+  return daily + weekly
 }

@@ -68,7 +68,7 @@ const TransactionTable = ({ pool }: { pool: PoolOverview }) => {
         <CardTitle>Recent Swaps</CardTitle>
         <CardDescription>
           Up to the latest {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} swaps
-          from the past 31 days, with the amounts that entered and left the pool
+          from the past 7 days, with the amounts that entered and left the pool
         </CardDescription>
       </CardHeader>
       <CardContent>

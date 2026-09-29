@@ -804,11 +804,12 @@ export type PoolActivity = {
   coveredFrom?: string
 }
 
-// The live LCD fallback has its own 30-minute cache, so the 5-minute refresh
-// of store reads below does not multiply LCD load (and fail2ban risk) while
-// the store is unavailable.
+// The live LCD fallback has its own 30-minute cache, so the store reads below
+// do not multiply LCD load (and fail2ban risk) while the store is unavailable.
+// Store reads refresh at the cron's cadence: the store only changes every 15
+// minutes, and each read is billed.
 const LIVE_REVALIDATE_SECONDS = 1800
-const STORE_REVALIDATE_SECONDS = 300
+const STORE_REVALIDATE_SECONDS = 900
 
 const getLiveActivity = unstable_cache(
   async (poolId: string): Promise<PoolActivity> => {

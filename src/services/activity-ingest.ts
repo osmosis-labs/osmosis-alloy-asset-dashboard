@@ -180,6 +180,26 @@ export const bucketRange = (events: SwapEvent[]) => {
   return { start: new Date(start * 1000), end: new Date(end * 1000) }
 }
 
+// A swap event as a pool_swap row.
+const swapRow = (poolId: string, e: SwapEvent) => ({
+  poolId,
+  height: BigInt(e.height),
+  txHash: e.hash,
+  msgIndex: e.msgIndex,
+  eventIndex: e.eventIndex,
+  ts: new Date(e.timestamp),
+  sender: e.sender,
+  action: e.action,
+  contract: e.contract ?? null,
+  denomIn: e.in.denom,
+  amountIn: new Prisma.Decimal(e.in.amount),
+  denomOut: e.out.denom,
+  amountOut: new Prisma.Decimal(e.out.amount),
+})
+
+// Buckets are computed in UTC whatever the session time zone (timestamps are
+// stored as UTC without a zone; to_timestamp returns a zoned value, so it is
+// converted back explicitly).
 // Insert events and recompute the 15-minute buckets they touch. Idempotent:
 // rows are keyed on (pool, tx, msg index, event index) and buckets are
 // recomputed from pool_swap, so re-running a range changes nothing.
@@ -190,21 +210,7 @@ export const writeEvents = async (
 ) => {
   if (events.length === 0) return 0
   const { count } = await tx.poolSwap.createMany({
-    data: events.map((e) => ({
-      poolId,
-      height: BigInt(e.height),
-      txHash: e.hash,
-      msgIndex: e.msgIndex,
-      eventIndex: e.eventIndex,
-      ts: new Date(e.timestamp),
-      sender: e.sender,
-      action: e.action,
-      contract: e.contract ?? null,
-      denomIn: e.in.denom,
-      amountIn: new Prisma.Decimal(e.in.amount),
-      denomOut: e.out.denom,
-      amountOut: new Prisma.Decimal(e.out.amount),
-    })),
+    data: events.map((e) => swapRow(poolId, e)),
     skipDuplicates: true,
   })
 
@@ -214,13 +220,13 @@ export const writeEvents = async (
     SELECT pool_id, bucket, denom, SUM(amount_in), SUM(amount_out), COUNT(*)::int
     FROM (
       SELECT pool_id,
-             to_timestamp(floor(extract(epoch FROM ts) / 900) * 900) AS bucket,
+             to_timestamp(floor(extract(epoch FROM ts) / 900) * 900) AT TIME ZONE 'UTC' AS bucket,
              denom_in AS denom, amount_in, 0::numeric AS amount_out
       FROM pool_swap
       WHERE pool_id = ${poolId} AND ts >= ${start} AND ts < ${end}
       UNION ALL
       SELECT pool_id,
-             to_timestamp(floor(extract(epoch FROM ts) / 900) * 900) AS bucket,
+             to_timestamp(floor(extract(epoch FROM ts) / 900) * 900) AT TIME ZONE 'UTC' AS bucket,
              denom_out AS denom, 0::numeric AS amount_in, amount_out
       FROM pool_swap
       WHERE pool_id = ${poolId} AND ts >= ${start} AND ts < ${end}
@@ -344,6 +350,176 @@ export const coveredThroughTime = ({
   if (events.length === 0) return null
   return new Date(_.maxBy(events, (e) => e.height)!.timestamp)
 }
+
+// Rows per createMany: 13 parameters a row, under the Postgres limit of
+// 65,535 parameters per statement.
+const SWAP_INSERT_CHUNK = 4000
+
+// What one pool contributes to a cron run: the swap events from its cursor up
+// to the run's tip, and where that leaves the cursor. Built from the LCD alone;
+// writeIngestBatch writes every pool's plan at once. null when the pool is
+// already at the tip.
+export type PoolIngestPlan = {
+  poolId: string
+  events: SwapEvent[]
+  coveredTo: number
+  coveredThrough: Date | null
+  // Where coverage starts for a pool with no cursor yet (ignored otherwise).
+  coveredFrom: Date
+}
+
+export const planPoolIngest = async ({
+  poolId,
+  cursor,
+  upTo,
+  upToTime,
+  maxPages = 10,
+  hosts = DEFAULT_LCD_HOSTS,
+}: {
+  poolId: string
+  cursor: ActivityCursor | null
+  upTo: number
+  upToTime: Date
+  maxPages?: number
+  hosts?: string[]
+}): Promise<PoolIngestPlan | null> => {
+  // A pool with no cursor is seeded just behind the tip (the backfill fills
+  // history); its coverage starts at the tip's block time.
+  const from = cursor ? Number(cursor.height) : upTo - 750 // ~15 min seed
+  if (from >= upTo) return null
+  const { events, coveredTo } = await fetchSwapEvents({
+    poolId,
+    from,
+    to: upTo,
+    maxPages,
+    hosts,
+  })
+  return {
+    poolId,
+    events,
+    coveredTo,
+    coveredThrough: coveredThroughTime({ coveredTo, upTo, upToTime, events }),
+    coveredFrom: upToTime,
+  }
+}
+
+// Writes a whole cron run in a handful of statements, whatever the number of
+// pools: the new swap rows (one insert per 4,000), one recompute of every
+// touched 15-minute bucket across pools, then one upsert of every cursor. Each
+// step is idempotent (rows keyed on tx, message and event; buckets recomputed
+// from rows) and cursors are written last, so a run that fails part-way is
+// repaired by the next one, which reads the same heights again. Before this,
+// each pool with swaps took an interactive transaction and each idle pool an
+// upsert, which was most of the store's billed operations.
+export const writeIngestBatch = async (
+  db: PrismaClient,
+  plans: PoolIngestPlan[]
+): Promise<number> => {
+  let added = 0
+  const rows = plans.flatMap((p) => p.events.map((e) => swapRow(p.poolId, e)))
+  for (const chunk of _.chunk(rows, SWAP_INSERT_CHUNK)) {
+    added += (
+      await db.poolSwap.createMany({ data: chunk, skipDuplicates: true })
+    ).count
+  }
+
+  const touched = plans
+    .filter((p) => p.events.length > 0)
+    .map((p) => ({ poolId: p.poolId, ...bucketRange(p.events) }))
+  if (touched.length > 0) {
+    const ids = touched.map((t) => t.poolId)
+    const starts = touched.map((t) => t.start)
+    const ends = touched.map((t) => t.end)
+    await db.$executeRaw`
+      WITH r AS (
+        SELECT * FROM unnest(${ids}::text[], ${starts}::timestamp[], ${ends}::timestamp[])
+          AS r(pool_id, s, e)
+      )
+      INSERT INTO pool_flow_15m (pool_id, bucket, denom, amount_in, amount_out, swaps)
+      SELECT pool_id, bucket, denom, SUM(amount_in), SUM(amount_out), COUNT(*)::int
+      FROM (
+        SELECT p.pool_id,
+               to_timestamp(floor(extract(epoch FROM p.ts) / 900) * 900) AT TIME ZONE 'UTC' AS bucket,
+               p.denom_in AS denom, p.amount_in, 0::numeric AS amount_out
+        FROM pool_swap p JOIN r ON p.pool_id = r.pool_id AND p.ts >= r.s AND p.ts < r.e
+        UNION ALL
+        SELECT p.pool_id,
+               to_timestamp(floor(extract(epoch FROM p.ts) / 900) * 900) AT TIME ZONE 'UTC' AS bucket,
+               p.denom_out AS denom, 0::numeric AS amount_in, p.amount_out
+        FROM pool_swap p JOIN r ON p.pool_id = r.pool_id AND p.ts >= r.s AND p.ts < r.e
+      ) flows
+      GROUP BY pool_id, bucket, denom
+      ON CONFLICT (pool_id, bucket, denom) DO UPDATE
+        SET amount_in = EXCLUDED.amount_in,
+            amount_out = EXCLUDED.amount_out,
+            swaps = EXCLUDED.swaps
+    `
+  }
+
+  if (plans.length > 0) {
+    const ids = plans.map((p) => p.poolId)
+    const heights = plans.map((p) => String(p.coveredTo))
+    const froms = plans.map((p) => p.coveredFrom)
+    const throughs = plans.map((p) => p.coveredThrough)
+    // A pool with no progress this run (null coveredThrough) keeps its stored
+    // value, as the per-pool upsert did.
+    await db.$executeRaw`
+      INSERT INTO activity_cursor (pool_id, height, covered_from, covered_through, updated_at)
+      SELECT pool_id, height::bigint, covered_from, covered_through, now()
+      FROM unnest(${ids}::text[], ${heights}::text[], ${froms}::timestamp[], ${throughs}::timestamp[])
+        AS c(pool_id, height, covered_from, covered_through)
+      ON CONFLICT (pool_id) DO UPDATE
+        SET height = EXCLUDED.height,
+            covered_through = COALESCE(EXCLUDED.covered_through, activity_cursor.covered_through),
+            updated_at = now()
+    `
+  }
+  return added
+}
+
+// 15-minute rollups are folded into daily ones once they are this old. The
+// 7-day chart buckets by 6 hours and needs them; 30 days and longer bucket by
+// a day or more (pickActivityBucketMinutes in swap-rows.ts).
+export const DAILY_FLOW_AFTER_DAYS = 8
+
+// Pure: midnight UTC DAILY_FLOW_AFTER_DAYS before `now`. Whole UTC days before
+// it are folded.
+export const dailyFlowCutoff = (now: number) => {
+  const d = new Date(now - DAILY_FLOW_AFTER_DAYS * 86_400_000)
+  d.setUTCHours(0, 0, 0, 0)
+  return d
+}
+
+// Folds whole UTC days of 15-minute rollups before `cutoff` into
+// pool_flow_daily and deletes them, in one transaction, so a day is never in
+// both tables. A day already folded is overwritten with the totals of its
+// 15-minute rows: a backfill that re-creates a folded day writes all of that
+// day's buckets (it walks whole ranges), so the recomputed total is complete.
+export const foldFlowsToDaily = async (db: PrismaClient, cutoff: Date) => {
+  const [folded, deleted] = await db.$transaction([
+    db.$executeRaw`
+      INSERT INTO pool_flow_daily (pool_id, day, denom, amount_in, amount_out, swaps)
+      SELECT pool_id, date_trunc('day', bucket), denom,
+             SUM(amount_in), SUM(amount_out), SUM(swaps)::int
+      FROM pool_flow_15m
+      WHERE bucket < ${cutoff}
+      GROUP BY pool_id, date_trunc('day', bucket), denom
+      ON CONFLICT (pool_id, day, denom) DO UPDATE
+        SET amount_in = EXCLUDED.amount_in,
+            amount_out = EXCLUDED.amount_out,
+            swaps = EXCLUDED.swaps
+    `,
+    db.$executeRaw`DELETE FROM pool_flow_15m WHERE bucket < ${cutoff}`,
+  ])
+  return { folded, deleted }
+}
+
+// Pure: whether a run does the once-a-day maintenance (folding, pruning,
+// snapshot thinning): the run whose tip falls in the first 15 minutes after
+// midnight UTC. A missed day is caught up by the next, since each step works
+// on everything older than its cutoff.
+export const isDailyMaintenanceRun = (upToTime: Date) =>
+  upToTime.getUTCHours() === 0 && upToTime.getUTCMinutes() < 15
 
 // Drop swap rows older than `days`; their 15-minute rollups are kept.
 export const pruneSwaps = async (db: PrismaClient, days: number) => {

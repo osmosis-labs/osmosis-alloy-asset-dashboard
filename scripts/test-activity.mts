@@ -411,3 +411,23 @@ test("a snapshot is due with none yet, or 55 minutes after the last", () => {
   assert.equal(isSnapshotDue(ago(54), ts), false)
   assert.equal(isSnapshotDue(ago(15), ts), false)
 })
+
+const { dailyFlowCutoff, isDailyMaintenanceRun } = await import(
+  pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
+)
+
+test("rollups fold at midnight UTC eight days back", () => {
+  const cutoff = (iso: string) =>
+    dailyFlowCutoff(new Date(iso).getTime()).toISOString()
+  assert.equal(cutoff("2026-09-29T00:05:00Z"), "2026-09-21T00:00:00.000Z")
+  assert.equal(cutoff("2026-09-29T23:59:00Z"), "2026-09-21T00:00:00.000Z")
+  assert.equal(cutoff("2026-10-01T00:00:00Z"), "2026-09-23T00:00:00.000Z")
+})
+
+test("daily maintenance runs once, just after midnight UTC", () => {
+  const at = (iso: string) => isDailyMaintenanceRun(new Date(iso))
+  assert.equal(at("2026-09-29T00:00:00Z"), true)
+  assert.equal(at("2026-09-29T00:14:59Z"), true)
+  assert.equal(at("2026-09-29T00:15:00Z"), false)
+  assert.equal(at("2026-09-29T12:05:00Z"), false)
+})

@@ -77,12 +77,12 @@ const fetchPoolComposition = async (
   }
 }
 
-// Snapshots are hourly, so a 15-minute cache keeps the newest one visible
-// soon after it lands.
+// Snapshots are hourly, so the chart refreshes hourly: a shorter cache only
+// re-reads (billed) the same rows.
 const getCachedPoolComposition = unstable_cache(
   fetchPoolComposition,
   ["pool-composition-v2"],
-  { revalidate: 900 }
+  { revalidate: 3600 }
 )
 
 // Non-throwing: the chart is simply hidden when history is unavailable.

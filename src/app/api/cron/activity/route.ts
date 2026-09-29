@@ -3,29 +3,36 @@ import { NextResponse } from "next/server"
 import {
   blockTime,
   byPoolId,
-  cronRunStatus,
-  ingestPool,
+  dailyFlowCutoff,
+  foldFlowsToDaily,
+  isDailyMaintenanceRun,
   latestHeight,
+  planPoolIngest,
+  PoolIngestPlan,
   pruneSwaps,
+  writeIngestBatch,
 } from "@/services/activity-ingest"
 import { getPoolsOverview } from "@/services/pool"
 import {
+  isSnapshotDue,
   latestSnapshotTimes,
+  poolLiquidityAt,
   pruneReserveSnapshots,
-  snapshotPoolIfDue,
+  writeSnapshots,
 } from "@/services/reserves"
 import { ActivityCursor } from "@prisma/client"
 
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
 // Activity store ingest. Triggered by Vercel Cron (see vercel.json) every 15
-// minutes: reads every supported pool's cursor and newest reserve snapshot
-// time up front (one query each), then for each pool reads token_swapped
-// events from its cursor up to the current tip and writes them to Postgres
-// (rows, 15-minute rollups, then the cursor, in one transaction per pool; a
-// pool with no new events only moves its cursor), takes the pool's hourly
-// reserve snapshot when due, then prunes old swap rows and thins reserve
-// snapshots older than a week to daily.
+// minutes. Each run reads every listed pool's cursor and newest reserve
+// snapshot time (one query each), fetches each pool's token_swapped events
+// from its cursor up to the current tip from the LCD, then writes all pools
+// together (swap rows, 15-minute rollups, cursors) in a few statements, and
+// the reserve snapshots of every pool due one in one more. The run just after
+// midnight UTC also folds 15-minute rollups older than 8 days into daily ones,
+// prunes swap rows older than a week and thins old reserve snapshots. About 5
+// billed database operations a run, whatever the number of pools.
 // The pool page reads the store once a pool's history is fresh and covers the
 // window; until then it keeps using live LCD queries.
 //
@@ -39,10 +46,13 @@ export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 export const maxDuration = 300
 
-// Swap rows are kept this long; their 15-minute rollups are kept for good.
-const SWAP_RETENTION_DAYS = 31
-// Reserve snapshots stay hourly this long, then one per day is kept.
+// Swap rows are kept this long (the Recent Swaps table); their rollups are
+// kept for good, folded to daily after 8 days.
+const SWAP_RETENTION_DAYS = 7
+// Reserve snapshots stay hourly this long, then one per day is kept, then one
+// per week.
 const HOURLY_SNAPSHOT_DAYS = 7
+const DAILY_SNAPSHOT_DAYS = 90
 
 // Constant-time comparison, so response timing does not reveal how much of a
 // guessed token matched.
@@ -70,12 +80,12 @@ export async function GET(request: Request) {
   const upTo = await latestHeight()
   const upToTime = await blockTime(upTo)
   const { pools } = await getPoolsOverview()
-
-  // Cursors and newest snapshot times for every pool in one query each,
-  // instead of one of each per pool (the free tier bills per operation). If a
-  // batched read fails, its map stays empty and each pool reads its own.
   const ids = pools.map((p) => p.id)
-  let cursors = new Map<string, ActivityCursor | null>()
+
+  // Cursors and newest snapshot times for every pool, one query each. Without
+  // the cursors nothing can be planned, so a failed read fails the run; the
+  // next one resumes from the same cursors.
+  let cursors: Map<string, ActivityCursor | null>
   try {
     cursors = byPoolId(
       ids,
@@ -83,8 +93,9 @@ export async function GET(request: Request) {
     )
   } catch (e) {
     console.error(`[cron/activity] cursor read failed: ${e}`)
+    return NextResponse.json({ error: "cursor read failed" }, { status: 502 })
   }
-  let lastSnapshots = new Map<string, Date | null>()
+  let lastSnapshots: Map<string, Date | null> | null = null
   try {
     const latest = byPoolId(ids, await latestSnapshotTimes(db, ids))
     lastSnapshots = new Map(ids.map((id) => [id, latest.get(id)?.ts ?? null]))
@@ -92,57 +103,103 @@ export async function GET(request: Request) {
     console.error(`[cron/activity] snapshot time read failed: ${e}`)
   }
 
-  const results = []
+  // Swap events for every pool from the LCD (no database access), then one
+  // batched write for all of them.
+  const plans: PoolIngestPlan[] = []
+  const ingestErrors: Record<string, string> = {}
   for (const pool of pools) {
-    let ingest: object
     try {
-      ingest = await ingestPool({
-        db,
+      const plan = await planPoolIngest({
         poolId: pool.id,
+        cursor: cursors.get(pool.id) ?? null,
         upTo,
         upToTime,
-        cursor: cursors.get(pool.id),
       })
+      if (plan) plans.push(plan)
     } catch (e) {
       console.error(`[cron/activity] pool ${pool.id} ingest failed: ${e}`)
-      ingest = { error: String(e) }
+      ingestErrors[pool.id] = String(e)
     }
-    // Hourly reserve snapshot for the Backing Over Time chart (archive LCD).
-    let snapshot: unknown
+  }
+  let rowsAdded = 0
+  let writeError: string | null = null
+  try {
+    rowsAdded = await writeIngestBatch(db, plans)
+  } catch (e) {
+    console.error(`[cron/activity] batched write failed: ${e}`)
+    writeError = String(e)
+  }
+
+  // Hourly reserve snapshots for the Backing Over Time chart (archive LCD),
+  // written in one insert for every pool that is due.
+  const due = lastSnapshots
+    ? pools.filter((p) =>
+        isSnapshotDue(lastSnapshots.get(p.id) ?? null, upToTime)
+      )
+    : []
+  const snapshots = []
+  const snapshotErrors: Record<string, string> = {}
+  for (const pool of due) {
     try {
-      snapshot = (
-        await snapshotPoolIfDue({
-          db,
+      const liquidity = await poolLiquidityAt(pool.contractAddress, upTo)
+      if (liquidity) {
+        snapshots.push({
           poolId: pool.id,
-          contractAddress: pool.contractAddress,
           height: upTo,
           ts: upToTime,
-          lastTs: lastSnapshots.get(pool.id),
+          liquidity,
         })
-      ).snapshot
+      }
     } catch (e) {
       console.error(`[cron/activity] pool ${pool.id} snapshot failed: ${e}`)
-      snapshot = { error: String(e) }
+      snapshotErrors[pool.id] = String(e)
     }
-    results.push({ poolId: pool.id, ...ingest, snapshot })
+  }
+  let snapshotRows = 0
+  try {
+    snapshotRows = await writeSnapshots(db, snapshots)
+  } catch (e) {
+    console.error(`[cron/activity] snapshot write failed: ${e}`)
+    writeError = writeError ?? String(e)
   }
 
-  let pruned = 0
-  try {
-    pruned = await pruneSwaps(db, SWAP_RETENTION_DAYS)
-  } catch (e) {
-    console.error(`[cron/activity] prune failed: ${e}`)
-  }
-  let thinned = 0
-  try {
-    thinned = await pruneReserveSnapshots(db, HOURLY_SNAPSHOT_DAYS)
-  } catch (e) {
-    console.error(`[cron/activity] snapshot thinning failed: ${e}`)
+  // Once a day: fold 15-minute rollups older than 8 days into daily ones,
+  // prune old swap rows, and thin old reserve snapshots.
+  const maintenance: Record<string, unknown> = {}
+  if (isDailyMaintenanceRun(upToTime)) {
+    try {
+      maintenance.folded = await foldFlowsToDaily(
+        db,
+        dailyFlowCutoff(upToTime.getTime())
+      )
+      maintenance.pruned = await pruneSwaps(db, SWAP_RETENTION_DAYS)
+      maintenance.thinned = await pruneReserveSnapshots(
+        db,
+        HOURLY_SNAPSHOT_DAYS,
+        DAILY_SNAPSHOT_DAYS
+      )
+    } catch (e) {
+      console.error(`[cron/activity] daily maintenance failed: ${e}`)
+      maintenance.error = String(e)
+    }
   }
 
-  const { failed, ingestFailed, snapshotFailed } = cronRunStatus(results)
+  const failed =
+    !!writeError ||
+    (pools.length > 0 && Object.keys(ingestErrors).length === pools.length) ||
+    (due.length > 0 && Object.keys(snapshotErrors).length === due.length)
   return NextResponse.json(
-    { upTo, results, pruned, thinned, ingestFailed, snapshotFailed },
+    {
+      upTo,
+      pools: pools.length,
+      advanced: plans.length,
+      rowsAdded,
+      snapshots: snapshotRows,
+      ingestErrors,
+      snapshotErrors,
+      writeError,
+      maintenance,
+    },
     { status: failed ? 502 : 200 }
   )
 }

@@ -108,7 +108,7 @@ console.log(
 // Swap rows are only kept this long (the cron prunes the rest); older rows
 // exist just to build their 15-minute rollups, so the backfill prunes them as
 // it goes instead of holding a whole history in the table at once.
-const RETENTION_MS = 31 * 86_400_000
+const RETENTION_MS = 7 * 86_400_000
 // Rows this far behind the newest processed swap are kept. Slices end on a
 // bucket boundary (trimToBucketBoundary), so no later slice needs them; the
 // margin is only a safety net.
