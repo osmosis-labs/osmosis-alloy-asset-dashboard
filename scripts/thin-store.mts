@@ -62,7 +62,8 @@ const sizes = async () => {
 console.log("before", await sizes())
 const cutoff = dailyFlowCutoff(Date.now())
 console.log(`folding 15-minute rollups before ${cutoff.toISOString()}`)
-console.log("  ", await foldFlowsToDaily(db, cutoff))
+// Folding the whole history at once: allow up to 15 minutes.
+console.log("  ", await foldFlowsToDaily(db, cutoff, 15 * 60_000))
 console.log("pruned swap rows:", await pruneSwaps(db, 7))
 console.log("thinned snapshots:", await pruneReserveSnapshots(db, 7, 90))
 
