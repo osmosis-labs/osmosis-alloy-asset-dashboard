@@ -30,12 +30,7 @@ import {
 import { reserveAmount } from "@/lib/pool-sources"
 import { fetchLcd, fetchWithRetry, getAssetImageUrl } from "@/lib/utils"
 
-import {
-  getStoreCoverage,
-  isStoreReady,
-  readFlowPoints,
-  readSwaps,
-} from "./activity-store"
+import { getStoreCoverage, readFlowPoints, readSwaps } from "./activity-store"
 import {
   getAssetMap,
   getAssetPrice,
@@ -827,39 +822,76 @@ const getLiveActivity = unstable_cache(
 // Cache key bumped with the return shape and the range argument: the Vercel
 // data cache is shared across deployments, and an old-shape entry must not be
 // read here. Store reads are cheap, so this refreshes every 5 minutes.
-export const getPoolInOutAssets = unstable_cache(
-  async (poolId: string, range: string = "24h"): Promise<PoolActivity> => {
+// The store's coverage of a pool (null when it is not fresh), cached at the
+// cron's cadence and shared by every range and the swap table, so a page
+// refresh reads the cursor once rather than once per cached range.
+// unstable_cache stores JSON, so the date travels as a string.
+const getCachedCoverage = unstable_cache(
+  async (poolId: string): Promise<{ coveredFrom: string } | null> => {
     const coverage = await getStoreCoverage(poolId)
-    if (coverage && coverage.coveredFrom.getTime() <= Date.now() - DAY_MS) {
-      try {
-        // null means "all" (from coveredFrom); `??` would turn it into 1 day.
-        const days =
-          range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
-        const requested =
-          days === null
-            ? coverage.coveredFrom.getTime()
-            : Date.now() - days * DAY_MS
-        const from = Math.max(requested, coverage.coveredFrom.getTime())
-        const points = await readFlowPoints(poolId, new Date(from))
-        return {
-          source: "store",
-          activities: bucketFlows(points, {
-            minBucketMinutes: 15,
-            from,
-            to: Date.now(),
-          }),
-          coveredFrom: coverage.coveredFrom.toISOString(),
-        }
-      } catch (e) {
-        console.error(`[getPoolInOutAssets] store read failed: ${e}`)
-      }
-    }
-
-    return getLiveActivity(poolId)
+    return coverage ? { coveredFrom: coverage.coveredFrom.toISOString() } : null
   },
-  ["pool-in-out-assets-v3"],
+  ["store-coverage-v1"],
   { revalidate: STORE_REVALIDATE_SECONDS }
 )
+
+const readActivity = async (
+  poolId: string,
+  range: string
+): Promise<PoolActivity> => {
+  const coverage = await getCachedCoverage(poolId)
+  const coveredFrom = coverage ? new Date(coverage.coveredFrom).getTime() : null
+  if (coveredFrom !== null && coveredFrom <= Date.now() - DAY_MS) {
+    try {
+      // null means "all" (from coveredFrom); `??` would turn it into 1 day.
+      const days = range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+      const requested = days === null ? coveredFrom : Date.now() - days * DAY_MS
+      const from = Math.max(requested, coveredFrom)
+      const points = await readFlowPoints(poolId, new Date(from))
+      return {
+        source: "store",
+        activities: bucketFlows(points, {
+          minBucketMinutes: 15,
+          from,
+          to: Date.now(),
+        }),
+        coveredFrom: new Date(coveredFrom).toISOString(),
+      }
+    } catch (e) {
+      console.error(`[getPoolInOutAssets] store read failed: ${e}`)
+    }
+  }
+
+  return getLiveActivity(poolId)
+}
+
+// Each range is cached as long as its chart can go without changing: the
+// short ranges at the cron's cadence; 30 days (daily bars) for an hour; 90
+// days and longer (bars of three days or more) for six hours. Every refresh
+// is a billed read, and most of them would return the same chart. Cache keys
+// carry a version: the data cache is shared across deployments and the
+// return shape must match.
+const cachedActivity = (seconds: number, key: string) =>
+  unstable_cache(readActivity, [key], { revalidate: seconds })
+const ACTIVITY_CACHE = {
+  short: cachedActivity(STORE_REVALIDATE_SECONDS, "pool-in-out-assets-v4"),
+  month: cachedActivity(3600, "pool-in-out-assets-month-v1"),
+  long: cachedActivity(6 * 3600, "pool-in-out-assets-long-v1"),
+}
+
+export const getPoolInOutAssets = (
+  poolId: string,
+  range: string = "24h"
+): Promise<PoolActivity> => {
+  const days = range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+  const cache =
+    days !== null && days <= 7
+      ? ACTIVITY_CACHE.short
+      : days === 30
+        ? ACTIVITY_CACHE.month
+        : ACTIVITY_CACHE.long
+  return cache(poolId, range)
+}
 
 const toPoolSwap = ({ msgIndex, eventIndex, ...swap }: SwapEvent): PoolSwap =>
   swap
@@ -881,8 +913,13 @@ const getLiveSwaps = unstable_cache(
 // is fresh (refreshed every 5 minutes), otherwise the live fallback.
 export const getPoolSwaps = unstable_cache(
   async (poolId: string): Promise<PoolSwap[]> => {
-    const windowStart = new Date(Date.now() - DAY_MS)
-    if (await isStoreReady(poolId, windowStart)) {
+    // The same cached coverage as the activity chart: the store is used once
+    // it is fresh and covers the last day.
+    const coverage = await getCachedCoverage(poolId)
+    if (
+      coverage &&
+      new Date(coverage.coveredFrom).getTime() <= Date.now() - DAY_MS
+    ) {
       try {
         return await readSwaps(poolId, ACTIVITY_MAX_SWAPS)
       } catch (e) {

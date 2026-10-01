@@ -18,26 +18,6 @@ const MAX_STALENESS_MS = 60 * 60 * 1000
 export const isFresh = (coveredThrough: Date | null, now = Date.now()) =>
   !!coveredThrough && now - coveredThrough.getTime() <= MAX_STALENESS_MS
 
-export const isStoreReady = async (
-  poolId: string,
-  windowStart: Date
-): Promise<boolean> => {
-  if (!isDatabaseEnabled()) return false
-  try {
-    const cursor = await getPrisma().activityCursor.findUnique({
-      where: { poolId },
-    })
-    return (
-      !!cursor &&
-      cursor.coveredFrom <= windowStart &&
-      isFresh(cursor.coveredThrough)
-    )
-  } catch (e) {
-    console.error(`[activity-store] cursor read failed for ${poolId}: ${e}`)
-    return false
-  }
-}
-
 // The store's coverage for a pool when it is fresh, else null.
 export const getStoreCoverage = async (
   poolId: string
