@@ -495,9 +495,18 @@ export const dailyFlowCutoff = (now: number) => {
 // both tables. A day already folded is overwritten with the totals of its
 // 15-minute rows: a backfill that re-creates a folded day writes all of that
 // day's buckets (it walks whole ranges), so the recomputed total is complete.
-export const foldFlowsToDaily = async (db: PrismaClient, cutoff: Date) => {
-  const [folded, deleted] = await db.$transaction([
-    db.$executeRaw`
+//
+// The transaction gets `timeoutMs` (Prisma's default is 5 seconds): a daily
+// run folds one day in well under that, but folding a whole history at once
+// (scripts/thin-store.mts) takes far longer.
+export const foldFlowsToDaily = async (
+  db: PrismaClient,
+  cutoff: Date,
+  timeoutMs = TX_OPTIONS.timeout
+) => {
+  const [folded, deleted] = await db.$transaction(
+    async (tx) => [
+      await tx.$executeRaw`
       INSERT INTO pool_flow_daily (pool_id, day, denom, amount_in, amount_out, swaps)
       SELECT pool_id, date_trunc('day', bucket), denom,
              SUM(amount_in), SUM(amount_out), SUM(swaps)::int
@@ -509,8 +518,10 @@ export const foldFlowsToDaily = async (db: PrismaClient, cutoff: Date) => {
             amount_out = EXCLUDED.amount_out,
             swaps = EXCLUDED.swaps
     `,
-    db.$executeRaw`DELETE FROM pool_flow_15m WHERE bucket < ${cutoff}`,
-  ])
+      await tx.$executeRaw`DELETE FROM pool_flow_15m WHERE bucket < ${cutoff}`,
+    ],
+    { ...TX_OPTIONS, timeout: timeoutMs }
+  )
   return { folded, deleted }
 }
 

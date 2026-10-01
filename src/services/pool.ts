@@ -30,12 +30,7 @@ import {
 import { reserveAmount } from "@/lib/pool-sources"
 import { fetchLcd, fetchWithRetry, getAssetImageUrl } from "@/lib/utils"
 
-import {
-  getStoreCoverage,
-  isStoreReady,
-  readFlowPoints,
-  readSwaps,
-} from "./activity-store"
+import { getStoreCoverage, readFlowPoints, readSwaps } from "./activity-store"
 import {
   getAssetMap,
   getAssetPrice,
@@ -824,42 +819,93 @@ const getLiveActivity = unstable_cache(
   { revalidate: LIVE_REVALIDATE_SECONDS }
 )
 
-// Cache key bumped with the return shape and the range argument: the Vercel
-// data cache is shared across deployments, and an old-shape entry must not be
-// read here. Store reads are cheap, so this refreshes every 5 minutes.
-export const getPoolInOutAssets = unstable_cache(
-  async (poolId: string, range: string = "24h"): Promise<PoolActivity> => {
+// The store's coverage of a pool (null when it is not fresh), cached at the
+// cron's cadence and shared by every range and the swap table. It is read by
+// the exported functions below, never inside another cached function: Next
+// bypasses an unstable_cache nested in another one, so a nested read would
+// query the cursor on every outer refresh. unstable_cache stores JSON, so the
+// date travels as a string.
+const getCachedCoverage = unstable_cache(
+  async (poolId: string): Promise<{ coveredFrom: string } | null> => {
     const coverage = await getStoreCoverage(poolId)
-    if (coverage && coverage.coveredFrom.getTime() <= Date.now() - DAY_MS) {
-      try {
-        // null means "all" (from coveredFrom); `??` would turn it into 1 day.
-        const days =
-          range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
-        const requested =
-          days === null
-            ? coverage.coveredFrom.getTime()
-            : Date.now() - days * DAY_MS
-        const from = Math.max(requested, coverage.coveredFrom.getTime())
-        const points = await readFlowPoints(poolId, new Date(from))
-        return {
-          source: "store",
-          activities: bucketFlows(points, {
-            minBucketMinutes: 15,
-            from,
-            to: Date.now(),
-          }),
-          coveredFrom: coverage.coveredFrom.toISOString(),
-        }
-      } catch (e) {
-        console.error(`[getPoolInOutAssets] store read failed: ${e}`)
-      }
-    }
-
-    return getLiveActivity(poolId)
+    return coverage ? { coveredFrom: coverage.coveredFrom.toISOString() } : null
   },
-  ["pool-in-out-assets-v3"],
+  ["store-coverage-v1"],
   { revalidate: STORE_REVALIDATE_SECONDS }
 )
+
+// The store is used once it is fresh and covers the last day; returns where
+// its coverage starts (ms), or null to use the live fallback.
+const storeCoveredFrom = async (poolId: string): Promise<number | null> => {
+  const coverage = await getCachedCoverage(poolId)
+  const from = coverage ? new Date(coverage.coveredFrom).getTime() : null
+  return from !== null && from <= Date.now() - DAY_MS ? from : null
+}
+
+// Store-only: a failed read throws, so it is not cached and the caller falls
+// back to live data.
+const readStoreActivity = async (
+  poolId: string,
+  range: string,
+  coveredFromIso: string
+): Promise<PoolActivity> => {
+  const coveredFrom = new Date(coveredFromIso).getTime()
+  // null means "all" (from coveredFrom); `??` would turn it into 1 day.
+  const days = range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+  const requested = days === null ? coveredFrom : Date.now() - days * DAY_MS
+  const from = Math.max(requested, coveredFrom)
+  const points = await readFlowPoints(poolId, new Date(from))
+  return {
+    source: "store",
+    activities: bucketFlows(points, {
+      minBucketMinutes: 15,
+      from,
+      to: Date.now(),
+    }),
+    coveredFrom: coveredFromIso,
+  }
+}
+
+// Each range's store chart is cached as long as it can go without changing:
+// the short ranges at the cron's cadence; 30 days (daily bars) for an hour;
+// 90 days and longer (bars of three days or more) for six hours. Every refresh
+// is a billed read, and most of them would return the same chart. The live
+// fallback keeps its own 30-minute cache, so recent swaps and the store's
+// recovery are picked up on that schedule whatever the range. Cache keys carry
+// a version: the data cache is shared across deployments and the return shape
+// must match.
+const cachedStoreActivity = (seconds: number, key: string) =>
+  unstable_cache(readStoreActivity, [key], { revalidate: seconds })
+const STORE_ACTIVITY_CACHE = {
+  short: cachedStoreActivity(
+    STORE_REVALIDATE_SECONDS,
+    "pool-store-activity-v1"
+  ),
+  month: cachedStoreActivity(3600, "pool-store-activity-month-v1"),
+  long: cachedStoreActivity(6 * 3600, "pool-store-activity-long-v1"),
+}
+
+export const getPoolInOutAssets = async (
+  poolId: string,
+  range: string = "24h"
+): Promise<PoolActivity> => {
+  const coveredFrom = await storeCoveredFrom(poolId)
+  if (coveredFrom !== null) {
+    const days = range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+    const cache =
+      days !== null && days <= 7
+        ? STORE_ACTIVITY_CACHE.short
+        : days === 30
+          ? STORE_ACTIVITY_CACHE.month
+          : STORE_ACTIVITY_CACHE.long
+    try {
+      return await cache(poolId, range, new Date(coveredFrom).toISOString())
+    } catch (e) {
+      console.error(`[getPoolInOutAssets] store read failed: ${e}`)
+    }
+  }
+  return getLiveActivity(poolId)
+}
 
 const toPoolSwap = ({ msgIndex, eventIndex, ...swap }: SwapEvent): PoolSwap =>
   swap
@@ -877,20 +923,24 @@ const getLiveSwaps = unstable_cache(
   { revalidate: LIVE_REVALIDATE_SECONDS }
 )
 
-// Swap rows for the pool's transaction table: from the activity store when it
-// is fresh (refreshed every 5 minutes), otherwise the live fallback.
-export const getPoolSwaps = unstable_cache(
-  async (poolId: string): Promise<PoolSwap[]> => {
-    const windowStart = new Date(Date.now() - DAY_MS)
-    if (await isStoreReady(poolId, windowStart)) {
-      try {
-        return await readSwaps(poolId, ACTIVITY_MAX_SWAPS)
-      } catch (e) {
-        console.error(`[getPoolSwaps] store read failed: ${e}`)
-      }
-    }
-    return getLiveSwaps(poolId)
-  },
-  ["pool-swaps"],
+// Store swap rows, refreshed at the cron's cadence. A failed read throws, so
+// it is not cached and the caller falls back to live rows.
+const getStoreSwaps = unstable_cache(
+  (poolId: string): Promise<PoolSwap[]> =>
+    readSwaps(poolId, ACTIVITY_MAX_SWAPS),
+  ["pool-store-swaps-v1"],
   { revalidate: STORE_REVALIDATE_SECONDS }
 )
+
+// Swap rows for the pool's transaction table: from the activity store when it
+// is fresh, otherwise the live fallback.
+export const getPoolSwaps = async (poolId: string): Promise<PoolSwap[]> => {
+  if ((await storeCoveredFrom(poolId)) !== null) {
+    try {
+      return await getStoreSwaps(poolId)
+    } catch (e) {
+      console.error(`[getPoolSwaps] store read failed: ${e}`)
+    }
+  }
+  return getLiveSwaps(poolId)
+}
