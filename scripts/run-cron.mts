@@ -14,6 +14,18 @@ import { pathToFileURL } from "node:url"
 process.env.CRON_SECRET ||= randomBytes(32).toString("hex")
 
 const imp = (p: string) => import(pathToFileURL(path.resolve(p)).href)
+
+// The route answers 200 "skipped" without a database (fine for a web host
+// with the store not connected), which here would leave scheduled runs green
+// while nothing is ingested.
+const { isDatabaseEnabled } = await imp("src/lib/database.ts")
+if (!isDatabaseEnabled()) {
+  console.error(
+    "activity: no database URL (DATABASE_URL, POSTGRES_PRISMA_URL or POSTGRES_URL); not running"
+  )
+  process.exit(1)
+}
+
 const { GET } = await imp("src/app/api/cron/activity/route.ts")
 
 const started = Date.now()
