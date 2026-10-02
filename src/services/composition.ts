@@ -1,7 +1,7 @@
-import { unstable_cache } from "next/cache"
 import BigNumber from "bignumber.js"
 import _ from "lodash"
 
+import { dataCache } from "@/lib/data-cache"
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
 import { getAssetMap, getFrontendAssetSymbolsSafe } from "./asset"
@@ -79,7 +79,7 @@ const fetchPoolComposition = async (
 
 // Snapshots are hourly, so the chart refreshes hourly: a shorter cache only
 // re-reads (billed) the same rows.
-const getCachedPoolComposition = unstable_cache(
+const getCachedPoolComposition = dataCache(
   fetchPoolComposition,
   ["pool-composition-v2"],
   { revalidate: 3600 }

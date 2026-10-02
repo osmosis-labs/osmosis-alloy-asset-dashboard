@@ -1,5 +1,5 @@
 import { cache } from "react"
-import { unstable_cache, unstable_noStore } from "next/cache"
+import { unstable_noStore } from "next/cache"
 import _ from "lodash"
 
 import {
@@ -11,6 +11,7 @@ import {
   CurrencyWithPrice,
   FiatAmount,
 } from "@/types/asset"
+import { dataCache } from "@/lib/data-cache"
 import { collectKeyPages } from "@/lib/paginate"
 import { displayExponent } from "@/lib/pool-build"
 import { fetchJsonWithRetry } from "@/lib/utils"
@@ -100,7 +101,7 @@ const fetchAssetList = async (): Promise<AssetWithDecimal[]> => {
   }) as AssetWithDecimal[]
 }
 
-export const getAssetList = unstable_cache(fetchAssetList, ["asset-list"], {
+export const getAssetList = dataCache(fetchAssetList, ["asset-list"], {
   revalidate: 1800,
 })
 
@@ -195,7 +196,7 @@ const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
   return { statusMap: map, names, symbols }
 }
 
-const getFrontendAssetMeta = unstable_cache(
+const getFrontendAssetMeta = dataCache(
   fetchFrontendAssetMeta,
   ["frontend-asset-meta-v2"],
   { revalidate: 1800 }
