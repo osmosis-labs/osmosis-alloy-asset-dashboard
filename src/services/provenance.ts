@@ -1,6 +1,6 @@
-import { unstable_cache } from "next/cache"
 import _ from "lodash"
 
+import { dataCache } from "@/lib/data-cache"
 import { fetchJsonWithRetry } from "@/lib/utils"
 
 import { getAssetMap } from "./asset"
@@ -111,7 +111,7 @@ const fetchVariantProvenance = async (
   return _.fromPairs(entries)
 }
 
-const getVariantProvenance = unstable_cache(
+const getVariantProvenance = dataCache(
   fetchVariantProvenance,
   ["variant-provenance"],
   { revalidate: 86400 }

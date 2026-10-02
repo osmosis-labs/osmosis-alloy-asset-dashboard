@@ -1,5 +1,4 @@
 import { cache } from "react"
-import { unstable_cache } from "next/cache"
 import { MIGRATION_ALLOYS } from "@/constants/migration"
 import BigNumber from "bignumber.js"
 import _ from "lodash"
@@ -19,6 +18,7 @@ import {
   ACTIVITY_RANGE_DAYS,
   PoolActivitySource,
 } from "@/lib/activity"
+import { dataCache } from "@/lib/data-cache"
 import dayjs from "@/lib/dayjs"
 import {
   appImageUrl,
@@ -565,7 +565,7 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
 // Cache keys carry a version: the Vercel data cache is shared across
 // deployments, and entries from before migration kinds, nullable volumes and
 // the $10k cutoff must not be read.
-const getLastKnownGoodPools = unstable_cache(
+const getLastKnownGoodPools = dataCache(
   async (): Promise<PoolsOverviewResult> => {
     const fresh = await buildPoolsOverview()
     if (!hasAlloys(fresh)) {
@@ -656,7 +656,7 @@ const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
   return result
 }
 
-export const getPoolsOverview = unstable_cache(
+export const getPoolsOverview = dataCache(
   async (): Promise<PoolsOverviewResult> => {
     const result = await resolvePoolsOverview()
 
@@ -806,7 +806,7 @@ export type PoolActivity = {
 const LIVE_REVALIDATE_SECONDS = 1800
 const STORE_REVALIDATE_SECONDS = 900
 
-const getLiveActivity = unstable_cache(
+const getLiveActivity = dataCache(
   async (poolId: string): Promise<PoolActivity> => {
     const { txs } = await getPoolInOutTxs(poolId)
     const swaps = _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId))
@@ -825,7 +825,7 @@ const getLiveActivity = unstable_cache(
 // bypasses an unstable_cache nested in another one, so a nested read would
 // query the cursor on every outer refresh. unstable_cache stores JSON, so the
 // date travels as a string.
-const getCachedCoverage = unstable_cache(
+const getCachedCoverage = dataCache(
   async (poolId: string): Promise<{ coveredFrom: string } | null> => {
     const coverage = await getStoreCoverage(poolId)
     return coverage ? { coveredFrom: coverage.coveredFrom.toISOString() } : null
@@ -875,7 +875,7 @@ const readStoreActivity = async (
 // a version: the data cache is shared across deployments and the return shape
 // must match.
 const cachedStoreActivity = (seconds: number, key: string) =>
-  unstable_cache(readStoreActivity, [key], { revalidate: seconds })
+  dataCache(readStoreActivity, [key], { revalidate: seconds })
 const STORE_ACTIVITY_CACHE = {
   short: cachedStoreActivity(
     STORE_REVALIDATE_SECONDS,
@@ -914,7 +914,7 @@ const toPoolSwap = ({ msgIndex, eventIndex, ...swap }: SwapEvent): PoolSwap =>
 // cache() dedupes it within a render). The raw tx pages (~3MB each) are too
 // large for the data cache, so the compact rows are cached instead, on the
 // live 30-minute schedule.
-const getLiveSwaps = unstable_cache(
+const getLiveSwaps = dataCache(
   async (poolId: string): Promise<PoolSwap[]> => {
     const { txs } = await getPoolInOutTxs(poolId)
     return _.flatMap(txs, (tx) => swapEventsFromTx(tx, poolId)).map(toPoolSwap)
@@ -925,7 +925,7 @@ const getLiveSwaps = unstable_cache(
 
 // Store swap rows, refreshed at the cron's cadence. A failed read throws, so
 // it is not cached and the caller falls back to live rows.
-const getStoreSwaps = unstable_cache(
+const getStoreSwaps = dataCache(
   (poolId: string): Promise<PoolSwap[]> =>
     readSwaps(poolId, ACTIVITY_MAX_SWAPS),
   ["pool-store-swaps-v1"],

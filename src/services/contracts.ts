@@ -1,6 +1,6 @@
-import { unstable_cache } from "next/cache"
 import _ from "lodash"
 
+import { dataCache } from "@/lib/data-cache"
 import { fetchLcd } from "@/lib/utils"
 
 // Display names for routing contracts in the swap table's Route column.
@@ -42,7 +42,7 @@ const fetchContractName = async (address: string): Promise<string | null> => {
 }
 
 // Contract metadata rarely changes, so a day is plenty.
-const getContractNames = unstable_cache(
+const getContractNames = dataCache(
   async (addresses: string[]): Promise<Record<string, string | null>> =>
     _.fromPairs(
       await Promise.all(

@@ -22,23 +22,30 @@ import {
 } from "@/services/reserves"
 import { ActivityCursor } from "@prisma/client"
 
+import {
+  hasCronStateFile,
+  readCronState,
+  writeCronState,
+} from "@/lib/cron-state"
 import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 
-// Activity store ingest. Triggered by Vercel Cron (see vercel.json) every 15
-// minutes. Each run reads every listed pool's cursor and newest reserve
-// snapshot time (one query each), fetches each pool's token_swapped events
-// from its cursor up to the current tip from the LCD, then writes all pools
-// together (swap rows, 15-minute rollups, cursors) in a few statements, and
-// the reserve snapshots of every pool due one in one more. The run just after
-// midnight UTC also folds 15-minute rollups older than 8 days into daily ones,
-// prunes swap rows older than a week and thins old reserve snapshots. About 5
+// Activity store ingest, every 15 minutes: run by Vercel Cron (vercel.json)
+// or, without it, by the GitHub Actions workflow (.github/workflows/cron.yml
+// via scripts/run-cron.mts). Each run reads every listed pool's cursor and
+// newest reserve snapshot time (one query each), fetches each pool's
+// token_swapped events from its cursor up to the current tip from the LCD,
+// then writes all pools together (swap rows, 15-minute rollups, cursors) in a
+// few statements, and the reserve snapshots of every pool due one in one more.
+// Once a day, just after midnight UTC, a run also folds 15-minute rollups
+// older than 8 days into daily ones, prunes swap rows older than a week and
+// thins old reserve snapshots. About 5
 // billed database operations a run, whatever the number of pools.
 // The pool page reads the store once a pool's history is fresh and covers the
 // window; until then it keeps using live LCD queries.
 //
-// Security: Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`. Requests
-// without the matching bearer token are rejected, and the route refuses to run
-// if CRON_SECRET is unset.
+// Security: requests need `Authorization: Bearer <CRON_SECRET>` (Vercel Cron
+// sends it; scripts/run-cron.mts supplies a per-run secret). Others are
+// rejected, and the route refuses to run if CRON_SECRET is unset.
 export const dynamic = "force-dynamic"
 // Every LCD read must be live: Next 14 keeps fetch() responses in the Data
 // Cache by default, and a cached latest-block response pins every run to the
@@ -53,6 +60,8 @@ const SWAP_RETENTION_DAYS = 7
 // per week.
 const HOURLY_SNAPSHOT_DAYS = 7
 const DAILY_SNAPSHOT_DAYS = 90
+// The UTC day ("YYYY-MM-DD") whose daily maintenance has run (state file only).
+const MAINTENANCE_DAY_KEY = "activity.maintenanceDay"
 
 // Constant-time comparison, so response timing does not reveal how much of a
 // guessed token matched.
@@ -164,9 +173,16 @@ export async function GET(request: Request) {
   }
 
   // Once a day: fold 15-minute rollups older than 8 days into daily ones,
-  // prune old swap rows, and thin old reserve snapshots.
+  // prune old swap rows, and thin old reserve snapshots. Vercel Cron starts on
+  // the quarter hour, so that is its 00:00-00:15 UTC run. The Actions runner
+  // can start late or skip a slot, so with its state file the first run of
+  // each UTC day does it, and a failed attempt is retried by the next run.
   const maintenance: Record<string, unknown> = {}
-  if (isDailyMaintenanceRun(upToTime)) {
+  const today = upToTime.toISOString().slice(0, 10)
+  const maintenanceDue = hasCronStateFile()
+    ? readCronState(MAINTENANCE_DAY_KEY, "") !== today
+    : isDailyMaintenanceRun(upToTime)
+  if (maintenanceDue) {
     try {
       maintenance.folded = await foldFlowsToDaily(
         db,
@@ -178,6 +194,7 @@ export async function GET(request: Request) {
         HOURLY_SNAPSHOT_DAYS,
         DAILY_SNAPSHOT_DAYS
       )
+      writeCronState(MAINTENANCE_DAY_KEY, today)
     } catch (e) {
       console.error(`[cron/activity] daily maintenance failed: ${e}`)
       maintenance.error = String(e)

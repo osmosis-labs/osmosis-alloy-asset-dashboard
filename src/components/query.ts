@@ -1,6 +1,6 @@
 "use server"
 
-import { unstable_cache } from "next/cache"
+import { dataCache } from "@/lib/data-cache"
 
 import {
   PRICE_VOLUME_CHART_TIMEFRAME,
@@ -8,7 +8,7 @@ import {
   PriceVolumeRaw,
 } from "../lib/timeframe"
 
-export const getPriceVolumeChart = unstable_cache(
+export const getPriceVolumeChart = dataCache(
   async (denom: string, tf: keyof typeof PRICE_VOLUME_CHART_TIMEFRAME) => {
     if (!PRICE_VOLUME_CHART_TIMEFRAME[tf]) {
       throw new Error("Invalid timeframe")

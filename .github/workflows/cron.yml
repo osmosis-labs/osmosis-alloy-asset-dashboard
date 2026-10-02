@@ -1,0 +1,73 @@
+name: Cron
+
+# The activity store ingest (src/app/api/cron/activity), run here rather than
+# on the web host. Scheduled runs only happen when the repository variable
+# CRON_RUNNER is "github": set it at the moment the host's own cron is
+# switched off, or both would ingest and double the database writes. Manual
+# runs (Actions tab -> Cron -> Run workflow) work either way.
+#
+# GitHub may start a scheduled run late, or drop it, under load, which is
+# heaviest on the hour and quarter hour, so the schedule sits off those
+# minutes. Each run ingests from the pools' cursors up to the chain tip, so a
+# late or dropped run only delays data; the daily maintenance runs on the
+# first run of each UTC day (src/lib/cron-state.ts).
+on:
+  schedule:
+    - cron: "3,18,33,48 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  activity:
+    if: github.event_name == 'workflow_dispatch' || vars.CRON_RUNNER == 'github'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One run at a time: a late run waits rather than overlapping.
+    concurrency:
+      group: cron-activity
+      cancel-in-progress: false
+    env:
+      # Values the cron keeps between runs (src/lib/cron-state.ts), carried
+      # in the actions cache below.
+      CRON_STATE_FILE: .cron-state/state.json
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Public build values the env schema (src/env.mjs) requires;
+      # NEXT_PUBLIC_CODE_IDS also selects which pools are tracked.
+      NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+      NEXT_PUBLIC_CODE_IDS: ${{ vars.NEXT_PUBLIC_CODE_IDS }}
+      NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: ${{ vars.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+
+      # The newest state saved. Cache keys are immutable, so each run attempt
+      # saves under its own key (run_id stays the same on a re-run,
+      # run_attempt does not) and restores the newest by prefix.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .cron-state
+          key: cron-state-activity-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cron-state-activity-
+
+      # The state directory always exists, so the save below has something to
+      # store.
+      - run: mkdir -p .cron-state && pnpm cron
+
+      - if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cron-state
+          key: cron-state-activity-${{ github.run_id }}-${{ github.run_attempt }}
