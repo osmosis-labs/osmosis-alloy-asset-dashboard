@@ -8,10 +8,20 @@ import { blockTime, latestHeight } from "./activity-ingest"
 // accounted reserves per denom at a block height, from the transmuter's own
 // get_total_pool_liquidity query (excludes stray tokens sent to the contract,
 // which the raw bank balance would include). Historical heights need an
-// archive node, and lcd.osmosis.zone blocks contract queries, so this always
-// goes to the archive. No Next.js imports.
+// archive node, and lcd.osmosis.zone blocks contract queries, so backfills go
+// to the archive. No Next.js imports.
 
 export const ARCHIVE_HOSTS = ["https://lcd.archive.osmosis.zone"]
+
+// For heights near the tip (the cron's snapshots), any node holding recent
+// state can answer. These serve contract queries at a requested height and
+// echo the height they served; the archive, which often times out or returns
+// 502, is the last resort.
+export const RECENT_HOSTS = [
+  "https://osmosis-api.polkachu.com",
+  "https://rest.lavenderfive.com:443/osmosis",
+  ...ARCHIVE_HOSTS,
+]
 
 const archiveJson = async (
   path: string,
@@ -26,6 +36,13 @@ const archiveJson = async (
         returnServerErrors: true,
       })
       const body = await res.json().catch(() => null)
+      // A node that pruned the height can answer from another one; never
+      // accept a snapshot from a height other than the one asked for.
+      const served = res.headers.get("grpc-metadata-x-cosmos-block-height")
+      if (res.ok && height && served && served !== String(height)) {
+        lastError = new Error(`${host} served height ${served}, not ${height}`)
+        continue
+      }
       if (res.ok) return body
       lastError = new Error(
         `${host} returned ${res.status}: ${String(body?.message ?? "").slice(0, 160)}`

@@ -18,6 +18,7 @@ import {
   latestSnapshotTimes,
   poolLiquidityAt,
   pruneReserveSnapshots,
+  RECENT_HOSTS,
   writeSnapshots,
 } from "@/services/reserves"
 import { ActivityCursor } from "@prisma/client"
@@ -138,8 +139,9 @@ export async function GET(request: Request) {
     writeError = String(e)
   }
 
-  // Hourly reserve snapshots for the Backing Over Time chart (archive LCD),
-  // written in one insert for every pool that is due.
+  // Hourly reserve snapshots for the Backing Over Time chart, at the tip
+  // height from recent-state LCDs (archive last), written in one insert for
+  // every pool that is due.
   const due = lastSnapshots
     ? pools.filter((p) =>
         isSnapshotDue(lastSnapshots.get(p.id) ?? null, upToTime)
@@ -149,7 +151,11 @@ export async function GET(request: Request) {
   const snapshotErrors: Record<string, string> = {}
   for (const pool of due) {
     try {
-      const liquidity = await poolLiquidityAt(pool.contractAddress, upTo)
+      const liquidity = await poolLiquidityAt(
+        pool.contractAddress,
+        upTo,
+        RECENT_HOSTS
+      )
       if (liquidity) {
         snapshots.push({
           poolId: pool.id,
