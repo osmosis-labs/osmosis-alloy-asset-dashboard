@@ -212,15 +212,32 @@ export const writeSnapshots = async (
   return count
 }
 
-// Cron step: one snapshot per pool per hour, at the run's tip. The cron runs
-// every 15 minutes, so a slightly short interval keeps snapshots on the hour
-// instead of drifting to every 75 minutes.
-const SNAPSHOT_INTERVAL_MS = 55 * 60 * 1000
+// Cron step: one snapshot per pool per calendar hour (UTC). Scheduled runs
+// start late or not at all, so each run fills every hour since the pool's
+// newest snapshot, not just the current one: the current hour at the run's
+// tip, earlier hours at the block just after the top of the hour. Capped, so a pool
+// back after a long absence (or a long outage) doesn't stall a run; older
+// gaps are for scripts/backfill-reserves.mts.
+export const MAX_CATCH_UP_HOURS = 48
+const HOUR_MS = 60 * 60 * 1000
 
-// Pure: whether a snapshot at `ts` is due, given the pool's newest snapshot
-// time (null when it has none). Exported for tests.
-export const isSnapshotDue = (lastTs: Date | null, ts: Date) =>
-  !lastTs || ts.getTime() - lastTs.getTime() >= SNAPSHOT_INTERVAL_MS
+// Pure: the hour starts (ms, ascending) a pool still needs a snapshot for,
+// given its newest snapshot time (null when it has none) and the run's tip
+// time. The last entry, when present, is the tip's own hour. A pool with no
+// snapshot gets only the current hour. Exported for tests.
+export const snapshotHoursDue = (
+  lastTs: Date | null,
+  tip: Date,
+  maxHours = MAX_CATCH_UP_HOURS
+): number[] => {
+  const current = Math.floor(tip.getTime() / HOUR_MS) * HOUR_MS
+  if (!lastTs) return [current]
+  const lastHour = Math.floor(lastTs.getTime() / HOUR_MS) * HOUR_MS
+  const first = Math.max(lastHour + HOUR_MS, current - (maxHours - 1) * HOUR_MS)
+  const hours: number[] = []
+  for (let h = first; h <= current; h += HOUR_MS) hours.push(h)
+  return hours
+}
 
 // Newest snapshot time of each of `poolIds`, in one query (the cron reads
 // these once per run rather than once per pool). Pools with no snapshot are
@@ -237,43 +254,6 @@ export const latestSnapshotTimes = async (
   return rows.flatMap((r) =>
     r._max.ts ? [{ poolId: r.poolId, ts: r._max.ts }] : []
   )
-}
-
-// `lastTs` is the pool's newest snapshot time when the caller already read it
-// (null if it has none); when omitted it is read here.
-export const snapshotPoolIfDue = async ({
-  db,
-  poolId,
-  contractAddress,
-  height,
-  ts,
-  lastTs: preRead,
-}: {
-  db: PrismaClient
-  poolId: string
-  contractAddress: string
-  height: number
-  ts: Date
-  lastTs?: Date | null
-}) => {
-  const lastTs =
-    preRead !== undefined
-      ? preRead
-      : ((
-          await db.poolReserveSnapshot.findFirst({
-            where: { poolId },
-            orderBy: { ts: "desc" },
-            select: { ts: true },
-          })
-        )?.ts ?? null)
-  if (!isSnapshotDue(lastTs, ts)) {
-    return { poolId, snapshot: "not due" as const }
-  }
-  const liquidity = await poolLiquidityAt(contractAddress, height)
-  const rows = liquidity
-    ? await writeSnapshot(db, poolId, height, ts, liquidity)
-    : 0
-  return { poolId, snapshot: rows }
 }
 
 // Snapshots older than `days` are thinned to one per UTC day, and those older

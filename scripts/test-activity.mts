@@ -386,7 +386,7 @@ test("bucketFlows zero-fills up to `to` (a frozen pool runs on to the present)",
 const { byPoolId } = await import(
   pathToFileURL(path.resolve("src/services/activity-ingest.ts")).href
 )
-const { isSnapshotDue } = await import(
+const { snapshotHoursDue, MAX_CATCH_UP_HOURS } = await import(
   pathToFileURL(path.resolve("src/services/reserves.ts")).href
 )
 
@@ -403,13 +403,31 @@ test("batched reads give every pool its row, or null when it has none", () => {
   assert.equal(map.get("9999"), undefined)
 })
 
-test("a snapshot is due with none yet, or 55 minutes after the last", () => {
-  const ts = new Date("2026-09-25T12:00:00Z")
-  const ago = (min: number) => new Date(ts.getTime() - min * 60_000)
-  assert.equal(isSnapshotDue(null, ts), true)
-  assert.equal(isSnapshotDue(ago(55), ts), true)
-  assert.equal(isSnapshotDue(ago(54), ts), false)
-  assert.equal(isSnapshotDue(ago(15), ts), false)
+test("snapshots fill every calendar hour since the last one", () => {
+  const H = 3_600_000
+  const tip = new Date("2026-09-25T12:20:00Z")
+  const hour = (iso: string) => new Date(iso).getTime()
+  // No snapshot yet: only the current hour.
+  assert.deepEqual(snapshotHoursDue(null, tip), [hour("2026-09-25T12:00:00Z")])
+  // Already one this hour: nothing, however recent the run.
+  assert.deepEqual(snapshotHoursDue(new Date("2026-09-25T12:01:00Z"), tip), [])
+  // Last one in the previous hour, even 50 minutes ago: this hour is due
+  // (the old interval rule skipped it).
+  assert.deepEqual(snapshotHoursDue(new Date("2026-09-25T11:30:00Z"), tip), [
+    hour("2026-09-25T12:00:00Z"),
+  ])
+  // Dropped runs: every missed hour, oldest first, ending with the current.
+  assert.deepEqual(snapshotHoursDue(new Date("2026-09-25T08:59:00Z"), tip), [
+    hour("2026-09-25T09:00:00Z"),
+    hour("2026-09-25T10:00:00Z"),
+    hour("2026-09-25T11:00:00Z"),
+    hour("2026-09-25T12:00:00Z"),
+  ])
+  // A long absence is capped to the most recent hours.
+  const capped = snapshotHoursDue(new Date("2026-09-01T00:00:00Z"), tip)
+  assert.equal(capped.length, MAX_CATCH_UP_HOURS)
+  assert.equal(capped.at(-1), hour("2026-09-25T12:00:00Z"))
+  assert.equal(capped[1] - capped[0], H)
 })
 
 const { dailyFlowCutoff, isDailyMaintenanceRun } = await import(

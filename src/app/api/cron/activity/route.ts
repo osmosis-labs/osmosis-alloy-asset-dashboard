@@ -14,11 +14,12 @@ import {
 } from "@/services/activity-ingest"
 import { getPoolsOverview } from "@/services/pool"
 import {
-  isSnapshotDue,
+  heightAtTime,
   latestSnapshotTimes,
   poolLiquidityAt,
   pruneReserveSnapshots,
   RECENT_HOSTS,
+  snapshotHoursDue,
   writeSnapshots,
 } from "@/services/reserves"
 import { ActivityCursor } from "@prisma/client"
@@ -139,35 +140,71 @@ export async function GET(request: Request) {
     writeError = String(e)
   }
 
-  // Hourly reserve snapshots for the Backing Over Time chart, at the tip
-  // height from recent-state LCDs (archive last), written in one insert for
-  // every pool that is due.
+  // Hourly reserve snapshots for the Backing Over Time chart, one per pool
+  // per calendar hour, written in one insert. Each run fills every hour since
+  // a pool's newest snapshot (snapshotHoursDue), so a late or dropped run, a
+  // failed query or a pool briefly out of the list leaves no gap: the current
+  // hour at the tip, earlier hours at the block two minutes past the hour,
+  // resolved once per hour and shared by every pool. Recent-state LCDs first,
+  // the archive last.
+  const tip = { height: upTo, time: upToTime.getTime() }
+  const currentHour = Math.floor(tip.time / 3_600_000) * 3_600_000
+  const hourHeights = new Map<number, Promise<{ height: number; time: Date }>>()
+  const blockForHour = (hour: number) => {
+    if (hour === currentHour) {
+      return Promise.resolve({ height: upTo, time: upToTime })
+    }
+    let block = hourHeights.get(hour)
+    if (!block) {
+      // Two minutes in: heightAtTime returns the block at or just before its
+      // target, which at the hour itself would be stamped in the hour before.
+      block = heightAtTime(new Date(hour + 120_000), {
+        hosts: RECENT_HOSTS,
+        tip,
+      })
+      hourHeights.set(hour, block)
+    }
+    return block
+  }
   const due = lastSnapshots
-    ? pools.filter((p) =>
-        isSnapshotDue(lastSnapshots.get(p.id) ?? null, upToTime)
-      )
+    ? pools
+        .map((p) => ({
+          pool: p,
+          hours: snapshotHoursDue(lastSnapshots.get(p.id) ?? null, upToTime),
+        }))
+        .filter((d) => d.hours.length > 0)
     : []
   const snapshots = []
   const snapshotErrors: Record<string, string> = {}
-  for (const pool of due) {
-    try {
-      const liquidity = await poolLiquidityAt(
-        pool.contractAddress,
-        upTo,
-        RECENT_HOSTS
-      )
-      if (liquidity) {
-        snapshots.push({
-          poolId: pool.id,
-          height: upTo,
-          ts: upToTime,
-          liquidity,
-        })
+  let failedPools = 0
+  for (const { pool, hours } of due) {
+    let failed = false
+    for (const hour of hours) {
+      try {
+        const block = await blockForHour(hour)
+        const liquidity = await poolLiquidityAt(
+          pool.contractAddress,
+          block.height,
+          RECENT_HOSTS
+        )
+        if (liquidity) {
+          snapshots.push({
+            poolId: pool.id,
+            height: block.height,
+            ts: block.time,
+            liquidity,
+          })
+        }
+      } catch (e) {
+        // Later hours are still worth trying; the next run retries this one.
+        console.error(
+          `[cron/activity] pool ${pool.id} snapshot for ${new Date(hour).toISOString()} failed: ${e}`
+        )
+        snapshotErrors[pool.id] = String(e)
+        failed = true
       }
-    } catch (e) {
-      console.error(`[cron/activity] pool ${pool.id} snapshot failed: ${e}`)
-      snapshotErrors[pool.id] = String(e)
     }
+    if (failed) failedPools++
   }
   let snapshotRows = 0
   try {
@@ -210,7 +247,7 @@ export async function GET(request: Request) {
   const failed =
     !!writeError ||
     (pools.length > 0 && Object.keys(ingestErrors).length === pools.length) ||
-    (due.length > 0 && Object.keys(snapshotErrors).length === due.length)
+    (due.length > 0 && snapshots.length === 0 && failedPools > 0)
   return NextResponse.json(
     {
       upTo,
