@@ -18,10 +18,21 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {},
+  // Left unbundled so each host resolves Prisma's own entry: Node's for
+  // scripts and local dev, and on Cloudflare (OpenNext bundles with Workers
+  // conditions) the one that imports the query compiler's Wasm as a module.
+  // Workers forbid compiling Wasm at runtime, which the Node entry does.
+  serverExternalPackages: ["@prisma/client", ".prisma/client"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
   },
   webpack: (config, { isServer }) => {
+    // The package names above don't cover this subpath (src/lib/database.ts).
+    if (isServer) {
+      config.externals.push({
+        ".prisma/client/edge": "commonjs .prisma/client/edge",
+      })
+    }
     config.resolve.fallback = {
       ...config.resolve.fallback,
       crypto: require.resolve("crypto-browserify"),

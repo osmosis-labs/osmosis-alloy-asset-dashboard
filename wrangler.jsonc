@@ -1,0 +1,50 @@
+// Cloudflare Worker for alloyed.osmosis.zone: the Next.js app built with
+// OpenNext (`opennextjs-cloudflare build`), deployed by Workers Builds. No
+// cron triggers: the activity ingest runs from GitHub Actions.
+{
+  "name": "alloy-dashboard",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-06",
+  // nodejs_compat: Prisma, pg (TCP through Cloudflare sockets) and node:*
+  // modules. global_fetch_strictly_public: fetches to the site's own public
+  // hostname go over the internet rather than looping back into the Worker.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  // Wrangler runs this before bundling, so every deploy (Workers Builds
+  // production and previews, or by hand) builds .open-next first.
+  "build": {
+    "command": "pnpm cf:build",
+  },
+  // OpenNext's incremental cache: ISR pages and unstable_cache entries,
+  // shared by every request (open-next.config.ts).
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "e038ace0a5d94c6daf71703bc48091f3",
+    },
+  ],
+  // The in-memory revalidation queue re-renders stale pages through the
+  // Worker itself.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "alloy-dashboard",
+    },
+  ],
+  "observability": { "enabled": true },
+  "vars": {
+    // robots.ts only allows indexing when this is "production".
+    "SITE_ENV": "production",
+  },
+  // Pull-request previews (Workers Builds runs `wrangler preview` for
+  // non-production branches), which require an explicit preview value for
+  // every var. Anything but "production" keeps previews out of search.
+  "previews": {
+    "vars": {
+      "SITE_ENV": "preview",
+    },
+  },
+}

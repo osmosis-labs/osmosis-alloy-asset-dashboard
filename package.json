@@ -10,9 +10,9 @@
     "format": "pnpm prettier ./src --write",
     "format:check": "pnpm prettier ./src --check",
     "snapshot:generate": "node scripts/generate-last-known-good.mjs",
-    "pages:build": "pnpx @cloudflare/next-on-pages",
-    "preview": "pnpm pages:build && wrangler pages dev",
-    "deploy": "pnpm pages:build && wrangler pages deploy",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "activity:backfill": "tsx --tsconfig tsconfig.json scripts/backfill-activity.mts",
@@ -79,8 +79,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.2",
     "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
+    "@opennextjs/cloudflare": "^1.20.8",
     "@types/node": "^22.5.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.1.0",
@@ -97,7 +97,7 @@
     "tsx": "^4.23.15",
     "typescript": "^5.5.4",
     "vercel": "39.1.1",
-    "wrangler": "^3.114.17"
+    "wrangler": "^4.147.0"
   },
   "overrides": {
     "vercel": "$vercel"
