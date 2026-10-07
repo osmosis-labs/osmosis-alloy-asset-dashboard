@@ -10,7 +10,6 @@ import { getPoolsOverview } from "@/services/pool"
 // app.osmosis.zone for any alloy land somewhere useful. Temporary redirects,
 // since the pool behind an alloy can change.
 export const revalidate = 300
-export const maxDuration = 60
 
 // Next 15: route params arrive as a Promise.
 export async function GET(

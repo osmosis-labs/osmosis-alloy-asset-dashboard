@@ -16,8 +16,6 @@ export const metadata: Metadata = {
 // Pool activity is read from the Postgres store (refreshed by the 15-minute
 // cron), so pages can rebuild often without adding LCD load.
 export const revalidate = 300 // 5 minutes
-// Above Vercel's 15s default; see src/app/page.tsx.
-export const maxDuration = 60
 
 // The tables never draw the liquidity history; leaving it out keeps it out of
 // the page's serialized props (it was most of a ~2MB page).

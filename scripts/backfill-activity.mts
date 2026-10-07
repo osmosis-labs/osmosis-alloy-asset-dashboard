@@ -3,8 +3,8 @@
 //   pnpm activity:backfill --env ~/.claude/alloy-dashboard.env [--days 30]
 //                          [--pool 3497] [--host https://lcd.archive.osmosis.zone]
 //
-// The env file (kept outside the repo) must provide the database URL, e.g. from
-// `vercel env pull`. Walks each pool oldest-first in slices through the archive
+// The env file (kept outside the repo) must provide the database URL (the
+// direct Prisma Postgres connection string). Walks each pool oldest-first in slices through the archive
 // LCD (paced by fetchLcd), writing rows and 15-minute rollups idempotently.
 // Progress is stored per pool (activity_cursor.backfill_from / backfill_to), so
 // the script can be stopped and re-run to resume. A pool's covered_from is only

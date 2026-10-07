@@ -52,7 +52,6 @@ export const dynamic = "force-dynamic"
 // Cache by default, and a cached latest-block response pins every run to the
 // same tip, so the cursors stop advancing.
 export const fetchCache = "force-no-store"
-export const maxDuration = 300
 
 // Swap rows are kept this long (the Recent Swaps table); their rollups are
 // kept for good, folded to daily after 8 days.

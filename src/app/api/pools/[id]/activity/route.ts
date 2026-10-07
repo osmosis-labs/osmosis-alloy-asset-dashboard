@@ -11,8 +11,6 @@ import { ACTIVITY_RANGE_DAYS } from "@/lib/activity"
 // decimals for every denom in the activity, so the chart can show variants
 // that are no longer in the pool's current reserves.
 export const dynamic = "force-dynamic"
-// The live fallback can take a while (up to 10 LCD pages).
-export const maxDuration = 60
 
 export async function GET(
   request: Request,
