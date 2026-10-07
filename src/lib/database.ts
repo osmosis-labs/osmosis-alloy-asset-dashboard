@@ -5,13 +5,16 @@ import type { PrismaClient as PrismaClientType } from "@prisma/client"
 // Cloudflare Workers forbid. Its Workers entry (`.prisma/client/edge`)
 // imports the Wasm as a module instead, but the Worker bundler resolves
 // `@prisma/client` with the `node` condition, which Prisma lists first, so the
-// Workers entry is required by name there. Both are server-external packages
+// Workers entry is required by its `@prisma/client/edge` subpath there. Not by
+// `.prisma/client/edge`: under pnpm's isolated layout the generated client
+// sits beside `@prisma/client` inside node_modules/.pnpm, so that bare name
+// only resolves from within the package. Both are left unbundled
 // (next.config.js), so Node (scripts, local dev) never loads the edge entry.
 type PrismaClient = PrismaClientType
 const { PrismaClient } = (
   typeof navigator !== "undefined" &&
   navigator.userAgent === "Cloudflare-Workers"
-    ? require(".prisma/client/edge")
+    ? require("@prisma/client/edge")
     : require("@prisma/client")
 ) as typeof import("@prisma/client")
 
