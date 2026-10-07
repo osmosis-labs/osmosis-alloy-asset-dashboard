@@ -125,9 +125,6 @@ importers:
       bignumber.js:
         specifier: ^9.1.2
         version: 9.1.2
-      chain-registry:
-        specifier: ^1.69.674
-        version: 1.69.674
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
@@ -3020,9 +3017,6 @@ packages:
   cardinal@2.1.1:
     resolution: {integrity: sha512-JSr5eOgoEymtYHBjNWyjrMqet9Am2miJhlfKNdqLp6zoeAh0KN5dRAcxlecj5mAJrmQomgiOBj35xHLrFjqBpw==}
     hasBin: true
-
-  chain-registry@1.69.674:
-    resolution: {integrity: sha512-/HvpxZsOn+1WyV6ITGAV1ggAyvhBiW0yCs0hV+Ki/rYAIP4THP15juv5RNl6OS/7OSh05NuAB2iwKhuuXtJpZw==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -9263,10 +9257,6 @@ snapshots:
     dependencies:
       ansicolors: 0.3.2
       redeyed: 2.1.1
-
-  chain-registry@1.69.674:
-    dependencies:
-      '@chain-registry/types': 0.50.410
 
   chalk@2.4.2:
     dependencies:
