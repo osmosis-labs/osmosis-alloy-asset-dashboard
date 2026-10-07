@@ -8,15 +8,10 @@ import { ChainProvider, useModalTheme } from "@cosmos-kit/react"
 import { wallets as station } from "@cosmos-kit/station"
 import { wallets as trust } from "@cosmos-kit/trust"
 import { useTheme } from "next-themes"
-import {
-  cosmwasmAminoConverters,
-  cosmwasmProtoRegistry,
-  osmosisAminoConverters,
-  osmosisProtoRegistry,
-} from "osmojs"
 
 import { env } from "@/env.mjs"
 import { osmosisAssetList, osmosisChain } from "@/lib/osmosis-chain"
+import { swapAminoConverters, swapProtoRegistry } from "@/lib/swap-msgs"
 
 // chain-registry and cosmos-kit each pin a different @chain-registry/types
 // release. The data is the same JSON, so only the declared types differ.
@@ -57,14 +52,10 @@ const WalletProvider = ({ children }: { children: ReactNode }) => {
           // never mix writers across versions, so the cast is safe at runtime.
           registry: new Registry([
             ...defaultRegistryTypes,
-            ...(osmosisProtoRegistry as unknown as typeof defaultRegistryTypes),
-            ...(cosmwasmProtoRegistry as unknown as typeof defaultRegistryTypes),
+            ...(swapProtoRegistry as unknown as typeof defaultRegistryTypes),
           ]),
           gasPrice: GasPrice.fromString("0.0025uosmo"),
-          aminoTypes: new AminoTypes({
-            ...osmosisAminoConverters,
-            ...cosmwasmAminoConverters,
-          }),
+          aminoTypes: new AminoTypes(swapAminoConverters),
         }),
       }}
       endpointOptions={{

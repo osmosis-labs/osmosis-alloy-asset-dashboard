@@ -1,13 +1,12 @@
 import { createRequestHandler } from "react-router"
 
 import { requestStore } from "../src/lib/request-context"
-import sodiumWasm from "../.generated/libsodium-sumo.wasm?module"
 import yogaWasm from "../.generated/yoga.wasm?module"
 
-// Published before the server build is imported. libsodium and yoga read this
-// from their instantiateWasm hook (workers/wasm-module-plugin.ts). A static
-// import of the server build would run those modules first and miss it.
-globalThis.__workerWasm = { sodium: sodiumWasm, yoga: yogaWasm }
+// Published before the server build is imported. yoga reads this from its
+// instantiateWasm hook (workers/wasm-module-plugin.ts). A static import of
+// the server build would run that module first and miss it.
+globalThis.__workerWasm = { yoga: yogaWasm }
 
 type DataCacheKv = {
   get(key: string, type: "text"): Promise<string | null>

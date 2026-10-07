@@ -18,7 +18,6 @@ import {
   UserRound,
   WalletMinimal,
 } from "lucide-react"
-import { cosmwasm, osmosis } from "osmojs"
 import { toast } from "sonner"
 import useSWR from "swr"
 import useSWRImmutable from "swr/immutable"
@@ -26,6 +25,7 @@ import useSWRImmutable from "swr/immutable"
 import { AssetWithDecimal } from "@/types/asset"
 import { MinimalAssetPool } from "@/types/pool"
 import { BlockExplorer } from "@/lib/block-explorer"
+import { executeContract, swapExactAmountIn } from "@/lib/swap-msgs"
 import {
   alloyContract,
   directSwapFromQuote,
@@ -48,10 +48,6 @@ import { Switch } from "@/components/ui/switch"
 import { DecimalSpan } from "@/components/decimal-span"
 
 import { AssetShow } from "./asset-show"
-
-const { swapExactAmountIn } =
-  osmosis.poolmanager.v1beta1.MessageComposer.withTypeUrl
-const { executeContract } = cosmwasm.wasm.v1.MessageComposer.withTypeUrl
 
 // The pool the form opens on: the one named in the URL (?pool=), otherwise
 // the first pool that is not frozen, so the form does not open on a pool
