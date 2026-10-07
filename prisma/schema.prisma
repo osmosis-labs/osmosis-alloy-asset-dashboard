@@ -5,6 +5,10 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Size-optimized query compiler. The default "fast" build is a 3.4 MB Wasm
+  // module. "small" compiles each query a bit slower, which is the right
+  // trade for the Worker script limit. Same compiler for Node scripts.
+  compilerBuild = "small"
 }
 
 datasource db {
