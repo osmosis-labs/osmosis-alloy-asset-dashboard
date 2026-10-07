@@ -36,6 +36,9 @@
 
     --radius: 0.5rem;
 
+    --font-geist-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-geist-mono: "Geist Mono Variable", ui-monospace, monospace;
+
     /* One palette for both themes, so a series keeps its color when the
        theme changes: Osmosis purple, teal (#30b5bd deepened), amber, pink,
        blue. Each is at least 3.2:1 against the light background and 4.8:1

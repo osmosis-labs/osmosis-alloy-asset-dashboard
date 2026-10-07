@@ -26,7 +26,7 @@ if (!isDatabaseEnabled()) {
   process.exit(1)
 }
 
-const { GET } = await imp("src/app/api/cron/activity/route.ts")
+const { GET } = await imp("src/services/cron-activity.ts")
 
 const started = Date.now()
 const response: Response = await GET(

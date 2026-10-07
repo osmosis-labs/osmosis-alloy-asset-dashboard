@@ -1,5 +1,3 @@
-"use client"
-
 import "@interchain-ui/react/styles"
 import "@/styles/wallet.css"
 

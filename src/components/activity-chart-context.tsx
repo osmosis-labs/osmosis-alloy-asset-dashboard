@@ -1,5 +1,3 @@
-"use client"
-
 import { useMemo } from "react"
 import type { DenomMeta } from "@/services/denom-meta"
 import { BigNumber } from "bignumber.js"

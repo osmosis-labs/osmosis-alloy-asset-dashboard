@@ -1,0 +1,288 @@
+import { Link } from "react-router"
+import { getPoolComposition } from "@/services/composition"
+import { getPoolOverview, getPoolsOverview } from "@/services/pool"
+import { loadSwaps } from "@/services/load-swaps"
+import { ExternalLink } from "lucide-react"
+
+import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
+import { NumberFormatter } from "@/lib/number"
+import { isMigrationPool } from "@/lib/pool-build"
+import { getPoolSources, SOURCE_GROUPINGS } from "@/lib/pool-sources"
+import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DataFreshnessNotice } from "@/components/data-freshness"
+import { DateRangeProvider } from "@/components/date-range"
+import { DecimalSpan, SmallDecimals } from "@/components/decimal-span"
+import { OverviewChart } from "@/components/overview-chart"
+import {
+  limitersFor,
+  PoolAssetCard,
+  PoolStats,
+  TradeLinks,
+  valueFormatter,
+} from "@/components/pool-card"
+import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
+import { ActivityChart } from "@/components/activity-chart"
+import { CompositionChart } from "@/components/composition-chart"
+import { CopyDenom } from "@/components/copy-denom"
+import { PriceVolumeChart } from "@/components/price-volume-chart"
+import { SourceChart } from "@/components/source-chart"
+import { TransactionTable } from "@/components/transaction-table"
+
+import { cachedPageHeaders, pageMeta } from "../meta"
+import type { Route } from "./+types/pools.$id"
+
+export const meta: Route.MetaFunction = ({ loaderData }) => {
+  if (!loaderData?.pool) return pageMeta({ title: "Pool" })
+  const { pool } = loaderData
+  return pageMeta({
+    title: `${pool.alloy.asset.name} Pool`,
+    description:
+      pool.alloy.asset.extended_description || pool.alloy.asset.description,
+    path: `/pools/${pool.id}`,
+    image: `/pools/${pool.id}/opengraph-image`,
+  })
+}
+
+export const headers: Route.HeadersFunction = ({ errorHeaders }) =>
+  cachedPageHeaders({ errorHeaders })
+
+export async function loader({ params }: Route.LoaderArgs) {
+  const pool = await getPoolOverview(params.id)
+  // A real 404, so links to a pool the dashboard does not list are broken.
+  if (!pool) throw new Response(null, { status: 404 })
+
+  const composition = await getPoolComposition(pool.id)
+  // Cached: the same overview getPoolOverview read, for its data freshness.
+  const { source, builtAt } = await getPoolsOverview()
+  return {
+    pool,
+    composition,
+    source,
+    builtAt,
+    // Streamed: the swap table does not hold up the rest of the page.
+    swaps: loadSwaps(pool),
+  }
+}
+
+export default function PoolPage({ loaderData }: Route.ComponentProps) {
+  const { pool, composition, source, builtAt, swaps } = loaderData
+  const totalAmount =
+    pool.reserveCoins?.reduce((acc, a) => acc + valueFormatter(a.currency), 0) ||
+    0
+  const isMigration = isMigrationPool(pool)
+  const groupedSources = {
+    issuer: getPoolSources(pool, "issuer"),
+    origin: getPoolSources(pool, "origin"),
+  }
+
+  return (
+    <main className="flex items-center justify-center">
+      <div className="container my-6 flex flex-col items-center gap-6 text-center">
+        <DataFreshnessNotice source={source} builtAt={builtAt} />
+        <div
+          className={cn(
+            "flex w-full flex-col gap-4 text-start md:flex-row",
+            poolTileClass(pool.status) && "rounded-lg border p-4",
+            poolTileClass(pool.status)
+          )}
+        >
+          <Avatar className="size-24">
+            <AvatarImage src={getAssetImageUrl(pool.alloy.asset)} alt="" />
+            <AvatarFallback>
+              {capitalName(pool.alloy.asset.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-start gap-0.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold">{pool.alloy.asset.name}</h1>
+              {isMigration && <Badge variant="outline">Migration</Badge>}
+              <PoolStatusBadges pool={pool} />
+            </div>
+            {!isMigration && (
+              <p className="text-sm">
+                An alloyed asset: one {pool.alloy.asset.symbol} is backed 1:1 by
+                the variants below, held by this pool&apos;s transmuter
+                contract.
+              </p>
+            )}
+            <p className="whitespace-pre-wrap text-sm leading-tight text-muted-foreground">
+              {pool.alloy.asset.extended_description ||
+                pool.alloy.asset.description}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <TradeLinks pool={pool} />
+              {!isMigration && (
+                <Link
+                  to={`/swap?pool=${pool.id}`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Transmuter Swap
+                </Link>
+              )}
+              <a
+                href={OsmosisApp.pool(pool.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Badge variant="secondary" className="min-h-6">
+                  Pool <ExternalLink className="ml-1 size-3" aria-hidden />
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </Badge>
+              </a>
+              <a
+                href={BlockExplorer.contract(pool.alloy.asset.address)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Badge variant="secondary" className="min-h-6">
+                  Contract <ExternalLink className="ml-1 size-3" aria-hidden />
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </Badge>
+              </a>
+              <CopyDenom denom={pool.alloy.asset.denom} />
+            </div>
+          </div>
+        </div>
+        <PoolStats
+          pool={pool}
+          totalAmount={totalAmount}
+          className="w-full grid-cols-2 md:grid-cols-4"
+        />
+
+        <DateRangeProvider>
+          <div className="grid w-full gap-6 md:grid-cols-10">
+            <OverviewChart
+              pools={[pool]}
+              description="Historical liquidity of the pool in USD"
+              className="md:col-span-7"
+              fillHeight
+            />
+            <SourceChart pool={pool} className="md:col-span-3" />
+          </div>
+
+          <Tabs defaultValue="variant" className="w-full">
+            <Card>
+              <CardHeader className="flex items-center justify-between gap-2 md:flex-row">
+                <div className="grid flex-1 gap-1 text-center sm:text-left">
+                  <CardTitle>Underlying Assets</CardTitle>
+                  <CardDescription>
+                    Underlying assets in the pool with their amounts, by
+                    variant, by provider, or by origin chain.
+                  </CardDescription>
+                </div>
+                <TabsList>
+                  {SOURCE_GROUPINGS.map((g) => (
+                    <TabsTrigger key={g.value} value={g.value}>
+                      {g.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </CardHeader>
+              <CardContent>
+                <TabsContent value="variant">
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {pool.reserveCoins?.map((a) => (
+                      <PoolAssetCard
+                        key={a.asset.denom}
+                        asset={a}
+                        price={pool.prices[a.asset.base]}
+                        totalAmount={totalAmount}
+                        limiters={limitersFor(pool, a.asset.base)}
+                        status={pool.status?.reserves?.[a.asset.base]}
+                        corrupted={pool.status?.corruptedDenoms?.includes(
+                          a.asset.base
+                        )}
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
+                {(["issuer", "origin"] as const).map((grouping) => (
+                  <TabsContent
+                    key={grouping}
+                    value={grouping}
+                    className="space-y-4"
+                  >
+                    {groupedSources[grouping].map((v, i) => (
+                      <div key={i} className="flex flex-col gap-2">
+                        <div className="flex items-center text-start">
+                          <h3 className="text-lg font-semibold md:text-xl">
+                            {v.label}
+                          </h3>
+                          <div className="ml-auto text-end">
+                            <DecimalSpan
+                              className="font-semibold"
+                              mantissa={2}
+                              percent
+                            >
+                              {(v.totalAmount / totalAmount) * 100}
+                            </DecimalSpan>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              <SmallDecimals>
+                                {pool.alloy.price?.amount
+                                  ? `$${NumberFormatter.formatValue(
+                                      v.totalAmount *
+                                        Number(pool.alloy.price?.amount)
+                                    )}`
+                                  : "-"}
+                              </SmallDecimals>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-2">
+                          {v.assets.map((a) => (
+                            <PoolAssetCard
+                              key={a.asset.denom}
+                              asset={a}
+                              price={pool.prices[a.asset.base]}
+                              totalAmount={totalAmount}
+                              limiters={limitersFor(pool, a.asset.base)}
+                              status={pool.status?.reserves?.[a.asset.base]}
+                              corrupted={pool.status?.corruptedDenoms?.includes(
+                                a.asset.base
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </TabsContent>
+                ))}
+              </CardContent>
+            </Card>
+          </Tabs>
+
+          <ActivityChart pool={pool} />
+
+          {composition ? (
+            <CompositionChart pool={pool} composition={composition} />
+          ) : (
+            <Card className="w-full text-start">
+              <CardHeader>
+                <CardTitle>Backing Over Time</CardTitle>
+                <CardDescription>
+                  The pool&apos;s backing history is still being collected: it
+                  appears here once there are at least two hourly snapshots.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
+          {!isMigration && <PriceVolumeChart denom={pool.alloy.asset.denom} />}
+
+          <TransactionTable pool={pool} swaps={swaps} />
+        </DateRangeProvider>
+      </div>
+    </main>
+  )
+}

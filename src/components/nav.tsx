@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router"
 
 import { siteConfig } from "@/config/site"
 
@@ -11,7 +11,7 @@ const Nav = () => {
       <div className="container flex items-center gap-4 sm:gap-6">
         <div>
           <Link
-            href="/"
+            to="/"
             className="flex items-center gap-2 font-semibold md:text-lg"
           >
             <img src="/osmo-logo-icon.svg" className="size-5 shrink-0" alt="" />
@@ -38,7 +38,7 @@ const Nav = () => {
               </NavItem>
             </li>
             <li>
-              <Link
+              <a
                 href={siteConfig.links.docs}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -47,7 +47,7 @@ const Nav = () => {
                 <span className="sm:hidden">About</span>
                 <span className="hidden sm:inline">About Alloyed Assets</span>
                 <span className="sr-only"> (opens in a new tab)</span>
-              </Link>
+              </a>
             </li>
           </ul>
         </nav>

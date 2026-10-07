@@ -544,9 +544,9 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   }
 }
 
-// Last-known-good tier. `unstable_cache` is backed by Next's data cache (not
-// process memory), so it survives the serverless cold starts that made the
-// previous module-variable approach a no-op.
+// Last-known-good tier. The data cache is Workers KV (not process memory), so
+// it survives isolate cold starts that made the previous module-variable
+// approach a no-op.
 //
 // This tier holds the VALUE it last successfully built. It is SEEDED on the
 // success path below (not lazily on the failure path): every healthy 30-minute
@@ -555,16 +555,15 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
 // value. Every later healthy read is a plain cache hit that returns the held
 // value with no upstream call. The entry self-refreshes on its own 7-day
 // revalidation. If a build (initial or a 7-day refresh) lands during an outage
-// it THROWS rather than returning empty, and `unstable_cache` does not persist
+// it THROWS rather than returning empty, and the data cache does not persist
 // a thrown error, so the prior good value survives instead of being wiped.
 //
-// Reading (never revalidateTag) is deliberate: `revalidateTag` is unsupported
-// inside an `unstable_cache` function, and a plain read already gives seed-once
-// then serve-from-cache semantics, which is exactly last-known-good.
+// A plain read gives seed-once then serve-from-cache semantics, which is
+// exactly last-known-good.
 //
-// Cache keys carry a version: the Vercel data cache is shared across
-// deployments, and entries from before migration kinds, nullable volumes and
-// the $10k cutoff must not be read.
+// Cache keys carry a version: the KV namespace is shared across deployments,
+// and entries from before migration kinds, nullable volumes and the $10k
+// cutoff must not be read.
 const getLastKnownGoodPools = dataCache(
   async (): Promise<PoolsOverviewResult> => {
     const fresh = await buildPoolsOverview()
@@ -660,7 +659,7 @@ export const getPoolsOverview = dataCache(
   async (): Promise<PoolsOverviewResult> => {
     const result = await resolvePoolsOverview()
 
-    // Never cache an empty result. `unstable_cache` persists RETURNED values but
+    // Never cache an empty result. The data cache persists RETURNED values but
     // NOT thrown errors, so returning EMPTY here would lock a blank dashboard in
     // for the full `revalidate` window (the original blank-out bug). Throwing
     // instead means a transient all-tiers-empty state is retried on the next
@@ -737,8 +736,8 @@ export const getPoolInOutTxs = cache(async (poolId: string) => {
       timeoutMs: 30000,
     })
 
-    // Throw rather than return empty: getPoolInOutAssets is wrapped in
-    // unstable_cache, which persists returned values but not thrown errors, so
+    // Throw rather than return empty: getPoolInOutAssets is cached, and the
+    // data cache persists returned values but not thrown errors, so
     // an empty result from a rate-limited or banned IP would be served as "no
     // activity" for the whole revalidate window.
     if (!totalResponse.ok) {
@@ -821,10 +820,9 @@ const getLiveActivity = dataCache(
 
 // The store's coverage of a pool (null when it is not fresh), cached at the
 // cron's cadence and shared by every range and the swap table. It is read by
-// the exported functions below, never inside another cached function: Next
-// bypasses an unstable_cache nested in another one, so a nested read would
-// query the cursor on every outer refresh. unstable_cache stores JSON, so the
-// date travels as a string.
+// the exported functions below, outside the chart caches, so a chart refresh
+// does not rebuild coverage to discover it is already cached. The data cache
+// stores JSON, so the date travels as a string.
 const getCachedCoverage = dataCache(
   async (poolId: string): Promise<{ coveredFrom: string } | null> => {
     const coverage = await getStoreCoverage(poolId)

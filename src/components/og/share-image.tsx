@@ -1,6 +1,6 @@
-// Layout of the Open Graph share images (src/app/opengraph-image.tsx and the
-// per-pool one), rendered by next/og. Inline styles only: next/og does not
-// read Tailwind classes or the site's CSS variables.
+// Layout of the Open Graph share images, rendered by satori (@vercel/og).
+// Inline styles only: satori does not read Tailwind classes or the site's
+// CSS variables.
 export const SHARE_IMAGE_SIZE = { width: 1200, height: 630 }
 
 const PURPLE = "#7b67f6"
@@ -46,7 +46,6 @@ export const ShareImage = ({
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
         {logo && (
-          // eslint-disable-next-line @next/next/no-img-element -- next/og renders plain img
           <img src={logo} width={80} height={80} alt="" />
         )}
         <div style={{ display: "flex", fontSize: 76, fontWeight: 700 }}>

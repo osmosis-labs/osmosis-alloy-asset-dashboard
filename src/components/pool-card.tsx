@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import Link from "next/link"
+import { Link } from "react-router"
 import { LIMITERS } from "@/constants/limiter"
 import { TooltipArrow } from "@radix-ui/react-tooltip"
 import BigNumber from "bignumber.js"
@@ -132,7 +132,7 @@ const PoolStats = ({
 const TradeLinks = ({ pool }: { pool: PoolOverview }) =>
   isMigrationPool(pool) ? null : (
     <>
-      <Link
+      <a
         href={OsmosisApp.asset(pool.alloy.asset.denom)}
         target="_blank"
         rel="noopener noreferrer"
@@ -141,7 +141,7 @@ const TradeLinks = ({ pool }: { pool: PoolOverview }) =>
         Trade {pool.alloy.asset.symbol}
         <ExternalLink className="ml-2 size-4" aria-hidden />
         <span className="sr-only"> on Osmosis (opens in a new tab)</span>
-      </Link>
+      </a>
     </>
   )
 
@@ -163,7 +163,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
             <h2 className="text-lg font-semibold">{pool.alloy.asset.name}</h2>
             <Badge size="sm">{pool.alloy.asset.symbol}</Badge>
             <PoolStatusBadges pool={pool} />
-            <Link
+            <a
               href={OsmosisApp.pool(pool.id)}
               target="_blank"
               rel="noopener noreferrer"
@@ -175,8 +175,8 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   {pool.id} on Osmosis (opens in a new tab)
                 </span>
               </Badge>
-            </Link>
-            <Link
+            </a>
+            <a
               href={BlockExplorer.contract(pool.alloy.asset.address)}
               target="_blank"
               rel="noopener noreferrer"
@@ -185,7 +185,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                 Contract <ExternalLink className="ml-1 size-3" aria-hidden />
                 <span className="sr-only"> (opens in a new tab)</span>
               </Badge>
-            </Link>
+            </a>
           </div>
           <p className="text-sm text-muted-foreground">
             {pool.alloy.asset.extended_description ||
@@ -194,7 +194,7 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
         </div>
         <div className="flex flex-wrap gap-2 md:ml-auto md:flex-nowrap">
           <TradeLinks pool={pool} />
-          <Link href={`/pools/${pool.id}`} className={buttonVariants()}>
+          <Link to={`/pools/${pool.id}`} className={buttonVariants()}>
             View Details
             <span className="sr-only"> of {pool.alloy.asset.symbol}</span>
             <ChevronRight className="ml-2 size-4" aria-hidden />
@@ -299,7 +299,7 @@ const PoolAssetCard = ({
               </Badge>
             )}
             {variantDenom(c) && (
-              <Link
+              <a
                 href={OsmosisApp.asset(variantDenom(c)!)}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -308,7 +308,7 @@ const PoolAssetCard = ({
                 <Badge size="xs" variant="secondary" className="min-h-6">
                   Asset <ExternalLink className="ml-1 size-3" aria-hidden />
                 </Badge>
-              </Link>
+              </a>
             )}
             <AssetStatusBadges status={status} corrupted={corrupted} />
           </div>

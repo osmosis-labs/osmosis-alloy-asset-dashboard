@@ -1,6 +1,4 @@
-"use client"
-
-import Link from "next/link"
+import { Link } from "react-router"
 import {
   Column,
   ColumnDef,
@@ -202,7 +200,7 @@ const columns: ColumnDef<PoolOverview>[] = [
             className={buttonVariants({
               size: "icon-xs",
             })}
-            href={`/pools/${row.original.id}`}
+            to={`/pools/${row.original.id}`}
             aria-label={`${row.original.alloy.asset.name} details`}
           >
             <ChevronRight className="size-4" aria-hidden />
@@ -219,7 +217,7 @@ const columns: ColumnDef<PoolOverview>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-52">
               <DropdownMenuItem asChild>
-                <Link href={`/pools/${row.original.id}`}>
+                <Link to={`/pools/${row.original.id}`}>
                   <ChevronRight className="mr-2 size-4" />
                   <span>Go To Pool</span>
                 </Link>

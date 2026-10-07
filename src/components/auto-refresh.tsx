@@ -1,26 +1,23 @@
-"use client"
-
 import { useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useRevalidator } from "react-router"
 
-// Keeps an open tab from going stale. Server-rendered pages are sent once and
-// otherwise never update in the browser; router.refresh() re-requests the
-// server components (served from the ISR cache, so it does not hit the LCD or
-// SQS) while keeping client state such as a half-filled swap form. Paused
-// while the tab is hidden; a tab that comes back after the interval refreshes
-// straight away.
+// Keeps an open tab from going stale. The loader data is sent once and
+// otherwise never updates in the browser; revalidate() re-runs the loaders
+// (served from the data cache, so it does not hit the LCD or SQS) while
+// keeping client state such as a half-filled swap form. Paused while the tab
+// is hidden; a tab that comes back after the interval refreshes straight away.
 const AutoRefresh = ({
   intervalMs = 5 * 60 * 1000,
 }: {
   intervalMs?: number
 }) => {
-  const router = useRouter()
+  const { revalidate } = useRevalidator()
   const lastRefresh = useRef(Date.now())
 
   useEffect(() => {
     const refresh = () => {
       lastRefresh.current = Date.now()
-      router.refresh()
+      revalidate()
     }
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") refresh()
@@ -38,7 +35,7 @@ const AutoRefresh = ({
       clearInterval(timer)
       document.removeEventListener("visibilitychange", onVisible)
     }
-  }, [router, intervalMs])
+  }, [revalidate, intervalMs])
 
   return null
 }

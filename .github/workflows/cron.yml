@@ -1,6 +1,6 @@
 name: Cron
 
-# The activity store ingest (src/app/api/cron/activity), run here rather than
+# The activity store ingest (src/services/cron-activity.ts), run here rather than
 # on the web host. Scheduled runs only happen when the repository variable
 # CRON_RUNNER is "github": set it at the moment the host's own cron is
 # switched off, or both would ingest and double the database writes. Manual

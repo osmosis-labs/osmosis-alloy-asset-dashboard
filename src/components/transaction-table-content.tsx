@@ -1,7 +1,4 @@
-"use client"
-
 import { useMemo, useState } from "react"
-import Link from "next/link"
 import { TooltipArrow } from "@radix-ui/react-tooltip"
 import {
   ColumnDef,
@@ -203,14 +200,14 @@ const TransactionTableContent = ({
         cell: ({ getValue }) => {
           const hash = getValue() as string
           return (
-            <Link
+            <a
               href={BlockExplorer.tx(hash)}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-accent-foreground hover:underline"
             >
               {hash.slice(0, 4)}..{hash.slice(-4)}
-            </Link>
+            </a>
           )
         },
       },
@@ -317,14 +314,14 @@ const TransactionTableContent = ({
           const short = `${address.slice(0, 8)}..${address.slice(-4)}`
           if (!href) return <span className="font-medium">{short}</span>
           return (
-            <Link
+            <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-accent-foreground hover:underline"
             >
               {short}
-            </Link>
+            </a>
           )
         },
       },

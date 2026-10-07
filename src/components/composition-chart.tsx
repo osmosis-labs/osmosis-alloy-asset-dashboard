@@ -1,5 +1,3 @@
-"use client"
-
 import { useMemo, useState } from "react"
 import type { PoolComposition } from "@/services/composition"
 import _ from "lodash"

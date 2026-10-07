@@ -1,47 +1,35 @@
-// Cloudflare Worker for alloyed.osmosis.zone: the Next.js app built with
-// OpenNext (`opennextjs-cloudflare build`), deployed by Workers Builds. No
-// cron triggers: the activity ingest runs from GitHub Actions.
+// Cloudflare Worker for alloyed.osmosis.zone. React Router (framework mode)
+// built with Vite. The Cloudflare Vite plugin runs the Worker in workerd for
+// local dev and produces the deploy bundle. No cron triggers: the activity
+// ingest runs from GitHub Actions.
 {
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "alloy-dashboard",
-  "main": ".open-next/worker.js",
+  "main": "./workers/app.ts",
   "compatibility_date": "2026-10-06",
   // nodejs_compat: Prisma, pg (TCP through Cloudflare sockets) and node:*
   // modules. global_fetch_strictly_public: fetches to the site's own public
   // hostname go over the internet rather than looping back into the Worker.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS",
-  },
-  // Wrangler runs this before bundling, so every deploy (Workers Builds
-  // production and previews, or by hand) builds .open-next first.
-  "build": {
-    "command": "pnpm cf:build",
-  },
-  // OpenNext's incremental cache: ISR pages and unstable_cache entries,
-  // shared by every request (open-next.config.ts).
+  // The Vite plugin builds the Worker and ignores wrangler `build.command`.
+  // Workers Builds must run `pnpm cf:build` first: that generates the Prisma
+  // client, then `react-router build` bundles this file.
+  // Data cache for pool overviews, asset lists and charts. Same namespace the
+  // OpenNext incremental cache used; keys are prefixed v1: so the old entries
+  // are never read.
   "kv_namespaces": [
     {
-      "binding": "NEXT_INC_CACHE_KV",
+      "binding": "DATA_CACHE",
       "id": "e038ace0a5d94c6daf71703bc48091f3",
-    },
-  ],
-  // The in-memory revalidation queue re-renders stale pages through the
-  // Worker itself.
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "alloy-dashboard",
     },
   ],
   "observability": { "enabled": true },
   "vars": {
-    // robots.ts only allows indexing when this is "production".
+    // robots.txt only allows indexing when this is "production".
     "SITE_ENV": "production",
   },
-  // Pull-request previews (Workers Builds runs `wrangler preview` for
-  // non-production branches), which require an explicit preview value for
-  // every var. Anything but "production" keeps previews out of search.
+  // Pull-request previews require an explicit preview value for every var.
+  // Anything but "production" keeps previews out of search.
   "previews": {
     "vars": {
       "SITE_ENV": "preview",

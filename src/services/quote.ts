@@ -1,5 +1,3 @@
-import { unstable_noStore } from "next/cache"
-
 import { Quote } from "@/types/quote"
 
 const BASE_URL =
@@ -8,8 +6,6 @@ const BASE_DIRECT_URL =
   "https://sqsprod.osmosis.zone/router/custom-direct-quote?tokenIn={tokenIn}&tokenOutDenom={tokenOutDenom}&poolID={poolId}"
 
 export const getBaseQuote = async (denomIn: string, denomOut: string) => {
-  unstable_noStore()
-
   return getQuote("100", denomIn, denomOut)
 }
 
@@ -18,8 +14,6 @@ export const getQuote = async (
   denomIn: string,
   denomOut: string
 ) => {
-  unstable_noStore()
-
   const url = BASE_URL.replace(
     "{tokenIn}",
     `${amountIn}${encodeURIComponent(denomIn)}`
@@ -48,8 +42,6 @@ export const getBaseDirectQuote = async (
   denomIn: string,
   denomOut: string
 ) => {
-  unstable_noStore()
-
   return getDirectQuote(poolId, "100", denomIn, denomOut)
 }
 
@@ -59,8 +51,6 @@ export const getDirectQuote = async (
   denomIn: string,
   denomOut: string
 ) => {
-  unstable_noStore()
-
   const url = BASE_DIRECT_URL.replace(
     "{tokenIn}",
     `${amountIn}${encodeURIComponent(denomIn)}`

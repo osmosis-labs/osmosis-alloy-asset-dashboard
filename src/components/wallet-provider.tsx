@@ -1,5 +1,3 @@
-"use client"
-
 import { ComponentProps, ReactNode, useEffect, useMemo } from "react"
 import { Registry } from "@cosmjs/proto-signing"
 import { AminoTypes, defaultRegistryTypes, GasPrice } from "@cosmjs/stargate"
