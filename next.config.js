@@ -30,7 +30,7 @@ const nextConfig = {
     // The package names above don't cover this subpath (src/lib/database.ts).
     if (isServer) {
       config.externals.push({
-        ".prisma/client/edge": "commonjs .prisma/client/edge",
+        "@prisma/client/edge": "commonjs @prisma/client/edge",
       })
     }
     config.resolve.fallback = {
