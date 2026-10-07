@@ -8,10 +8,6 @@ import { PoolCard } from "../components/pool-card"
 // Pool activity is read from the Postgres store (refreshed by the 15-minute
 // cron), so pages can rebuild often without adding LCD load.
 export const revalidate = 300 // 5 minutes
-// ISR regenerations and the unstable_cache refreshes behind them run inside
-// this function. Vercel's 15s default kills the pools build mid-fetch, so
-// the cached overview is never replaced and the page freezes on old data.
-export const maxDuration = 60
 
 export default async function Home() {
   const overview = await getPoolsOverview()

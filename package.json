@@ -88,7 +88,6 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.1",
     "eslint-config-next": "15.5.26",
-    "eslint-plugin-next-on-pages": "1.13.2",
     "pino-pretty": "^11.2.2",
     "postcss": "^8.4.43",
     "prettier": "^3.3.3",
@@ -96,11 +95,7 @@
     "tailwindcss": "^3.4.10",
     "tsx": "^4.23.15",
     "typescript": "^5.5.4",
-    "vercel": "39.1.1",
     "wrangler": "^4.147.0"
-  },
-  "overrides": {
-    "vercel": "$vercel"
   },
   "pnpm": {
     "overrides": {

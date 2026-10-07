@@ -48,8 +48,6 @@ import { TransactionTable } from "../../../components/transaction-table"
 // Pool activity is read from the Postgres store (refreshed by the 15-minute
 // cron), so pages can rebuild often without adding LCD load.
 export const revalidate = 300 // 5 minutes
-// Above Vercel's 15s default; see src/app/page.tsx.
-export const maxDuration = 60
 
 // Next 15: route params arrive as a Promise.
 type PoolPageProps = { params: Promise<{ id: string }> }
