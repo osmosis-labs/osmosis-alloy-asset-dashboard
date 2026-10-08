@@ -34,5 +34,14 @@
     "vars": {
       "SITE_ENV": "preview",
     },
+    // Previews do not inherit top-level bindings. A separate namespace, so a
+    // branch build never writes into the production cache. No database secret:
+    // previews run unreviewed branch code.
+    "kv_namespaces": [
+      {
+        "binding": "DATA_CACHE",
+        "id": "47cd4c5d85f44e6592fe4cfdb7d80ad5",
+      },
+    ],
   },
 }
