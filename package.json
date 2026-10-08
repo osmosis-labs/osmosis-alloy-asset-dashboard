@@ -15,7 +15,7 @@
     "snapshot:generate": "node scripts/generate-last-known-good.mjs",
     "cf:build": "pnpm build",
     "cf:preview": "pnpm build && wrangler dev",
-    "cf:deploy": "pnpm deploy",
+    "cf:deploy": "pnpm run deploy",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "activity:backfill": "tsx --tsconfig tsconfig.json scripts/backfill-activity.mts",
