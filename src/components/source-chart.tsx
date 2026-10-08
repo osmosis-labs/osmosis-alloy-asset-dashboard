@@ -1,5 +1,3 @@
-"use client"
-
 import { useMemo, useState } from "react"
 import _ from "lodash"
 import { Pie, PieChart } from "recharts"

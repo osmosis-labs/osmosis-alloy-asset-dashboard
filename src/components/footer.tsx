@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { BookOpen, Github } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
@@ -47,14 +46,14 @@ const Footer = () => (
         <ul className="flex gap-2">
           {FOOTER_LINKS.map((link) => (
             <li key={link.href}>
-              <Link
+              <a
                 href={link.href}
                 aria-label={link.label}
                 title={link.label}
                 className="flex size-9 items-center justify-center rounded-md text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {link.icon}
-              </Link>
+              </a>
             </li>
           ))}
         </ul>

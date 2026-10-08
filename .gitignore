@@ -13,6 +13,9 @@
 /.next/
 /out/
 
+# React Router generated types
+/.react-router/
+
 # production
 /build
 
@@ -37,6 +40,9 @@ next-env.d.ts
 
 .wrangler/*
 
+# Wasm extracted from libsodium / yoga so the Worker can import it as a module.
+.generated
 
-# Cloudflare (OpenNext build output)
+
+# Cloudflare (OpenNext build output, left from the Next deploy)
 .open-next

@@ -1,5 +1,3 @@
-"use client"
-
 import { POOL_STATUS } from "@/constants/status"
 import type { DenomMeta } from "@/services/denom-meta"
 import type { PoolActivity } from "@/services/pool"

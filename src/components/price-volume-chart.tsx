@@ -1,5 +1,3 @@
-"use client"
-
 import { useMemo } from "react"
 import { Loader2 } from "lucide-react"
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
@@ -31,7 +29,6 @@ import {
 import { DecimalSpan } from "@/components/decimal-span"
 
 import { PriceVolume, Timeframe } from "../lib/timeframe"
-import { getPriceVolumeChart } from "./query"
 
 // The shared page range mapped to this chart's candle timeframes; "All" uses
 // the longest one the price API offers.
@@ -48,12 +45,17 @@ const TIMEFRAME_BY_RANGE: Record<DateRange, Timeframe> = {
 const PriceVolumeChart = ({ denom }: { denom: string }) => {
   const { range, setRange } = useDateRange()
   const timeframe = TIMEFRAME_BY_RANGE[range]
-  // Client-fetched, so AutoRefresh's router.refresh() does not reach it:
-  // poll on the same 5-minute cadence. The server action is cached for an
-  // hour, so this adds no upstream load.
+  // Client-fetched, so AutoRefresh's revalidation does not reach it: poll
+  // on the same 5-minute cadence. The API response is cached for an hour,
+  // so this adds no upstream load.
   const data = useSWR(
-    ["price-volume", denom, timeframe],
-    async ([, denom, timeframe]) => getPriceVolumeChart(denom, timeframe),
+    ["/api/price-volume", denom, timeframe],
+    async ([, denom, timeframe]) => {
+      const params = new URLSearchParams({ denom, tf: timeframe })
+      const res = await fetch(`/api/price-volume?${params}`)
+      if (!res.ok) throw new Error(`price history ${res.status}`)
+      return res.json() as Promise<PriceVolume[]>
+    },
     {
       refreshInterval: 5 * 60 * 1000,
       revalidateOnFocus: false,

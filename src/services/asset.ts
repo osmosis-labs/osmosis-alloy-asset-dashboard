@@ -1,5 +1,4 @@
 import { cache } from "react"
-import { unstable_noStore } from "next/cache"
 import _ from "lodash"
 
 import {
@@ -73,7 +72,7 @@ export const getAssetWithMarketPrice = cache(async (denom: string) => {
 // pool is "supported" only if its alloyed denom resolves to an entry here. So
 // an empty list silently demotes every pool to unsupported. To avoid caching
 // that failure, this THROWS on a fetch/parse failure or an empty list rather
-// than returning []. `unstable_cache` does not persist a thrown error, so the
+// than returning []. The data cache does not persist a thrown error, so the
 // previous good list keeps being served instead of an empty one poisoning the
 // cache for the whole revalidate window. Fetches go through fetchJsonWithRetry
 // because the 1.7MB list occasionally responds slowly or drops the connection
@@ -300,8 +299,6 @@ export const getAssetPrice = cache(async (denom: string) => {
 })
 
 export const getUserAssets = async (address: string) => {
-  unstable_noStore()
-
   try {
     // Every page: a wallet can hold more than 100 denoms, and a missing
     // balance reads as zero in the swap form.

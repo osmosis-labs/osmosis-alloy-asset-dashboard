@@ -1,22 +1,23 @@
 import { PrismaPg } from "@prisma/adapter-pg"
-import type { PrismaClient as PrismaClientType } from "@prisma/client"
+import * as PrismaNode from "@prisma/client"
+import * as PrismaEdge from "@prisma/client/edge"
+
+import { requestStore } from "@/lib/request-context"
 
 // Prisma's Node entry compiles its query-compiler Wasm at runtime, which
-// Cloudflare Workers forbid. Its Workers entry (`.prisma/client/edge`)
-// imports the Wasm as a module instead, but the Worker bundler resolves
-// `@prisma/client` with the `node` condition, which Prisma lists first, so the
-// Workers entry is required by its `@prisma/client/edge` subpath there. Not by
-// `.prisma/client/edge`: under pnpm's isolated layout the generated client
-// sits beside `@prisma/client` inside node_modules/.pnpm, so that bare name
-// only resolves from within the package. Both are left unbundled
-// (next.config.js), so Node (scripts, local dev) never loads the edge entry.
-type PrismaClient = PrismaClientType
-const { PrismaClient } = (
+// Cloudflare Workers forbid. The generated client's workerd condition points
+// at the edge entry, which imports that Wasm as a module. Vite cannot resolve
+// the `.prisma/client` specifier under pnpm, so the Worker build aliases it
+// (vite.config.mts) and the workerd condition selects the edge entry. Scripts
+// run in Node, where `navigator` is absent, and keep the Node entry. Static
+// imports: a runtime require() is not defined in the Worker.
+const PrismaNS =
   typeof navigator !== "undefined" &&
   navigator.userAgent === "Cloudflare-Workers"
-    ? require("@prisma/client/edge")
-    : require("@prisma/client")
-) as typeof import("@prisma/client")
+    ? PrismaEdge
+    : PrismaNode
+type PrismaClient = PrismaNode.PrismaClient
+const PrismaClient = PrismaNS.PrismaClient
 
 // Same pattern as OSMOscope's lib/database.ts. Prisma 7 connects through a
 // driver adapter; prefer the pooled URL at runtime (serverless).
@@ -43,6 +44,7 @@ const createClient = () =>
 // doesn't open a new pool on every edit.
 type CloudflareContext = { ctx: object }
 const requestContext = (): CloudflareContext | undefined =>
+  requestStore.getStore() ??
   (globalThis as unknown as Record<symbol, CloudflareContext | undefined>)[
     Symbol.for("__cloudflare-context__")
   ]
