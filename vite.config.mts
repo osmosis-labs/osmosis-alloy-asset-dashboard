@@ -3,7 +3,7 @@ import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 import { cloudflare } from "@cloudflare/vite-plugin"
 import { reactRouter } from "@react-router/dev/vite"
-import { defineConfig, type Plugin } from "vite"
+import { defineConfig, loadEnv, type Plugin } from "vite"
 import tsconfigPaths from "vite-tsconfig-paths"
 
 import {
@@ -97,11 +97,42 @@ const prismaWorkerResolve: Plugin = {
   resolveId(source) {
     const prefix = ".prisma/client"
     if (source !== prefix && !source.startsWith(`${prefix}/`)) return null
-    const sub = source === prefix ? "default.js" : source.slice(prefix.length + 1)
+    const sub =
+      source === prefix ? "default.js" : source.slice(prefix.length + 1)
     const direct = resolve(generatedPrismaClient, sub)
     if (existsSync(direct)) return direct
     if (existsSync(`${direct}.js`)) return `${direct}.js`
     return null
+  },
+}
+
+// src/env.mjs parses these when the server build loads. Vite inlines them at
+// build time and the production Worker has no runtime copies, so a build
+// without them deploys a Worker that throws on every request (error 1101).
+// Fail the build instead. buildStart, not configResolved: `react-router
+// typegen` resolves the build config without bundling and needs no env.
+const REQUIRED_BUILD_ENV = [
+  "NEXT_PUBLIC_APP_URL",
+  "NEXT_PUBLIC_CODE_IDS",
+  "NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID",
+] as const
+
+const requireBuildEnv: Plugin = {
+  name: "require-build-env",
+  apply: "build",
+  buildStart() {
+    const { config } = this.environment
+    const env = loadEnv(
+      config.mode,
+      config.envDir || config.root,
+      "NEXT_PUBLIC_"
+    )
+    const missing = REQUIRED_BUILD_ENV.filter((name) => !env[name])
+    if (missing.length === 0) return
+    throw new Error(
+      `Missing build variables: ${missing.join(", ")}. Set them as Workers ` +
+        `Builds build variables for production and preview branches.`
+    )
   },
 }
 
@@ -110,6 +141,7 @@ export default defineConfig({
   // workflow do not need new variables. Vite otherwise only exposes VITE_.
   envPrefix: ["VITE_", "NEXT_PUBLIC_"],
   plugins: [
+    requireBuildEnv,
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     reactRouter(),
     tsconfigPaths(),
