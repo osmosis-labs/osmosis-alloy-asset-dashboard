@@ -157,11 +157,14 @@ const TransactionTableContent = ({
     )
     for (const coin of pool.reserveCoins ?? []) {
       const denom = variantDenom(coin)
-      if (!denom) continue
+      // No guessed decimals: without them the denom shows as unknown (raw
+      // amount, no value) rather than scaled by an assumed exponent.
+      const decimals =
+        coin.currency?.currency?.coinDecimals ?? coin.asset?.decimal
+      if (!denom || decimals === undefined) continue
       meta[denom] = {
         symbol: variantSymbol(coin) ?? denom,
-        decimals:
-          coin.currency?.currency?.coinDecimals ?? coin.asset?.decimal ?? 6,
+        decimals,
         image: coin.asset ? getAssetImageUrl(coin.asset) : undefined,
       }
     }

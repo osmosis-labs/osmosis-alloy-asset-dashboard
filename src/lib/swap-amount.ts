@@ -55,15 +55,30 @@ export type DirectQuote = {
 // selected input denom and amount to the selected output denom. Anything else
 // (a misbehaving or compromised quote service routing through another pool,
 // or into another token) throws before anything is signed.
-export const directSwapFromQuote = (quote: DirectQuote, input: QuoteInput) => {
+//
+// The output amount is also bounded: a transmuter swaps 1:1 with no spread,
+// so the output can never be more than the input in the output's units
+// (`amountIn` shifted by the decimals difference, rounded down). Swap uses it
+// as the minimum output and Force Exit as the exact amount to withdraw (which
+// sets how much alloy is burned), so an inflated quote would otherwise make
+// Force Exit burn more than the user typed.
+export const directSwapFromQuote = (
+  quote: DirectQuote,
+  input: QuoteInput,
+  decimals: { in: number; out: number }
+) => {
   const hops = quote.route?.length === 1 ? quote.route[0].pools : []
+  const maxOut = new BigNumber(input.amountIn)
+    .shiftedBy(decimals.out - decimals.in)
+    .integerValue(BigNumber.ROUND_FLOOR)
   const matches =
     hops.length === 1 &&
     String(hops[0].id) === input.poolId &&
     hops[0].token_out_denom === input.denomOut &&
     quote.amount_in?.denom === input.denomIn &&
     quote.amount_in?.amount === input.amountIn &&
-    /^[1-9]\d*$/.test(quote.amount_out ?? "")
+    /^[1-9]\d*$/.test(quote.amount_out ?? "") &&
+    new BigNumber(quote.amount_out).isLessThanOrEqualTo(maxOut)
   if (!matches) {
     throw new Error(
       "The quote does not match the selected pool and assets. Refresh the page and try again."

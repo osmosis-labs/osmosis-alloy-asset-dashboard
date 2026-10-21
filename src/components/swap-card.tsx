@@ -256,7 +256,8 @@ const SwapCard = ({
       const amountIn = quoted.input.amountIn
       const { routes, minAmountOut } = directSwapFromQuote(
         quoted.quote,
-        quoted.input
+        quoted.input,
+        { in: inAsset[0].decimal, out: outAsset[0].decimal }
       )
       const msg = swapExactAmountIn({
         routes: routes.map((route) => ({
@@ -301,7 +302,10 @@ const SwapCard = ({
       if (!address) throw new Error("Wallet not connected")
       const quoted = assertQuoteCurrent()
       // Output amount only; the pool and denoms are the form's own.
-      const { minAmountOut } = directSwapFromQuote(quoted.quote, quoted.input)
+      const { minAmountOut } = directSwapFromQuote(quoted.quote, quoted.input, {
+        in: inAsset[0].decimal,
+        out: outAsset[0].decimal,
+      })
       // Exits go to the selected pool's own contract: the input must be that
       // pool's alloyed denom, and the contract it names must be the pool's.
       const pool = pools.find((p) => p.id === inAsset[1])

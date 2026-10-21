@@ -9,7 +9,14 @@ import type { Route } from "./+types/alloys.$symbol"
 // without a page of its own goes to /pools. Temporary redirects, since the
 // pool behind an alloy can change.
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const wanted = decodeURIComponent(params.symbol).toLowerCase()
+  let wanted: string
+  try {
+    wanted = decodeURIComponent(params.symbol).toLowerCase()
+  } catch {
+    // A malformed escape names no alloy.
+    throw redirect(new URL("/pools", request.url).toString(), 307)
+  }
+
   const { pools } = await getPoolsOverview()
   const pool = pools.find((p) => {
     const denom = p.alloy.asset.denom.toLowerCase()

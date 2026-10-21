@@ -20,6 +20,7 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
+  isSafeChartColor,
 } from "@/components/ui/chart"
 import {
   dateRangeDays,
@@ -146,10 +147,16 @@ const OverviewChartContent = ({
           pool.id,
           {
             label: pool.alloy.asset.name,
+            // Assetlist theme colors are third-party data: use them only
+            // when they are plain colors.
             color:
               POOL_COLORS[pool.id] ||
-              pool.alloy.asset.images?.at(1)?.theme?.primary_color_hex ||
-              pool.alloy.asset.images?.at(0)?.theme?.primary_color_hex ||
+              [1, 0]
+                .map(
+                  (i) =>
+                    pool.alloy.asset.images?.at(i)?.theme?.primary_color_hex
+                )
+                .find(isSafeChartColor) ||
               `hsl(var(--chart-${idx}))`,
           },
         ]
