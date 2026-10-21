@@ -7,6 +7,14 @@ import type { MinimalAssetPool, MinimalPool } from "@/types/pool"
 // asset has no metadata, or with no variants left, is left out entirely.
 // Throws when nothing usable remains, so the page shows an error rather than
 // a form built on missing data.
+//
+// The pools API also sends the decimals the server checked against each
+// contract's normalization factors. An asset whose assetlist copy here has
+// other decimals (a list updated between the two fetches) is treated like
+// one without metadata: amounts are converted with these decimals, so a
+// mismatch would sign the wrong amount. A pool the server could not verify
+// (the contract query failed, or a snapshot served during an outage) is
+// left out until it can.
 export const buildSwapPools = (
   pools: MinimalPool[],
   assets: Record<string, AssetWithDecimal>
@@ -14,13 +22,18 @@ export const buildSwapPools = (
   if (Object.keys(assets).length === 0) {
     throw new Error("Asset list unavailable")
   }
+  const verified = (asset: AssetWithDecimal | undefined, decimals?: number) =>
+    asset && (decimals === undefined || asset.decimal === decimals)
+      ? asset
+      : undefined
   const built = pools.flatMap((pool): MinimalAssetPool[] => {
-    const alloy = assets[pool.alloy.asset]
+    if (pool.decimalsVerified === false) return []
+    const alloy = verified(assets[pool.alloy.asset], pool.alloy.decimals)
     // Label variants with the frontend symbol and name (USDC.noble,
     // "USDC (Noble)") rather than the chain-registry ones, which are plain
     // "USDC" for several variants.
     const variants = pool.assets.flatMap((denom) => {
-      const asset = assets[denom]
+      const asset = verified(assets[denom], pool.assetDecimals?.[denom])
       if (!asset) return []
       return [
         {

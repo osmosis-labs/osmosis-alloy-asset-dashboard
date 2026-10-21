@@ -126,3 +126,58 @@ export const getVariantStyles = (pool: PoolOverview) => {
     .fromPairs()
     .value() as Record<string, { symbol: string; color: string }>
 }
+
+// The value of a pool's backing in USD. Each variant is valued at its own
+// price, so a variant trading below the alloy counts for what it is worth.
+// A variant with no price of its own is valued at the alloy price and named
+// in `atAlloyPrice`. Variants that cannot back the alloy are left out and
+// listed in `unbacked`: corrupted ones (they can only leave the pool) and ones
+// the assetlist has halted in both directions. `usd` is null when a backed
+// variant has no price at all (neither its own nor the alloy's).
+export type PoolBacking = {
+  usd: number | null
+  atAlloyPrice: string[]
+  unbacked: string[]
+}
+
+export const poolBacking = (
+  pool: Pick<PoolOverview, "reserveCoins" | "prices" | "alloy" | "status">
+): PoolBacking => {
+  const alloyPrice = pool.alloy.price ? Number(pool.alloy.price.amount) : null
+  const corrupted = pool.status?.corruptedDenoms ?? []
+  const backing: PoolBacking = { usd: 0, atAlloyPrice: [], unbacked: [] }
+  for (const coin of pool.reserveCoins ?? []) {
+    const denom = variantDenom(coin) ?? ""
+    const symbol = variantSymbol(coin) ?? denom
+    const flags = pool.status?.reserves?.[denom]
+    if (
+      corrupted.includes(denom) ||
+      (flags?.haltDeposits && flags?.haltWithdrawals)
+    ) {
+      backing.unbacked.push(symbol)
+      continue
+    }
+    const own = pool.prices?.[denom]
+    let price: number | null = null
+    if (own !== undefined && Number.isFinite(own)) {
+      price = own
+    } else if (alloyPrice !== null && Number.isFinite(alloyPrice)) {
+      price = alloyPrice
+      backing.atAlloyPrice.push(symbol)
+    }
+    if (price === null) {
+      backing.usd = null
+    } else if (backing.usd !== null) {
+      backing.usd += price * reserveAmount(coin.currency)
+    }
+  }
+  return backing
+}
+
+// One line explaining how a backing figure was valued, or null when every
+// variant counted at its own price.
+export const backingNote = ({ atAlloyPrice, unbacked }: PoolBacking) =>
+  _.compact([
+    atAlloyPrice.length > 0 && `${atAlloyPrice.join(", ")} at the alloy price`,
+    unbacked.length > 0 && `excludes ${unbacked.join(", ")} (unbacked)`,
+  ]).join("; ") || null

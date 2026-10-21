@@ -12,6 +12,8 @@ import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
 import { isMigrationPool } from "@/lib/pool-build"
 import {
+  backingNote,
+  poolBacking,
   reserveAmount,
   variantDenom,
   variantIssuer,
@@ -49,15 +51,17 @@ const limitersFor = (pool: PoolOverview, denom: string) =>
   pool.limiters ? (pool.limiters[denom] ?? []) : null
 
 // A headline figure. `title` carries the exact value when `value` is
-// abbreviated ($1.57M).
+// abbreviated ($1.57M); `note` is a short qualifier shown under it.
 const StatTile = ({
   label,
   value,
   title,
+  note,
 }: {
   label: string
   value: ReactNode
   title?: string
+  note?: string | null
 }) => (
   <div className="rounded-md border p-2">
     <p className="text-xs text-muted-foreground md:text-sm">{label}</p>
@@ -67,6 +71,11 @@ const StatTile = ({
     >
       {value}
     </p>
+    {note && (
+      <p className="line-clamp-2 text-xs text-muted-foreground" title={note}>
+        {note}
+      </p>
+    )}
   </div>
 )
 
@@ -80,8 +89,20 @@ const usdTile = (amount: number | string | null | undefined) =>
         title: `$${NumberFormatter.formatValue(amount)}`,
       }
 
+const TvlTile = ({ pool }: { pool: PoolOverview }) => {
+  const backing = poolBacking(pool)
+  return (
+    <StatTile
+      label="TVL"
+      {...usdTile(backing.usd)}
+      note={backingNote(backing)}
+    />
+  )
+}
+
 // The four headline figures of an alloy, shared by the overview cards and the
-// pool page. TVL is the value of the backing: price times the total amount.
+// pool page. TVL is the value of the backing (poolBacking): each variant at
+// its own price, unbacked variants left out.
 const PoolStats = ({
   pool,
   totalAmount,
@@ -116,12 +137,7 @@ const PoolStats = ({
       }
     />
     <StatTile label="24h Volume" {...usdTile(pool.volume24hUsd?.amount)} />
-    <StatTile
-      label="TVL"
-      {...usdTile(
-        pool.alloy.price ? Number(pool.alloy.price.amount) * totalAmount : null
-      )}
-    />
+    <TvlTile pool={pool} />
   </div>
 )
 

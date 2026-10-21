@@ -85,3 +85,49 @@ test("pagination stops with an error instead of looping forever", async () => {
     /more than 3 pages/
   )
 })
+
+test("assets whose decimals differ from the server-verified ones are dropped", () => {
+  const assets = { a: asset("a"), b: asset("b"), all: asset("all") }
+  const [p] = buildSwapPools(
+    [
+      {
+        ...pool("1", ["a", "b"], "all"),
+        assetDecimals: { a: 6, b: 8 },
+        alloy: { asset: "all", decimals: 6, price: "1" },
+      },
+    ],
+    assets
+  )
+  assert.deepEqual(
+    p.assets.map((a: any) => a.denom),
+    ["a"]
+  )
+  // An alloy that disagrees drops the whole pool.
+  assert.throws(
+    () =>
+      buildSwapPools(
+        [
+          {
+            ...pool("1", ["a"], "all"),
+            alloy: { asset: "all", decimals: 8, price: "1" },
+          },
+        ],
+        assets
+      ),
+    /No pools available/
+  )
+})
+
+test("a pool the server could not verify is left out", () => {
+  const assets = { a: asset("a"), all: asset("all") }
+  assert.throws(
+    () =>
+      buildSwapPools(
+        [{ ...pool("1", ["a"], "all"), decimalsVerified: false }],
+        assets
+      ),
+    /No pools available/
+  )
+  // Absent (an older response) is accepted.
+  assert.equal(buildSwapPools([pool("1", ["a"], "all")], assets).length, 1)
+})

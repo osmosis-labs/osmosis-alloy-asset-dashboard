@@ -55,6 +55,17 @@ export const fetchWithRetry = async (
     : new Error(`fetchWithRetry failed for ${String(input)}`)
 }
 
+// Headers for server-side reads from sqs.osmosis.zone: the Osmosis Foundation
+// integrator token (Worker secret OSMOSIS_ENDPOINTS_TOKEN) when it is set,
+// which raises the rate limit. Requests work without it.
+export const sqsHeaders = (): Record<string, string> => {
+  const token =
+    typeof process !== "undefined"
+      ? process.env?.OSMOSIS_ENDPOINTS_TOKEN
+      : undefined
+  return token ? { "X-API-TOKEN": token } : {}
+}
+
 // lcd.osmosis.zone bans any IP that makes more than 20 requests within 1s for
 // 12h (fail2ban; every response status counts, 429s included) and rate-limits
 // to 5 req/s with a burst of 10. Request STARTS are spaced process-wide so the
