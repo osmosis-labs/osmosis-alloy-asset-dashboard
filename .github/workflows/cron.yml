@@ -32,20 +32,21 @@ jobs:
       # Values the cron keeps between runs (src/lib/cron-state.ts), carried
       # in the actions cache below.
       CRON_STATE_FILE: .cron-state/state.json
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       # Public build values the env schema (src/env.mjs) requires;
       # NEXT_PUBLIC_CODE_IDS also selects which pools are tracked.
       NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
       NEXT_PUBLIC_CODE_IDS: ${{ vars.NEXT_PUBLIC_CODE_IDS }}
       NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: ${{ vars.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID }}
+    # Actions are pinned by commit SHA (tag in the comment), so a moved tag
+    # cannot change what runs next to the database secret.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 10.18.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
@@ -56,18 +57,21 @@ jobs:
       # The newest state saved. Cache keys are immutable, so each run attempt
       # saves under its own key (run_id stays the same on a re-run,
       # run_attempt does not) and restores the newest by prefix.
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .cron-state
           key: cron-state-activity-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: cron-state-activity-
 
       # The state directory always exists, so the save below has something to
-      # store.
+      # store. The database secret is given to this step only, not to the
+      # actions or the dependency install above.
       - run: mkdir -p .cron-state && pnpm cron
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .cron-state
           key: cron-state-activity-${{ github.run_id }}-${{ github.run_attempt }}

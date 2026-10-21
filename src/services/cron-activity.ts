@@ -43,9 +43,11 @@ import { getPrisma, isDatabaseEnabled } from "@/lib/database"
 // The pool page reads the store once a pool's history is fresh and covers the
 // window; until then it keeps using live LCD queries.
 //
-// Security: requests need `Authorization: Bearer <CRON_SECRET>`
-// (scripts/run-cron.mts supplies a per-run secret). Others are rejected, and
-// the route refuses to run if CRON_SECRET is unset. fetch() is not cached
+// Not served over HTTP: the only caller is scripts/run-cron.mts (the GitHub
+// Actions cron), which calls GET in-process. The bearer check stays as
+// defence in depth: requests need `Authorization: Bearer <CRON_SECRET>` (the
+// script supplies a per-run secret), and the handler refuses to run if
+// CRON_SECRET is unset. fetch() is not cached
 // here (the Worker and the script runner both hit the LCD directly), so a
 // latest-block response cannot pin every run to the same tip.
 

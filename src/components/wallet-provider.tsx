@@ -5,7 +5,6 @@ import { wallets as compass } from "@cosmos-kit/compass"
 import { wallets as cosmostation } from "@cosmos-kit/cosmostation"
 import { wallets as keplr } from "@cosmos-kit/keplr"
 import { ChainProvider, useModalTheme } from "@cosmos-kit/react"
-import { wallets as station } from "@cosmos-kit/station"
 import { wallets as trust } from "@cosmos-kit/trust"
 import { useTheme } from "next-themes"
 
@@ -31,13 +30,7 @@ const WalletProvider = ({ children }: { children: ReactNode }) => {
     <ChainProvider
       chains={[osmosisChain] as unknown as Chains}
       assetLists={[osmosisAssetList] as unknown as AssetLists}
-      wallets={[
-        ...keplr,
-        ...compass,
-        ...cosmostation,
-        ...station,
-        ...trust,
-      ]}
+      wallets={[...keplr, ...compass, ...cosmostation, ...trust]}
       walletConnectOptions={{
         signClient: {
           projectId: env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID,
