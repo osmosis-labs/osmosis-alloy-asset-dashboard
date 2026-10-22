@@ -1,3 +1,4 @@
+import "@/lib/buffer-global"
 import "@interchain-ui/react/styles"
 import "@/styles/wallet.css"
 
