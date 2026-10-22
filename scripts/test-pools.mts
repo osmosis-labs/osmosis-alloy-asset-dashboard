@@ -228,6 +228,7 @@ const {
   isCorruptedVariant,
   isPayoutVariant,
   migrationProgress,
+  isYoungMigration,
 } = await import(
   pathToFileURL(path.resolve("src/lib/pool-sources.ts")).href
 )
@@ -387,10 +388,56 @@ test("a corrupted variant that is not a payout is still unbacked", () => {
 
 test("migration progress is the legacy token's share in alloy units", () => {
   const migration = { from: "sttia", to: "tia", redemption: true }
-  // 2 stTIA at 1.5 (3 alloy units) against 1 TIA: 75% migrated.
-  assert.equal(migrationProgress({ ...redemptionPool(), migration }), 0.75)
+  // 2 stTIA at 1.5 (3 alloy units) against 1 TIA: 75% migrated, with
+  // $200 of backing (2 x $75 stTIA + 1 x $50 TIA).
+  const priced = { prices: { sttia: 75, tia: 50 }, migration }
+  assert.equal(migrationProgress({ ...redemptionPool(priced) }), 0.75)
   assert.equal(migrationProgress(redemptionPool()), null)
-  const empty = redemptionPool()
+  const empty = redemptionPool(priced)
   empty.reserveCoins.forEach((c) => (c.currency.amount = "0"))
-  assert.equal(migrationProgress({ ...empty, migration }), null)
+  assert.equal(migrationProgress(empty), 0)
+})
+
+test("migration progress is zero at $100 of TVL or less, unknown without prices", () => {
+  const migration = {
+    from: "sttia",
+    to: "tia",
+    redemption: true,
+    created: new Date().toISOString().slice(0, 10),
+  }
+  // $40 of backing (2 x $15 + 1 x $10).
+  assert.equal(migrationProgress(redemptionPool({ migration })), 0)
+  assert.equal(
+    migrationProgress(
+      redemptionPool({ migration, prices: {}, alloy: { price: null } })
+    ),
+    null
+  )
+})
+
+test("a pool 90 days old or more shows its real share at any TVL", () => {
+  const now = Date.parse("2026-10-22T00:00:00Z")
+  const old = { from: "sttia", to: "tia", created: "2026-06-18" }
+  const young = { ...old, created: "2026-10-08" }
+  assert.equal(isYoungMigration({ migration: old }, now), false)
+  assert.equal(isYoungMigration({ migration: young }, now), true)
+  assert.equal(isYoungMigration({ migration: { from: "a", to: "b" } }, now), true)
+  // $40 of backing: the young pool reads 0, the old one its 75% share.
+  assert.equal(migrationProgress(redemptionPool({ migration: young }), now), 0)
+  assert.equal(migrationProgress(redemptionPool({ migration: old }), now), 0.75)
+  // An old pool needs no prices to show its share.
+  assert.equal(
+    migrationProgress(
+      redemptionPool({ migration: old, prices: {}, alloy: { price: null } }),
+      now
+    ),
+    0.75
+  )
+})
+
+test("every configured migration has a creation date", () => {
+  for (const [poolId, { created }] of Object.entries(MIGRATION_ALLOYS)) {
+    assert.match(created, /^\d{4}-\d{2}-\d{2}$/, poolId)
+    assert.ok(Number.isFinite(Date.parse(created)), poolId)
+  }
 })

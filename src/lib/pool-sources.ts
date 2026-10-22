@@ -31,12 +31,54 @@ export const reserveValue = (coin: {
 // pool in alloy units (reserveValue). The pool starts out holding the
 // replacement (the native, for a Stride redemption pool); holders deposit the
 // legacy token (STARS.og, stTIA) and withdraw the replacement, so the share
-// rises towards 1. null when the pool is not a migration pool or holds
-// nothing.
+// rises towards 1. A young pool (under MIGRATION_SETTLED_DAYS old) holding
+// MIN_MIGRATION_TVL_USD or less (its backing, as the TVL column shows it)
+// reads 0: seed and test amounts would otherwise show as a migration that has
+// not happened. Older pools always show their real share. null when the pool
+// is not a migration pool, holds nothing, or a young pool's TVL is unknown.
+export const MIN_MIGRATION_TVL_USD = 100
+export const MIGRATION_SETTLED_DAYS = 90
+
+// Whether a migration pool is still young enough for the $100 rule. A pool
+// without a creation date (an overview built before it existed) counts as
+// young, so its progress is gated rather than shown unchecked.
+export const isYoungMigration = (
+  pool: Pick<PoolOverview, "migration">,
+  now = Date.now()
+) => {
+  const created = Date.parse(pool.migration?.created ?? "")
+  return (
+    !Number.isFinite(created) ||
+    now - created < MIGRATION_SETTLED_DAYS * 86_400_000
+  )
+}
+
+// Whether a pool's progress is held at 0 by the $100 rule.
+export const isMigrationGated = (
+  pool: Pick<
+    PoolOverview,
+    "migration" | "reserveCoins" | "prices" | "alloy" | "status"
+  >,
+  now = Date.now()
+) => {
+  if (!isYoungMigration(pool, now)) return false
+  const { usd } = poolBacking(pool)
+  return usd !== null && usd <= MIN_MIGRATION_TVL_USD
+}
+
 export const migrationProgress = (
-  pool: Pick<PoolOverview, "migration" | "reserveCoins">
+  pool: Pick<
+    PoolOverview,
+    "migration" | "reserveCoins" | "prices" | "alloy" | "status"
+  >,
+  now = Date.now()
 ): number | null => {
   if (!pool.migration) return null
+  if (isYoungMigration(pool, now)) {
+    const { usd } = poolBacking(pool)
+    if (usd === null) return null
+    if (usd <= MIN_MIGRATION_TVL_USD) return 0
+  }
   const total = _.sumBy(pool.reserveCoins ?? [], reserveValue)
   if (!(total > 0)) return null
   const from = (pool.reserveCoins ?? []).find(

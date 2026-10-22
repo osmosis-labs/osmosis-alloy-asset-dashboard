@@ -61,7 +61,8 @@ export default function Pools({ loaderData }: Route.ComponentProps) {
               redeem an stToken for its native token at the redemption rate.
               They exist for the migration and are not alloyed assets in their
               own right. Migrated is the share of the pool held in the legacy
-              token, deposited by holders as they withdraw its replacement.
+              token, deposited by holders as they withdraw its replacement. A
+              pool under 90 days old reads 0% until it holds more than $100.
             </p>
           </div>
           <div className="rounded-md border">

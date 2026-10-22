@@ -20,8 +20,11 @@ import { NumberFormatter } from "@/lib/number"
 import {
   backingNote,
   isCorruptedVariant,
+  isMigrationGated,
   isPayoutVariant,
+  MIGRATION_SETTLED_DAYS,
   migrationProgress,
+  MIN_MIGRATION_TVL_USD,
   poolBacking,
   variantDenom,
   variantSymbol,
@@ -330,7 +333,9 @@ const progressColumn: ColumnDef<PoolOverview> = {
     const from = symbolOf(pool, pool.migration?.from)
     const to = symbolOf(pool, pool.migration?.to)
     const percent = progress * 100
-    const label = `Share of the pool held in ${from}: ${from} deposited, ${to} withdrawn`
+    const label = isMigrationGated(pool)
+      ? `Not counted until the pool holds more than $${MIN_MIGRATION_TVL_USD} (pools under ${MIGRATION_SETTLED_DAYS} days old)`
+      : `Share of the pool held in ${from}: ${from} deposited, ${to} withdrawn`
     return (
       <div className="flex min-w-32 items-center gap-2" title={label}>
         <Progress value={percent} className="h-2 flex-1" aria-label={label} />

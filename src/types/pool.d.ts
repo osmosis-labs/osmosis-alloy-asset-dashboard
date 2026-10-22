@@ -78,7 +78,13 @@ export type PoolOverview = {
   // A migration pool's legacy (`from`) and replacement (`to`) denoms, from
   // src/constants/migration.ts. Absent on alloys and on overviews built
   // before this existed.
-  migration?: { from: string; to: string; redemption?: boolean }
+  migration?: {
+    from: string
+    to: string
+    redemption?: boolean
+    // Pool creation date (UTC). Absent on overviews built before it existed.
+    created?: string
+  }
   type: "cosmwasm-transmuter" | "cosmwasm"
   contractAddress: string
   codeId: string
