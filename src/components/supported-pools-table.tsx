@@ -339,7 +339,8 @@ const progressColumn: ColumnDef<PoolOverview> = {
     return (
       <div className="flex min-w-32 items-center gap-2" title={label}>
         <Progress value={percent} className="h-2 flex-1" aria-label={label} />
-        <span className="text-xs tabular-nums">
+        {/* Fixed to the widest label ("36.6%") so every bar is one length. */}
+        <span className="w-[5ch] shrink-0 text-end text-xs tabular-nums">
           {percent >= 99.95 || percent < 0.05
             ? percent.toFixed(0)
             : percent.toFixed(1)}
