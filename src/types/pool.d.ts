@@ -59,7 +59,8 @@ export type PoolStatus = {
 
 // "alloy": an alloyed asset listed on the overview. "migration": an alloy that
 // only converts a legacy token into its replacement 1:1 (allSTARS: STARS.og to
-// STARS); its alloyed denom is plumbing, not a listed asset. Migration alloys
+// STARS), or redeems an stToken at Stride's redemption rate (stTIA to TIA);
+// its alloyed denom is plumbing, not a listed asset. Migration alloys
 // have pool pages and their own section on /pools, but are not on the
 // overview.
 export type PoolKind = "alloy" | "migration"

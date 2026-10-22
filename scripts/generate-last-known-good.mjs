@@ -371,13 +371,18 @@ const migrationAlloyAsset = (pool, alloyDenom, migration, assetMap) => {
     to.coinName ?? assetMap[to.coinMinimalDenom]?.name ?? to.coinDenom
   const fromName =
     from.coinName ?? assetMap[from.coinMinimalDenom]?.name ?? from.coinDenom
+  const named = migration.redemption ? from : to
   return {
     base: alloyDenom,
     denom: alloyDenom,
     display: symbol,
     symbol,
-    name: `${toName} Migration`,
-    description: `Swaps ${from.coinDenom} (${fromName}) for ${to.coinDenom} 1:1. This pool exists for the token migration: its alloyed token, ${symbol}, is not a listed asset.`,
+    name: migration.redemption
+      ? `${fromName} Redemption`
+      : `${toName} Migration`,
+    description: migration.redemption
+      ? `Redeems ${from.coinDenom} (${fromName}) for ${to.coinDenom} at the redemption rate set in the pool, not 1:1. This pool exists for the Stride wind-down: its alloyed token, ${symbol}, is not a listed asset.`
+      : `Swaps ${from.coinDenom} (${fromName}) for ${to.coinDenom} 1:1. This pool exists for the token migration: its alloyed token, ${symbol}, is not a listed asset.`,
     denom_units: [
       { denom: alloyDenom, exponent: 0 },
       { denom: symbol, exponent: to.coinDecimals },
@@ -386,7 +391,7 @@ const migrationAlloyAsset = (pool, alloyDenom, migration, assetMap) => {
     type_asset: "sdk.coin",
     address: pool.raw.contract_address,
     traces: [],
-    images: assetMap[to.coinMinimalDenom]?.images ?? [],
+    images: assetMap[named.coinMinimalDenom]?.images ?? [],
     keywords: [],
   }
 }
@@ -516,7 +521,10 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
   if (alloyAssetPrice && Number(alloyAssetPrice.amount) > 1000000)
     alloyAssetPrice = null
   if (!alloyAssetPrice) {
-    const foundAssetPrice = mean(Object.values(prices))
+    // Mirror of the redemption-pool price in src/services/pool.ts.
+    const foundAssetPrice = migration?.redemption
+      ? prices[migration.to]
+      : mean(Object.values(prices))
     if (foundAssetPrice) {
       alloyAssetPrice = {
         fiat: { currency: "usd", symbol: "$", maxDecimals: 2, locale: "en-US" },

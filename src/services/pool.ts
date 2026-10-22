@@ -205,6 +205,16 @@ const fillPoolOverview = async (
   // "unknown" when the factors could not be read: the pool stays listed (a
   // transient LCD failure must not move it to the unsupported table), but its
   // decimals are not marked verified, so the swap form leaves it out.
+  //
+  // A redemption pool's stToken carries the redemption rate in its factor, so
+  // only the native and the alloy, which share a unit, are checked; the
+  // stToken's decimals are checked against the native's in
+  // migrationAlloyAsset.
+  const checkedCoins = migration?.redemption
+    ? reserveCoins.filter(
+        (c) => c.currency.currency.coinMinimalDenom === migration.to
+      )
+    : reserveCoins
   const normalization =
     !alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals
       ? "unknown"
@@ -213,7 +223,7 @@ const fillPoolOverview = async (
         : checkNormalization(
             await getNormalizationFactors(pool.raw.contract_address),
             [
-              ...reserveCoins.map((c) => ({
+              ...checkedCoins.map((c) => ({
                 denom: c.currency.currency.coinMinimalDenom,
                 decimals: c.currency.currency.coinDecimals,
               })),
@@ -313,7 +323,11 @@ const fillPoolOverview = async (
   if (alloyAssetPrice && Number(alloyAssetPrice?.amount) > 1000000)
     alloyAssetPrice = null
   if (!alloyAssetPrice) {
-    const foundAssetPrice = _.chain(prices).values().compact().mean().value()
+    // A redemption pool's alloy shares the native's unit; its stToken is worth
+    // more, so averaging the two would overprice the alloy.
+    const foundAssetPrice = migration?.redemption
+      ? (prices as Record<string, number>)[migration.to]
+      : _.chain(prices).values().compact().mean().value()
     if (foundAssetPrice) {
       alloyAssetPrice = {
         fiat: {

@@ -57,8 +57,10 @@ export default function Pools({ loaderData }: Route.ComponentProps) {
             <h2 className="text-2xl font-semibold">Migration Alloys</h2>
             <p className="text-muted-foreground">
               Pools that convert a legacy token into its replacement 1:1, such
-              as STARS.og to STARS. They exist for the migration and are not
-              alloyed assets in their own right.
+              as STARS.og to STARS, and Stride&apos;s wind-down pools, which
+              redeem an stToken for its native token at the redemption rate.
+              They exist for the migration and are not alloyed assets in their
+              own right.
             </p>
           </div>
           <div className="rounded-md border">

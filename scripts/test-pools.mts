@@ -117,11 +117,30 @@ test("a migration pool missing a variant, or with mixed decimals, is not built",
   )
 })
 
+test("a redemption alloy is named after the stToken it redeems, not 1:1", () => {
+  const sttia = MIGRATION_ALLOYS["3628"]
+  const asset = migrationAlloyAsset(
+    rawPool(
+      coin(sttia.from, "stTIA", "Stride Staked TIA"),
+      coin(sttia.to, "TIA", "Celestia")
+    ),
+    "factory/osmo1x/alloyed/stTIA",
+    sttia,
+    { [sttia.from]: { images } }
+  )
+  assert.equal(asset.symbol, "stTIA")
+  assert.equal(asset.name, "Stride Staked TIA Redemption")
+  assert.deepEqual(asset.images, images)
+  assert.match(asset.description, /stTIA .*for TIA at the redemption rate/)
+  assert.match(asset.description, /not 1:1/)
+})
+
 test("every configured migration pairs two different full denoms", () => {
   for (const [poolId, { from, to }] of Object.entries(MIGRATION_ALLOYS)) {
     assert.match(poolId, /^\d+$/)
     assert.match(from, /^ibc\/[0-9A-F]{64}$/, poolId)
-    assert.match(to, /^ibc\/[0-9A-F]{64}$/, poolId)
+    // stOSMO redeems for OSMO, the chain's native denom.
+    assert.match(to, /^(ibc\/[0-9A-F]{64}|uosmo)$/, poolId)
     assert.notEqual(from, to, poolId)
   }
 })
