@@ -15,6 +15,7 @@ import {
   backingNote,
   poolBacking,
   reserveAmount,
+  reserveValue,
   variantDenom,
   variantIssuer,
   variantOrigin,
@@ -163,10 +164,7 @@ const TradeLinks = ({ pool }: { pool: PoolOverview }) =>
 
 const PoolCard = ({ pool }: { pool: PoolOverview }) => {
   const totalAmount =
-    pool.reserveCoins?.reduce(
-      (acc, a) => acc + valueFormatter(a.currency),
-      0
-    ) || 0
+    pool.reserveCoins?.reduce((acc, a) => acc + reserveValue(a), 0) || 0
 
   return (
     <Card className={poolTileClass(pool.status)}>
@@ -270,7 +268,9 @@ const PoolAssetCard = ({
     asset: Asset
     currency: CurrencyAmount
     provenance?: { origin: string | null; issuer: string | null } | null
+    unitRate?: number
   }
+  // In alloy units (reserveValue).
   totalAmount: number
   className?: string
   // null when the pool's limiters could not be read.
@@ -281,8 +281,10 @@ const PoolAssetCard = ({
   // True when the contract lists this denom in get_corrupted_denoms.
   corrupted?: boolean
 }) => {
+  // Shown in the variant's own tokens; its share is in alloy units, so a
+  // redemption pool's stToken counts at its rate.
   const thisAmount = valueFormatter(c.currency)
-  const percentage = thisAmount / totalAmount
+  const percentage = reserveValue(c) / totalAmount
   const issuer = variantIssuer(c)
   const origin = variantOrigin(c)
 

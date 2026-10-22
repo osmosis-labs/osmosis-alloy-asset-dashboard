@@ -18,6 +18,15 @@ export const reserveAmount = (a: CurrencyAmount) => {
   return new BigNumber(a.amount).shiftedBy(-a.currency.coinDecimals).toNumber()
 }
 
+// A reserve coin's amount in units of the alloy, for shares and totals. The
+// variants of an alloy share its unit (no unitRate); a redemption pool's
+// stToken is worth unitRate of the alloy each (src/constants/migration.ts).
+// Amounts shown per variant stay in the variant's own tokens.
+export const reserveValue = (coin: {
+  currency: CurrencyAmount
+  unitRate?: number
+}) => reserveAmount(coin.currency) * (coin.unitRate ?? 1)
+
 // The symbol the Osmosis frontend shows for a variant (USDC.noble,
 // WBTC.eth.axl). The frontend pools API builds `coinDenom` from the frontend
 // assetlist; the chain-registry `symbol` is ambiguous across variants (three
@@ -81,13 +90,14 @@ export const getPoolSources = (
   _.chain(pool.reserveCoins)
     .map((a) => ({
       ...a,
-      formattedAmount: reserveAmount(a.currency),
+      alloyAmount: reserveValue(a),
       group: groupLabel(a, by),
     }))
     .groupBy("group")
     .map((v, label) => ({
       assets: v,
-      totalAmount: _.sumBy(v, "formattedAmount"),
+      // In alloy units (reserveValue), so groups compare across variants.
+      totalAmount: _.sumBy(v, "alloyAmount"),
       label,
     }))
     .sortBy((v) => -v.totalAmount)
@@ -162,7 +172,9 @@ export const poolBacking = (
     if (own !== undefined && Number.isFinite(own)) {
       price = own
     } else if (alloyPrice !== null && Number.isFinite(alloyPrice)) {
-      price = alloyPrice
+      // The alloy price is per alloy unit; a redemption pool's stToken is
+      // worth unitRate of those.
+      price = alloyPrice * (coin.unitRate ?? 1)
       backing.atAlloyPrice.push(symbol)
     }
     if (price === null) {

@@ -329,12 +329,15 @@ const resolveProvenance = async (denoms, assetMap) => {
 }
 
 // Mirror of byPrevalence in src/services/pool.ts: most prevalent variant
-// first (the variants of one alloy share a unit, so display amounts compare).
+// first, in alloy units (a redemption pool's stToken counts at its rate).
 const reserveDisplayAmount = (c) =>
-  Number(c.currency.amount) / 10 ** c.currency.currency.coinDecimals
+  (Number(c.currency.amount) / 10 ** c.currency.currency.coinDecimals) *
+  (c.unitRate ?? 1)
 const appImageUrl = (url) =>
   url?.startsWith("/") ? `${BASE_ASSET_URL}${url}` : (url ?? "")
-const mapReserveCoins = (pool, assetMap) =>
+// unitRates: mirror of redemptionUnitRates in src/services/pool.ts, set only
+// for redemption pools.
+const mapReserveCoins = (pool, assetMap, unitRates) =>
   pool.reserveCoins.map((coin) => {
     const c = JSON.parse(coin)
     const asset = assetMap[c.currency.coinMinimalDenom]
@@ -349,6 +352,7 @@ const mapReserveCoins = (pool, assetMap) =>
           coinImageUrl: appImageUrl(c.currency.coinImageUrl),
         },
       },
+      ...(unitRates && { unitRate: unitRates[c.currency.coinMinimalDenom] }),
     }
   }).sort((a, b) => reserveDisplayAmount(b) - reserveDisplayAmount(a))
 
@@ -467,6 +471,29 @@ const getMigrationRawPools = async (poolIds, assetMap) => {
   return pools.filter(Boolean)
 }
 
+// Mirror of getNormalizationFactors (src/services/transmuter.ts) and
+// redemptionUnitRates (src/services/pool.ts): alloy units per one of each
+// variant, or undefined when a factor is unavailable.
+const getRedemptionUnitRates = async (pool, alloyDenom) => {
+  const data = await smartQuery(pool.raw.contract_address, {
+    list_asset_configs: {},
+  })
+  if (!Array.isArray(data?.asset_configs)) return undefined
+  const factors = Object.fromEntries(
+    data.asset_configs.map((c) => [c.denom, c.normalization_factor])
+  )
+  const valid = (f) => /^[1-9]\d*$/.test(f ?? "")
+  if (!valid(factors[alloyDenom])) return undefined
+  const rates = {}
+  for (const coin of pool.reserveCoins) {
+    const denom = JSON.parse(coin).currency.coinMinimalDenom
+    if (!valid(factors[denom])) return undefined
+    // Factors are up to ~2e18; their ratio is well within double precision.
+    rates[denom] = Number(factors[alloyDenom]) / Number(factors[denom])
+  }
+  return rates
+}
+
 // Mirror of fillPoolOverview in src/services/pool.ts.
 const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
   const alloyDenom = calcAlloyDenom(
@@ -484,8 +511,18 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
   const hasUnknownDecimals = pool.reserveCoins.some(
     (c) => typeof JSON.parse(c).currency.coinDecimals !== "number"
   )
+  const unitRates =
+    migration?.redemption && alloyAssetDetail && !hasUnknownDecimals
+      ? await getRedemptionUnitRates(pool, alloyDenom)
+      : undefined
+  const hasUnknownRates = !!migration?.redemption && !unitRates
 
-  if (!alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals) {
+  if (
+    !alloyAssetDetail ||
+    isBelowMinTvl ||
+    hasUnknownDecimals ||
+    hasUnknownRates
+  ) {
     return {
       id: pool.id,
       type: pool.type,
@@ -540,7 +577,7 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
-    reserveCoins: mapReserveCoins(pool, assetMap),
+    reserveCoins: mapReserveCoins(pool, assetMap, unitRates),
     spreadFactor: JSON.parse(pool.spreadFactor),
     totalFiatValueLocked: JSON.parse(pool.totalFiatValueLocked),
     poolNameByDenom: pool.poolNameByDenom,

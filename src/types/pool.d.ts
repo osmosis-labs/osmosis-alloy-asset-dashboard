@@ -78,6 +78,10 @@ export type PoolOverview = {
     // Origin chain and bridge/issuer, resolved through the chain registry.
     // Absent on overviews built before this existed or when resolution failed.
     provenance?: { origin: string | null; issuer: string | null } | null
+    // Alloy units per one of this variant, from the contract's normalization
+    // factors. Set only on redemption pools, whose stToken is worth more than
+    // one alloy; absent means 1 (the variants of an alloy share its unit).
+    unitRate?: number
   }[]
   spreadFactor: Rate
   totalFiatValueLocked: FiatAmount

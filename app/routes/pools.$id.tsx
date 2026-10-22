@@ -7,7 +7,11 @@ import { ExternalLink } from "lucide-react"
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
 import { isMigrationPool } from "@/lib/pool-build"
-import { getPoolSources, SOURCE_GROUPINGS } from "@/lib/pool-sources"
+import {
+  getPoolSources,
+  reserveValue,
+  SOURCE_GROUPINGS,
+} from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +33,6 @@ import {
   PoolAssetCard,
   PoolStats,
   TradeLinks,
-  valueFormatter,
 } from "@/components/pool-card"
 import { PoolStatusBadges, poolTileClass } from "@/components/status-badges"
 import { ActivityChart } from "@/components/activity-chart"
@@ -78,7 +81,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 export default function PoolPage({ loaderData }: Route.ComponentProps) {
   const { pool, composition, source, builtAt, swaps } = loaderData
   const totalAmount =
-    pool.reserveCoins?.reduce((acc, a) => acc + valueFormatter(a.currency), 0) ||
+    pool.reserveCoins?.reduce((acc, a) => acc + reserveValue(a), 0) ||
     0
   const isMigration = isMigrationPool(pool)
   const groupedSources = {

@@ -220,7 +220,7 @@ test("an unmapped reason code gets the app's generic sentence", () => {
   )
 })
 
-const { poolBacking, backingNote } = await import(
+const { poolBacking, backingNote, reserveValue, getPoolSources } = await import(
   pathToFileURL(path.resolve("src/lib/pool-sources.ts")).href
 )
 
@@ -297,4 +297,61 @@ test("fully halted and corrupted variants are not backing", () => {
 test("no price at all is unknown, not zero", () => {
   const b = poolBacking(backingPool({ prices: {}, alloy: { price: null } }))
   assert.equal(b.usd, null)
+})
+
+// A redemption pool: 2 stTIA worth 1.5 TIA each, and 1 TIA (6 decimals).
+const redemptionPool = (over: Record<string, unknown> = {}) => ({
+  reserveCoins: [
+    {
+      currency: {
+        amount: "2000000",
+        currency: {
+          coinMinimalDenom: "sttia",
+          coinDenom: "stTIA",
+          coinDecimals: 6,
+        },
+      },
+      unitRate: 1.5,
+    },
+    {
+      currency: {
+        amount: "1000000",
+        currency: {
+          coinMinimalDenom: "tia",
+          coinDenom: "TIA",
+          coinDecimals: 6,
+        },
+      },
+      unitRate: 1,
+    },
+  ],
+  prices: { sttia: 15, tia: 10 },
+  alloy: { price: { amount: "10" } },
+  status: { corruptedDenoms: [], reserves: {} },
+  ...over,
+})
+
+test("a redemption pool's stToken counts at its rate in alloy units", () => {
+  const [sttia, tia] = redemptionPool().reserveCoins
+  assert.equal(reserveValue(sttia), 3)
+  assert.equal(reserveValue(tia), 1)
+  // No rate: the variants share the alloy's unit.
+  assert.equal(reserveValue(backingPool().reserveCoins[0]), 3)
+  const groups = getPoolSources(redemptionPool(), "variant")
+  assert.deepEqual(
+    groups.map((g: { label: string; totalAmount: number }) => [
+      g.label,
+      g.totalAmount,
+    ]),
+    [
+      ["stTIA", 3],
+      ["TIA", 1],
+    ]
+  )
+})
+
+test("an unpriced stToken is backed at the alloy price times its rate", () => {
+  const b = poolBacking(redemptionPool({ prices: { tia: 10 } }))
+  assert.equal(b.usd, 2 * 10 * 1.5 + 1 * 10)
+  assert.deepEqual(b.atAlloyPrice, ["stTIA"])
 })
