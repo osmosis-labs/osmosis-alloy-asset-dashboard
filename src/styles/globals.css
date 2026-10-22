@@ -4,35 +4,40 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* Surfaces take the Osmosis "osmoverse" purple. The page is a pale
+       lavender and cards stay white, so a card lifts off the page and the
+       status tints (frozen, corrupted, halted) keep the white base they were
+       tuned on. */
+    --background: 248 45% 96%;
+    --foreground: 248 50% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 248 50% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover-foreground: 248 50% 9%;
 
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 248 55% 13%;
+    --primary-foreground: 248 60% 97%;
 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 248 40% 94%;
+    --secondary-foreground: 248 55% 13%;
 
-    --muted: 0 0% 96.1%;
-    /* 40%: at least 4.7:1 on white, muted and the status-tinted tiles. */
-    --muted-foreground: 0 0% 40%;
+    --muted: 248 40% 94%;
+    /* At least 5.5:1 on white, the page, muted and the status-tinted tiles. */
+    --muted-foreground: 248 14% 40%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 248 40% 94%;
+    --accent-foreground: 248 55% 13%;
 
     /* 5.8:1 with white text (the default red was 3.6:1). */
     --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 248 30% 88%;
+    --input: 248 30% 88%;
+    /* Osmosis purple #7b67f6, 4.2:1 on white. */
+    --ring: 248 89% 68%;
 
     --radius: 0.5rem;
 
@@ -41,8 +46,8 @@
 
     /* One palette for both themes, so a series keeps its color when the
        theme changes: Osmosis purple, teal (#30b5bd deepened), amber, pink,
-       blue. Each is at least 3.2:1 against the light background and 4.8:1
-       against the dark one. */
+       blue. Each is at least 3.2:1 against the light card and 4.3:1 against
+       the dark one. */
     --chart-1: 248 89% 68%;
     --chart-2: 183 68% 38%;
     --chart-3: 36 77% 44%;
@@ -51,33 +56,36 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    /* The Osmosis app's dark surfaces: page osmoverse-1000 (#090524), cards
+       osmoverse-900 (#140f34), fills osmoverse-850, borders osmoverse-800. */
+    --background: 248 76% 8%;
+    --foreground: 248 60% 97%;
 
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 248 55% 13%;
+    --card-foreground: 248 60% 97%;
 
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 248 55% 13%;
+    --popover-foreground: 248 60% 97%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    --primary: 248 60% 97%;
+    --primary-foreground: 248 55% 13%;
 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 248 43% 18%;
+    --secondary-foreground: 248 60% 97%;
 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 248 43% 18%;
+    /* osmoverse-300 (#b0aadc), at least 7:1 on cards, fills and tinted tiles. */
+    --muted-foreground: 247 42% 76%;
 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 248 43% 18%;
+    --accent-foreground: 248 60% 97%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 241 34% 23%;
+    --input: 241 34% 23%;
+    --ring: 248 89% 72%;
   }
 }
 
