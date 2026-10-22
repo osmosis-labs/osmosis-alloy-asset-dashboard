@@ -10,7 +10,9 @@ const Avatar = React.forwardRef<
   <AvatarPrimitive.Root
     ref={ref}
     className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      // A themed disc behind the logo, so a transparent logo drawn in one
+      // colour (FET's is black) still shows in both themes.
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-primary/5 dark:bg-muted-foreground/85",
       className
     )}
     {...props}

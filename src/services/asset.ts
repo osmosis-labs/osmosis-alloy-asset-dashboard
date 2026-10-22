@@ -117,7 +117,11 @@ export const getAssetListSafe = async (): Promise<AssetWithDecimal[]> => {
 
 export const getAssetListUncached = async () => {
   try {
-    return await fetchAssetList()
+    const [assets, images] = await Promise.all([
+      fetchAssetList(),
+      getFrontendAssetImagesSafe(),
+    ])
+    return withFrontendImages(assets, images)
   } catch (e) {
     console.error(`Error fetching asset list (uncached): ${e}`)
     return []
@@ -137,6 +141,7 @@ type FrontendAsset = {
   withdrawalHaltReason?: string | null
   tooltipMessage?: string | null
   lastDowntimeDate?: string | null
+  logoURIs?: { svg?: string; png?: string } | null
 }
 
 type FrontendAssetMeta = {
@@ -149,9 +154,12 @@ type FrontendAssetMeta = {
   // Frontend symbols ("USDC.noble") by minimal denom, for denoms no longer in
   // a pool (removed variants in the reserve history).
   symbols: Record<string, string>
+  // Logos by minimal denom. The chain-registry list leaves some variants
+  // without any image (cbDOGE.axl); the frontend list still has one.
+  images: Record<string, { svg?: string; png?: string }>
 }
 
-// One download of the ~2.5MB frontend list feeds both maps.
+// One download of the ~2.5MB frontend list feeds every map.
 const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
   const data = await fetchJsonWithRetry<{ assets: FrontendAsset[] }>(
     [BASE_FRONTEND_ASSET_LIST, MIRROR_FRONTEND_ASSET_LIST],
@@ -164,12 +172,17 @@ const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
   const map: Record<string, AssetStatus> = {}
   const names: Record<string, string> = {}
   const symbols: Record<string, string> = {}
+  const images: Record<string, { svg?: string; png?: string }> = {}
   for (const a of data) {
     if (a.coinMinimalDenom && a.name) {
       names[a.coinMinimalDenom] = a.name
     }
     if (a.coinMinimalDenom && a.symbol) {
       symbols[a.coinMinimalDenom] = a.symbol
+    }
+    const logo = a.logoURIs
+    if (a.coinMinimalDenom && logo && (logo.svg || logo.png)) {
+      images[a.coinMinimalDenom] = { svg: logo.svg, png: logo.png }
     }
     const status: AssetStatus = {
       unstable: a.unstable === true,
@@ -192,12 +205,12 @@ const fetchFrontendAssetMeta = async (): Promise<FrontendAssetMeta> => {
       map[a.coinMinimalDenom] = status
     }
   }
-  return { statusMap: map, names, symbols }
+  return { statusMap: map, names, symbols, images }
 }
 
 const getFrontendAssetMeta = dataCache(
   fetchFrontendAssetMeta,
-  ["frontend-asset-meta-v2"],
+  ["frontend-asset-meta-v3"],
   { revalidate: 1800 }
 )
 
@@ -255,14 +268,38 @@ export const getAssetStatusMapSafe = async (): Promise<Record<
   }
 }
 
+// Non-throwing: a missing logo map only leaves image-less assets without one.
+const getFrontendAssetImagesSafe = async (): Promise<
+  FrontendAssetMeta["images"]
+> => {
+  try {
+    return (await getFrontendAssetMeta()).images
+  } catch (e) {
+    console.error(`Error fetching frontend asset images: ${e}`)
+    return {}
+  }
+}
+
+// Gives an asset with no chain-registry image the frontend list's logo.
+const withFrontendImages = (
+  assets: AssetWithDecimal[],
+  images: FrontendAssetMeta["images"]
+): AssetWithDecimal[] =>
+  assets.map((a) =>
+    !a.images?.length && images[a.base] ? { ...a, images: [images[a.base]] } : a
+  )
+
 export const getAssetMap = cache(async () => {
   // Uses the cached, throw-on-failure getAssetList so a transient assetlist
   // outage cannot produce an empty map (which would mark every pool
   // unsupported). Callers of getAssetMap must handle a thrown error; the pool
   // overview build treats an unavailable map as a build failure and falls back
   // to the last-known-good snapshot rather than caching an all-unsupported set.
-  const assets = await getAssetList()
-  return _.keyBy(assets, "base")
+  const [assets, images] = await Promise.all([
+    getAssetList(),
+    getFrontendAssetImagesSafe(),
+  ])
+  return _.keyBy(withFrontendImages(assets, images), "base")
 })
 
 export const getAssetWithPrice = cache(async (denom: string) => {
