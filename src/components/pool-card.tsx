@@ -13,8 +13,11 @@ import { NumberFormatter } from "@/lib/number"
 import { isMigrationPool } from "@/lib/pool-build"
 import {
   backingNote,
+  isCorruptedVariant,
+  isPayoutVariant,
   poolBacking,
   reserveAmount,
+  reserveValue,
   variantDenom,
   variantIssuer,
   variantOrigin,
@@ -163,10 +166,7 @@ const TradeLinks = ({ pool }: { pool: PoolOverview }) =>
 
 const PoolCard = ({ pool }: { pool: PoolOverview }) => {
   const totalAmount =
-    pool.reserveCoins?.reduce(
-      (acc, a) => acc + valueFormatter(a.currency),
-      0
-    ) || 0
+    pool.reserveCoins?.reduce((acc, a) => acc + reserveValue(a), 0) || 0
 
   return (
     <Card className={poolTileClass(pool.status)}>
@@ -243,9 +243,8 @@ const PoolCard = ({ pool }: { pool: PoolOverview }) => {
                   limiters={limitersFor(pool, c.asset.base)}
                   price={pool.prices[c.asset.base]}
                   status={pool.status?.reserves?.[c.asset.base]}
-                  corrupted={pool.status?.corruptedDenoms?.includes(
-                    c.asset.base
-                  )}
+                  corrupted={isCorruptedVariant(pool.status, c.asset.base)}
+                  payout={isPayoutVariant(pool.status, c.asset.base)}
                 />
               ))}
             </div>
@@ -265,12 +264,15 @@ const PoolAssetCard = ({
   price,
   status,
   corrupted = false,
+  payout = false,
 }: {
   asset: {
     asset: Asset
     currency: CurrencyAmount
     provenance?: { origin: string | null; issuer: string | null } | null
+    unitRate?: number
   }
+  // In alloy units (reserveValue).
   totalAmount: number
   className?: string
   // null when the pool's limiters could not be read.
@@ -278,11 +280,16 @@ const PoolAssetCard = ({
   price?: number
   // Assetlist flags for this constituent (undefined/null = none).
   status?: AssetStatus | null
-  // True when the contract lists this denom in get_corrupted_denoms.
+  // True when the contract lists this denom in get_corrupted_denoms and it
+  // is not a redemption payout (isCorruptedVariant).
   corrupted?: boolean
+  // True for a redemption pool's payout reserve (isPayoutVariant).
+  payout?: boolean
 }) => {
+  // Shown in the variant's own tokens; its share is in alloy units, so a
+  // redemption pool's stToken counts at its rate.
   const thisAmount = valueFormatter(c.currency)
-  const percentage = thisAmount / totalAmount
+  const percentage = reserveValue(c) / totalAmount
   const issuer = variantIssuer(c)
   const origin = variantOrigin(c)
 
@@ -326,7 +333,11 @@ const PoolAssetCard = ({
                 </Badge>
               </a>
             )}
-            <AssetStatusBadges status={status} corrupted={corrupted} />
+            <AssetStatusBadges
+              status={status}
+              corrupted={corrupted}
+              payout={payout}
+            />
           </div>
           <p className="line-clamp-2 whitespace-pre-wrap break-all text-xs text-muted-foreground">
             {c.asset.description}

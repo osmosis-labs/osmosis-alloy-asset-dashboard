@@ -3,7 +3,7 @@ import { ImageResponse } from "@vercel/og"
 
 import { Asset } from "@/types/asset"
 import { NumberFormatter } from "@/lib/number"
-import { poolBacking, reserveAmount, variantSymbol } from "@/lib/pool-sources"
+import { poolBacking, reserveValue, variantSymbol } from "@/lib/pool-sources"
 import {
   SHARE_IMAGE_SIZE,
   ShareImage,
@@ -41,10 +41,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
-  const total = pool.reserveCoins.reduce(
-    (acc, c) => acc + reserveAmount(c.currency),
-    0
-  )
+  const total = pool.reserveCoins.reduce((acc, c) => acc + reserveValue(c), 0)
   // The backed variants at their own prices (see poolBacking), so a share
   // image never shows unbacked variants as backing.
   const { usd } = poolBacking(pool)
@@ -52,7 +49,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     usd !== null ? `$${NumberFormatter.formatCompactValue(usd)} backing` : null
   const shares: ShareRow[] = pool.reserveCoins.map((c) => ({
     label: variantSymbol(c) ?? "Unknown",
-    percent: total > 0 ? (reserveAmount(c.currency) / total) * 100 : 0,
+    percent: total > 0 ? (reserveValue(c) / total) * 100 : 0,
   }))
   const rows =
     shares.length > 5

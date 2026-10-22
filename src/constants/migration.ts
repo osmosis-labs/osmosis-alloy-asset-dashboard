@@ -7,21 +7,241 @@
 // `from` is the legacy variant and `to` its replacement (full minimal denoms).
 // Both have normalization factor 1 in their pool, so they share a unit.
 //
+// `redemption` pools are the exception: Stride's wind-down pools redeem an
+// stToken for its native token at Stride's redemption rate, which the pool
+// holds as the native's normalization factor (the alloy shares the native's
+// unit). One `from` is worth more than one `to`, so the two are not compared
+// as one unit.
+//
+// `created` is the pool's creation date (UTC, from its instantiation block).
+// A migration's progress reads 0 while a pool is young and nearly empty; see
+// migrationProgress in src/lib/pool-sources.ts.
+//
 // No imports: scripts/generate-last-known-good.mjs reads this file too.
-export const MIGRATION_ALLOYS: Record<string, { from: string; to: string }> = {
+export const MIGRATION_ALLOYS: Record<
+  string,
+  { from: string; to: string; redemption?: boolean; created: string }
+> = {
   // allSTARS: STARS.og (Stargaze chain) to STARS (Cosmos Hub).
   "3471": {
     from: "ibc/987C17B11ABC2B20019178ACE62929FE9840202CE79498E29FE8E5CB02B7C0A4",
     to: "ibc/68BAF19F76BAC04C4CEA06325EF91D43E8637AE43EAC7887CE6211B4B99E1EC0",
+    created: "2026-06-18",
   },
   // allDGN: DGN.old to DGN.
   "2886": {
     from: "ibc/3B95D63B520C283BCA86F8CD426D57584039463FD684A5CBA31D2780B86A1995",
     to: "ibc/CD6412358F33B372A355CF22786D8C19477C15092B56BD56188679EED8556964",
+    created: "2025-04-04",
   },
   // allMARS: MARS.old (Mars Hub) to MARS.
   "2156": {
     from: "ibc/573FCD90FACEE750F55A8864EF7D38265F07E5A9273FA0E8DAFD39951332B580",
     to: "ibc/B67DF59507B3755EEDE0866C449445BD54B4DA82CCEBA89D775E53DC35664255",
+    created: "2024-08-30",
+  },
+  // Stride wind-down redemption pools.
+  // stTIA: stTIA to TIA.
+  "3628": {
+    from: "ibc/698350B8A61D575025F3ED13E9AC9C0F45C89DEFE92F76D5838F1D3C1A7FF7C9",
+    to: "ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stTIA.cosmoshub: stTIA, routed via the Cosmos Hub, to TIA.
+  "3629": {
+    from: "ibc/BF4248AD0B82DA13594FF5085EE8D0816F06589DE4EF13F0F0821AC0BA23AEB1",
+    to: "ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stTIA.neutron: stTIA, routed via Neutron, to TIA.
+  "3630": {
+    from: "ibc/7CE7BE7E3E26CD56B1F9B24BB8D529D85D93E8684FC01462CAF5DB596F51F29F",
+    to: "ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stTIA.agoric: stTIA, routed via Agoric, to TIA.
+  "3631": {
+    from: "ibc/DD2404CBD8107D2D65CF2B1D593A958AB50A8A50D7CE759D754A1A75A232EE30",
+    to: "ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stTIA.celestia: stTIA, routed via Celestia, to TIA.
+  "3632": {
+    from: "ibc/7763FB1C2AE250EE5EF8CA149B31EB4238F1963D38668EA8E722DA53A354D11B",
+    to: "ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stTIA.dymension: stTIA, routed via Dymension, to TIA.
+  "3633": {
+    from: "ibc/794CA22165BE422F3477D30F4D0F31407223C22B82A59E33D1835537B849C900",
+    to: "ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stATOM: stATOM to ATOM.
+  "3634": {
+    from: "ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901",
+    to: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stATOM.cosmoshub: stATOM, routed via the Cosmos Hub, to ATOM.
+  "3635": {
+    from: "ibc/7451074F46885686D3B47B12A6BF74F6D36847ED1891AC612FCFAEB7FB551E14",
+    to: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stATOM.terra: stATOM, routed via Terra, to ATOM.
+  "3636": {
+    from: "ibc/6FFB21E2C0D8406F9CDF418C9371ED1F4544655D80F1621E7394E4B427D85FE2",
+    to: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stATOM.neutron: stATOM, routed via Neutron, to ATOM.
+  "3637": {
+    from: "ibc/8FCFAF3AE6BA4C5BDFF85B41449FBACE547E2BAC23895E839230404FB0EC3837",
+    to: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stATOM.agoric: stATOM, routed via Agoric, to ATOM.
+  "3638": {
+    from: "ibc/C86C2FA56D954AB05960450215E63605528CB3481694ABEA87CE4DB0EF17D265",
+    to: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stDYDX: stDYDX to DYDX.
+  "3639": {
+    from: "ibc/980E82A9F8E7CA8CD480F4577E73682A6D3855A267D1831485D7EBEF0E7A6C2C",
+    to: "ibc/831F0B1BBB1D08A2B75311892876D71565478C532967545476DF4C2D7492E48C",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stDYDX.cosmoshub: stDYDX, routed via the Cosmos Hub, to DYDX.
+  "3640": {
+    from: "ibc/CCDF3314561B67BE2186A8B7369C2F87C50B363CE173F06D19C2A04CB5B0891E",
+    to: "ibc/831F0B1BBB1D08A2B75311892876D71565478C532967545476DF4C2D7492E48C",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stISLM: stISLM to ISLM.
+  "3641": {
+    from: "ibc/245C3CA604AAB4BB9EEA5E86F23F52D59253D8722C8FC9C4E3E69F77C5CD3D2F",
+    to: "ibc/69110FF673D70B39904FF056CFDFD58A90BEC3194303F45C32CB91B8B0A738EA",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stINJ: stINJ to INJ.
+  "3642": {
+    from: "ibc/C04DFC9BCD893E57F2BEFE40F63EFD18D2768514DBD5F63ABD2FF7F48FC01D36",
+    to: "ibc/64BA6E31FE887D66C6F8F31C7B1A80C7CA179239677B4088BB55F5EA07DBE273",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stINJ.cosmoshub: stINJ, routed via the Cosmos Hub, to INJ.
+  "3643": {
+    from: "ibc/DC697DA4D4353E3817B0CB3D08AAE9E133729BF1315EBA5172FBDA9C800D86B0",
+    to: "ibc/64BA6E31FE887D66C6F8F31C7B1A80C7CA179239677B4088BB55F5EA07DBE273",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stJUNO: stJUNO to JUNO.
+  "3644": {
+    from: "ibc/84502A75BCA4A5F68D464C00B3F610CE2585847D59B52E5FFB7C3C9D2DDCD3FE",
+    to: "ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94BED",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stBAND: stBAND to BAND.
+  "3645": {
+    from: "ibc/603140E681973C7A3A33B06B1D377AAD0F6AC376119735CECC04C9184A1AB080",
+    to: "ibc/F867AE2112EFE646EC71A25CD2DFABB8927126AC1E19F1BBF0FF693A4ECA05DE",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stBAND.cosmoshub: stBAND, routed via the Cosmos Hub, to BAND.
+  "3646": {
+    from: "ibc/1D49DDF2137C4D746EB61D466A535D3707B6A1F394478289BD07BFCF0D418BB4",
+    to: "ibc/F867AE2112EFE646EC71A25CD2DFABB8927126AC1E19F1BBF0FF693A4ECA05DE",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stOSMO: stOSMO to OSMO.
+  "3647": {
+    from: "ibc/D176154B0C63D1F9C6DCFB4F70349EBF2E2B5A87A05902F57A6AE92B863E9AEC",
+    to: "uosmo",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stOSMO.cosmoshub: stOSMO, routed via the Cosmos Hub, to OSMO.
+  "3648": {
+    from: "ibc/A35AB3D05B7799505B5E98B9853E5BA7080CA6E96A3F5D581EC2696557214492",
+    to: "uosmo",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stOSMO.secret: stOSMO, routed via Secret, to OSMO.
+  "3649": {
+    from: "ibc/56A305EA18BDB5ACBAB0909DA14CA1659F8058B2BEE4C6329D9BFA4EE5158621",
+    to: "uosmo",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stLUNA: stLUNA to LUNA.
+  "3650": {
+    from: "ibc/C491E7582E94AE921F6A029790083CDE1106C28F3F6C4AD7F1340544C13EC372",
+    to: "ibc/785AFEC6B3741100D15E7AF01374E3C4C36F24888E96479B1C33F5C71F364EF9",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stLUNA.terra: stLUNA, routed via Terra, to LUNA.
+  "3651": {
+    from: "ibc/231E2D37832CB212FEBAB3FC26A73758A15E50072DAAB4186028C304E0306288",
+    to: "ibc/785AFEC6B3741100D15E7AF01374E3C4C36F24888E96479B1C33F5C71F364EF9",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stSOMM: stSOMM to SOMM.
+  "3652": {
+    from: "ibc/5A0060579D24FBE5268BEA74C3281E7FE533D361C41A99307B4998FEC611E46B",
+    to: "ibc/9BBA9A1C257E971E38C1422780CE6F0B0686F0A3085E2D61118D904BFE0F5F5E",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stSAGA: stSAGA to SAGA.
+  "3653": {
+    from: "ibc/2CD9F8161C3FC332E78EF0C25F6E684D09379FB2F56EF9267E7EC139642EC57B",
+    to: "ibc/094FB70C3006906F67F5D674073D2DAFAFB41537E7033098F5C752F211E7B6C2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stATOM.secret: stATOM, routed via Secret, to ATOM.
+  "3654": {
+    from: "ibc/8AEB813EE960508AEDC1C2EB605788CE6A32F4E632583336D840BE4B8EC24CC7",
+    to: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stISLM.haqq: stISLM, routed via Haqq, to ISLM.
+  "3655": {
+    from: "ibc/5A2F817CDD856A83D06AB7DA6AB7B3C26DACE67CBBA897AB07BA66E249F0063B",
+    to: "ibc/69110FF673D70B39904FF056CFDFD58A90BEC3194303F45C32CB91B8B0A738EA",
+    created: "2026-10-08",
+    redemption: true,
+  },
+  // stINJ.secret: stINJ, routed via Secret, to INJ.
+  "3656": {
+    from: "ibc/CA5D0BBEC26DECB072BA6E73F61E827ADB8154DFE22EC87E44BAED3E15D0E02B",
+    to: "ibc/64BA6E31FE887D66C6F8F31C7B1A80C7CA179239677B4088BB55F5EA07DBE273",
+    created: "2026-10-08",
+    redemption: true,
   },
 }

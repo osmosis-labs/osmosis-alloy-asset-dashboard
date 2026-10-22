@@ -27,7 +27,7 @@ import {
   migrationAlloyAsset,
   parseReserveCoins,
 } from "@/lib/pool-build"
-import { reserveAmount } from "@/lib/pool-sources"
+import { reserveValue } from "@/lib/pool-sources"
 import {
   fetchLcd,
   fetchWithRetry,
@@ -114,10 +114,13 @@ const dropRedundantLiveSnapshot = (
 // Variants carry the frontend's display name ("USDC (Noble)"); the
 // chain-registry name is only the fallback. Only reserve coins are renamed:
 // the alloy keeps its registry name.
-// Variants ordered from most to least prevalent in the pool. The variants of
-// one alloy share a unit, so display amounts compare directly.
-const byPrevalence = <T extends { currency: CurrencyAmount }>(coins: T[]) =>
-  _.sortBy(coins, (c) => -reserveAmount(c.currency))
+// Variants ordered from most to least prevalent in the pool, in alloy units
+// (reserveValue: a redemption pool's stToken counts at its rate).
+const byPrevalence = <
+  T extends { currency: CurrencyAmount; unitRate?: number },
+>(
+  coins: T[]
+) => _.sortBy(coins, (c) => -reserveValue(c))
 
 const withFrontendName = (
   asset: AssetWithDecimal | undefined,
@@ -205,15 +208,32 @@ const fillPoolOverview = async (
   // "unknown" when the factors could not be read: the pool stays listed (a
   // transient LCD failure must not move it to the unsupported table), but its
   // decimals are not marked verified, so the swap form leaves it out.
+  //
+  // A redemption pool's stToken carries the redemption rate in its factor, so
+  // only the native and the alloy, which share a unit, are checked; the
+  // stToken's decimals are checked against the native's in
+  // migrationAlloyAsset.
+  const checkedCoins = migration?.redemption
+    ? reserveCoins.filter(
+        (c) => c.currency.currency.coinMinimalDenom === migration.to
+      )
+    : reserveCoins
+  const factors =
+    !alloyAssetDetail ||
+    isBelowMinTvl ||
+    hasUnknownDecimals ||
+    decimalSourcesDisagree.length > 0
+      ? null
+      : await getNormalizationFactors(pool.raw.contract_address)
   const normalization =
     !alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals
       ? "unknown"
       : decimalSourcesDisagree.length > 0
         ? "mismatch"
         : checkNormalization(
-            await getNormalizationFactors(pool.raw.contract_address),
+            factors,
             [
-              ...reserveCoins.map((c) => ({
+              ...checkedCoins.map((c) => ({
                 denom: c.currency.currency.coinMinimalDenom,
                 decimals: c.currency.currency.coinDecimals,
               })),
@@ -223,11 +243,20 @@ const fillPoolOverview = async (
           )
   const hasMismatchedNormalization = normalization === "mismatch"
 
+  // A redemption pool's shares and totals need each variant's rate. Without
+  // readable factors they would silently count an stToken as one alloy, so
+  // the pool is unsupported for this build rather than shown wrong.
+  const unitRates = migration?.redemption
+    ? redemptionUnitRates(factors, alloyDenom, reserveCoins, pool.id)
+    : undefined
+  const hasUnknownRates = !!migration?.redemption && !unitRates
+
   if (
     !alloyAssetDetail ||
     isBelowMinTvl ||
     hasUnknownDecimals ||
-    hasMismatchedNormalization
+    hasMismatchedNormalization ||
+    hasUnknownRates
   ) {
     return {
       id: pool.id,
@@ -248,7 +277,16 @@ const fillPoolOverview = async (
     } as NotSupportedPoolOverview
   }
 
-  const reserveDenoms = reserveCoins.map(
+  const valuedCoins = unitRates
+    ? byPrevalence(
+        reserveCoins.map((c) => ({
+          ...c,
+          unitRate: unitRates[c.currency.currency.coinMinimalDenom],
+        }))
+      )
+    : reserveCoins
+
+  const reserveDenoms = valuedCoins.map(
     (c) => c.currency.currency.coinMinimalDenom
   )
 
@@ -313,7 +351,11 @@ const fillPoolOverview = async (
   if (alloyAssetPrice && Number(alloyAssetPrice?.amount) > 1000000)
     alloyAssetPrice = null
   if (!alloyAssetPrice) {
-    const foundAssetPrice = _.chain(prices).values().compact().mean().value()
+    // A redemption pool's alloy shares the native's unit; its stToken is worth
+    // more, so averaging the two would overprice the alloy.
+    const foundAssetPrice = migration?.redemption
+      ? (prices as Record<string, number>)[migration.to]
+      : _.chain(prices).values().compact().mean().value()
     if (foundAssetPrice) {
       alloyAssetPrice = {
         fiat: {
@@ -342,10 +384,11 @@ const fillPoolOverview = async (
   return {
     id: pool.id,
     kind,
+    ...(migration && { migration }),
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
-    reserveCoins,
+    reserveCoins: valuedCoins,
     ...market,
     liquidityChart,
     prices,
@@ -357,11 +400,54 @@ const fillPoolOverview = async (
     decimalsVerified: normalization === "match",
     status: {
       ...contractStatus,
+      payoutDenoms: redemptionPayoutDenoms(
+        migration,
+        contractStatus.corruptedDenoms
+      ),
       alloy: statusMap?.[alloyDenom] ?? null,
       reserves: statusMap ? _.pick(statusMap, reserveDenoms) : {},
       flagsUnavailable: statusMap === null,
     },
   } as PoolOverview
+}
+
+// A redemption pool's native, when the moderator has marked it corrupted: the
+// one-way setup, where stTokens are swapped in for it and it can only be paid
+// out (see PoolStatus.payoutDenoms). Empty for every other pool.
+const redemptionPayoutDenoms = (
+  migration: { to: string; redemption?: boolean } | undefined,
+  corruptedDenoms: string[] | null
+) =>
+  migration?.redemption && corruptedDenoms?.includes(migration.to)
+    ? [migration.to]
+    : []
+
+// Alloy units per one of each variant of a redemption pool: the alloy's
+// normalization factor over the variant's (the contract converts amounts by
+// that ratio; the variants share the alloy's decimals, checked in
+// migrationAlloyAsset). Undefined when the factors could not be read or a
+// variant has none.
+const redemptionUnitRates = (
+  factors: Record<string, string> | null,
+  alloyDenom: string,
+  coins: { currency: CurrencyAmount }[],
+  poolId: string
+): Record<string, number> | undefined => {
+  const alloyFactor = factors?.[alloyDenom]
+  if (!factors || !alloyFactor) return undefined
+  const rates: Record<string, number> = {}
+  for (const c of coins) {
+    const denom = c.currency.currency.coinMinimalDenom
+    const factor = factors[denom]
+    if (!factor) {
+      console.error(
+        `[fillPoolOverview] pool ${poolId}: no normalization factor for ${denom}`
+      )
+      return undefined
+    }
+    rates[denom] = new BigNumber(alloyFactor).div(factor).toNumber()
+  }
+  return rates
 }
 
 // Whether the contract's normalization factors agree with the assetlist

@@ -8,11 +8,17 @@ import {
 } from "@/constants/status"
 import { TooltipArrow } from "@radix-ui/react-tooltip"
 import _ from "lodash"
-import { CircleHelp, ShieldAlert, Snowflake, TriangleAlert } from "lucide-react"
+import {
+  ArrowRightFromLine,
+  CircleHelp,
+  ShieldAlert,
+  Snowflake,
+  TriangleAlert,
+} from "lucide-react"
 
 import { AssetStatus } from "@/types/asset"
 import { PoolOverview, PoolStatus } from "@/types/pool"
-import { variantSymbol } from "@/lib/pool-sources"
+import { isCorruptedVariant, variantSymbol } from "@/lib/pool-sources"
 import { Badge, BadgeProps } from "@/components/ui/badge"
 import {
   Tooltip,
@@ -117,7 +123,8 @@ const AssetStatusLines = ({ status }: { status: AssetStatus }) => {
 }
 
 // Pool-level badges: frozen / unknown (from the contract) and the alloyed
-// denom's own assetlist flags, plus a count of corrupted constituents.
+// denom's own assetlist flags, plus a count of corrupted constituents and,
+// on a redemption pool, its payout reserve.
 const PoolStatusBadges = ({
   pool,
   size = "sm",
@@ -131,7 +138,10 @@ const PoolStatusBadges = ({
   // runtime last-known-good entry). Unknown is reported as unknown.
   const status = pool.status ?? null
   const alloyStatus = status?.alloy ?? null
-  const corrupted = status?.corruptedDenoms ?? []
+  const corrupted = (status?.corruptedDenoms ?? []).filter((d) =>
+    isCorruptedVariant(status, d)
+  )
+  const payouts = status?.payoutDenoms ?? []
   const symbolByDenom = _.chain(pool.reserveCoins ?? [])
     .keyBy((c) => c.asset?.base ?? c.currency.currency.coinMinimalDenom)
     .mapValues((c) => variantSymbol(c))
@@ -217,23 +227,54 @@ const PoolStatusBadges = ({
           </ul>
         </StatusTooltip>
       )}
+      {payouts.length > 0 && (
+        <StatusTooltip
+          title={POOL_STATUS.payout.title}
+          trigger={
+            <Badge size={size} variant="secondary" className="gap-1">
+              <ArrowRightFromLine className="size-3" aria-hidden /> Redeem Only
+            </Badge>
+          }
+        >
+          <p className="text-xs">{POOL_STATUS.payout.description}</p>
+          <ul className="list-inside list-disc font-mono text-xs">
+            {payouts.map((d) => (
+              <li key={d}>{symbolByDenom[d] ?? d}</li>
+            ))}
+          </ul>
+        </StatusTooltip>
+      )}
     </>
   )
 }
 PoolStatusBadges.displayName = "PoolStatusBadges"
 
-// Constituent-level badges: corrupted (from the contract) and the assetlist
-// flags for that denom.
+// Constituent-level badges: corrupted or redemption payout (from the
+// contract) and the assetlist flags for that denom.
 const AssetStatusBadges = ({
   status,
   corrupted = false,
+  payout = false,
   size = "xs",
 }: {
   status?: AssetStatus | null
   corrupted?: boolean
+  payout?: boolean
   size?: Size
 }) => (
   <>
+    {payout && (
+      <StatusTooltip
+        title={POOL_STATUS.payout.title}
+        trigger={
+          <Badge size={size} variant="secondary" className="gap-1">
+            <ArrowRightFromLine className="size-3" aria-hidden /> Payout
+          </Badge>
+        }
+      >
+        <p className="text-xs">{POOL_STATUS.payout.description}</p>
+      </StatusTooltip>
+    )}
     {corrupted && (
       <StatusTooltip
         title={POOL_STATUS.corrupted.title}

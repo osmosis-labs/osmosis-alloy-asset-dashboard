@@ -44,13 +44,14 @@ export const parseReserveCoins = (pool: RawPoolOverview) =>
 
 // The alloy asset of a migration pool. Its alloyed denom has no assetlist
 // entry, so it is described from the pool's two variants: named after the
-// replacement token, with its image. Undefined (the pool is then listed as
+// replacement token, with its image (a redemption pool is named after the
+// stToken it redeems, with its image). Undefined (the pool is then listed as
 // unsupported) unless both configured variants are in the pool with the same
 // decimals.
 export const migrationAlloyAsset = (
   pool: RawPoolOverview,
   alloyDenom: string,
-  migration: { from: string; to: string },
+  migration: { from: string; to: string; redemption?: boolean },
   assetMap: Record<string, AssetWithDecimal>
 ): AssetWithDecimal | undefined => {
   const coins = parseReserveCoins(pool).map((c) => c.currency)
@@ -62,13 +63,18 @@ export const migrationAlloyAsset = (
     to.coinName ?? assetMap[to.coinMinimalDenom]?.name ?? to.coinDenom
   const fromName =
     from.coinName ?? assetMap[from.coinMinimalDenom]?.name ?? from.coinDenom
+  const named = migration.redemption ? from : to
   return {
     base: alloyDenom,
     denom: alloyDenom,
     display: symbol,
     symbol,
-    name: `${toName} Migration`,
-    description: `Swaps ${from.coinDenom} (${fromName}) for ${to.coinDenom} 1:1. This pool exists for the token migration: its alloyed token, ${symbol}, is not a listed asset.`,
+    name: migration.redemption
+      ? `${fromName} Redemption`
+      : `${toName} Migration`,
+    description: migration.redemption
+      ? `Redeems ${from.coinDenom} (${fromName}) for ${to.coinDenom} at the redemption rate set in the pool, not 1:1. This pool exists for the Stride wind-down: its alloyed token, ${symbol}, is not a listed asset.`
+      : `Swaps ${from.coinDenom} (${fromName}) for ${to.coinDenom} 1:1. This pool exists for the token migration: its alloyed token, ${symbol}, is not a listed asset.`,
     denom_units: [
       { denom: alloyDenom, exponent: 0 },
       { denom: symbol, exponent: to.coinDecimals },
@@ -77,7 +83,7 @@ export const migrationAlloyAsset = (
     type_asset: "sdk.coin",
     address: pool.raw.contract_address,
     traces: [],
-    images: assetMap[to.coinMinimalDenom]?.images ?? [],
+    images: assetMap[named.coinMinimalDenom]?.images ?? [],
     keywords: [],
   }
 }

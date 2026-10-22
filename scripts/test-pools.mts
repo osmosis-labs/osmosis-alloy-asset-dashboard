@@ -117,11 +117,30 @@ test("a migration pool missing a variant, or with mixed decimals, is not built",
   )
 })
 
+test("a redemption alloy is named after the stToken it redeems, not 1:1", () => {
+  const sttia = MIGRATION_ALLOYS["3628"]
+  const asset = migrationAlloyAsset(
+    rawPool(
+      coin(sttia.from, "stTIA", "Stride Staked TIA"),
+      coin(sttia.to, "TIA", "Celestia")
+    ),
+    "factory/osmo1x/alloyed/stTIA",
+    sttia,
+    { [sttia.from]: { images } }
+  )
+  assert.equal(asset.symbol, "stTIA")
+  assert.equal(asset.name, "Stride Staked TIA Redemption")
+  assert.deepEqual(asset.images, images)
+  assert.match(asset.description, /stTIA .*for TIA at the redemption rate/)
+  assert.match(asset.description, /not 1:1/)
+})
+
 test("every configured migration pairs two different full denoms", () => {
   for (const [poolId, { from, to }] of Object.entries(MIGRATION_ALLOYS)) {
     assert.match(poolId, /^\d+$/)
     assert.match(from, /^ibc\/[0-9A-F]{64}$/, poolId)
-    assert.match(to, /^ibc\/[0-9A-F]{64}$/, poolId)
+    // stOSMO redeems for OSMO, the chain's native denom.
+    assert.match(to, /^(ibc\/[0-9A-F]{64}|uosmo)$/, poolId)
     assert.notEqual(from, to, poolId)
   }
 })
@@ -201,7 +220,16 @@ test("an unmapped reason code gets the app's generic sentence", () => {
   )
 })
 
-const { poolBacking, backingNote } = await import(
+const {
+  poolBacking,
+  backingNote,
+  reserveValue,
+  getPoolSources,
+  isCorruptedVariant,
+  isPayoutVariant,
+  migrationProgress,
+  isYoungMigration,
+} = await import(
   pathToFileURL(path.resolve("src/lib/pool-sources.ts")).href
 )
 
@@ -278,4 +306,138 @@ test("fully halted and corrupted variants are not backing", () => {
 test("no price at all is unknown, not zero", () => {
   const b = poolBacking(backingPool({ prices: {}, alloy: { price: null } }))
   assert.equal(b.usd, null)
+})
+
+// A redemption pool: 2 stTIA worth 1.5 TIA each, and 1 TIA (6 decimals).
+const redemptionPool = (over: Record<string, unknown> = {}) => ({
+  reserveCoins: [
+    {
+      currency: {
+        amount: "2000000",
+        currency: {
+          coinMinimalDenom: "sttia",
+          coinDenom: "stTIA",
+          coinDecimals: 6,
+        },
+      },
+      unitRate: 1.5,
+    },
+    {
+      currency: {
+        amount: "1000000",
+        currency: {
+          coinMinimalDenom: "tia",
+          coinDenom: "TIA",
+          coinDecimals: 6,
+        },
+      },
+      unitRate: 1,
+    },
+  ],
+  prices: { sttia: 15, tia: 10 },
+  alloy: { price: { amount: "10" } },
+  status: { corruptedDenoms: [], reserves: {} },
+  ...over,
+})
+
+test("a redemption pool's stToken counts at its rate in alloy units", () => {
+  const [sttia, tia] = redemptionPool().reserveCoins
+  assert.equal(reserveValue(sttia), 3)
+  assert.equal(reserveValue(tia), 1)
+  // No rate: the variants share the alloy's unit.
+  assert.equal(reserveValue(backingPool().reserveCoins[0]), 3)
+  const groups = getPoolSources(redemptionPool(), "variant")
+  assert.deepEqual(
+    groups.map((g: { label: string; totalAmount: number }) => [
+      g.label,
+      g.totalAmount,
+    ]),
+    [
+      ["stTIA", 3],
+      ["TIA", 1],
+    ]
+  )
+})
+
+test("an unpriced stToken is backed at the alloy price times its rate", () => {
+  const b = poolBacking(redemptionPool({ prices: { tia: 10 } }))
+  assert.equal(b.usd, 2 * 10 * 1.5 + 1 * 10)
+  assert.deepEqual(b.atAlloyPrice, ["stTIA"])
+})
+
+test("a redemption pool's corrupted native is its payout, and stays backing", () => {
+  const status = {
+    corruptedDenoms: ["tia"],
+    payoutDenoms: ["tia"],
+    reserves: {},
+  }
+  assert.equal(isPayoutVariant(status, "tia"), true)
+  assert.equal(isCorruptedVariant(status, "tia"), false)
+  const b = poolBacking(redemptionPool({ status }))
+  assert.equal(b.usd, 2 * 15 + 1 * 10)
+  assert.deepEqual(b.unbacked, [])
+})
+
+test("a corrupted variant that is not a payout is still unbacked", () => {
+  const status = { corruptedDenoms: ["tia"], reserves: {} }
+  assert.equal(isCorruptedVariant(status, "tia"), true)
+  const b = poolBacking(redemptionPool({ status }))
+  assert.equal(b.usd, 2 * 15)
+  assert.deepEqual(b.unbacked, ["TIA"])
+})
+
+test("migration progress is the legacy token's share in alloy units", () => {
+  const migration = { from: "sttia", to: "tia", redemption: true }
+  // 2 stTIA at 1.5 (3 alloy units) against 1 TIA: 75% migrated, with
+  // $200 of backing (2 x $75 stTIA + 1 x $50 TIA).
+  const priced = { prices: { sttia: 75, tia: 50 }, migration }
+  assert.equal(migrationProgress({ ...redemptionPool(priced) }), 0.75)
+  assert.equal(migrationProgress(redemptionPool()), null)
+  const empty = redemptionPool(priced)
+  empty.reserveCoins.forEach((c) => (c.currency.amount = "0"))
+  assert.equal(migrationProgress(empty), 0)
+})
+
+test("migration progress is zero at $100 of TVL or less, unknown without prices", () => {
+  const migration = {
+    from: "sttia",
+    to: "tia",
+    redemption: true,
+    created: new Date().toISOString().slice(0, 10),
+  }
+  // $40 of backing (2 x $15 + 1 x $10).
+  assert.equal(migrationProgress(redemptionPool({ migration })), 0)
+  assert.equal(
+    migrationProgress(
+      redemptionPool({ migration, prices: {}, alloy: { price: null } })
+    ),
+    null
+  )
+})
+
+test("a pool 90 days old or more shows its real share at any TVL", () => {
+  const now = Date.parse("2026-10-22T00:00:00Z")
+  const old = { from: "sttia", to: "tia", created: "2026-06-18" }
+  const young = { ...old, created: "2026-10-08" }
+  assert.equal(isYoungMigration({ migration: old }, now), false)
+  assert.equal(isYoungMigration({ migration: young }, now), true)
+  assert.equal(isYoungMigration({ migration: { from: "a", to: "b" } }, now), true)
+  // $40 of backing: the young pool reads 0, the old one its 75% share.
+  assert.equal(migrationProgress(redemptionPool({ migration: young }), now), 0)
+  assert.equal(migrationProgress(redemptionPool({ migration: old }), now), 0.75)
+  // An old pool needs no prices to show its share.
+  assert.equal(
+    migrationProgress(
+      redemptionPool({ migration: old, prices: {}, alloy: { price: null } }),
+      now
+    ),
+    0.75
+  )
+})
+
+test("every configured migration has a creation date", () => {
+  for (const [poolId, { created }] of Object.entries(MIGRATION_ALLOYS)) {
+    assert.match(created, /^\d{4}-\d{2}-\d{2}$/, poolId)
+    assert.ok(Number.isFinite(Date.parse(created)), poolId)
+  }
 })

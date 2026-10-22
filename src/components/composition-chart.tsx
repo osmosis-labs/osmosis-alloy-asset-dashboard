@@ -89,6 +89,12 @@ const CompositionChart = ({
         ])
       ),
     }
+    // Stacked in alloy units (reserveValue in @/lib/pool-sources): a
+    // redemption pool's stToken counts at its rate. History is scaled by the
+    // current rate, as the snapshots hold token amounts only.
+    const unitRates = _.fromPairs(
+      pool.reserveCoins.map((c) => [variantDenom(c) ?? "", c.unitRate ?? 1])
+    )
     const days = dateRangeDays(range)
     const from = days === null ? -Infinity : Date.now() - days * 86_400_000
     const points = [...composition.points.filter((p) => p.time >= from), now]
@@ -97,7 +103,7 @@ const CompositionChart = ({
       const row: Record<string, number> = { time: p.time }
       for (const [denom, value] of Object.entries(p.values)) {
         const key = groupOf(denom)
-        row[key] = (row[key] ?? 0) + value
+        row[key] = (row[key] ?? 0) + value * (unitRates[denom] ?? 1)
       }
       return row
     })

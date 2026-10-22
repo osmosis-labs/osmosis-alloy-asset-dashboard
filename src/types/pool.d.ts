@@ -47,6 +47,12 @@ export type PoolStatus = {
   // increase in amount or weight; it can only leave the pool. null = the query
   // failed or the code id does not support it.
   corruptedDenoms: string[] | null
+  // Redemption payouts: a redemption pool's native that the moderator marked
+  // corrupted on purpose, so the pool only redeems (stToken in, native out).
+  // Also in corruptedDenoms, which reports the contract as is; the UI shows
+  // these as the payout reserve rather than as corrupted, and counts them as
+  // backing. Absent on overviews built before this existed.
+  payoutDenoms?: string[]
   // Frontend-assetlist flags for the alloyed denom itself.
   alloy: AssetStatus | null
   // Frontend-assetlist flags per constituent, keyed by minimal denom.
@@ -59,7 +65,8 @@ export type PoolStatus = {
 
 // "alloy": an alloyed asset listed on the overview. "migration": an alloy that
 // only converts a legacy token into its replacement 1:1 (allSTARS: STARS.og to
-// STARS); its alloyed denom is plumbing, not a listed asset. Migration alloys
+// STARS), or redeems an stToken at Stride's redemption rate (stTIA to TIA);
+// its alloyed denom is plumbing, not a listed asset. Migration alloys
 // have pool pages and their own section on /pools, but are not on the
 // overview.
 export type PoolKind = "alloy" | "migration"
@@ -68,6 +75,16 @@ export type PoolOverview = {
   id: string
   // Absent on overviews cached before kinds existed: treat as "alloy".
   kind?: PoolKind
+  // A migration pool's legacy (`from`) and replacement (`to`) denoms, from
+  // src/constants/migration.ts. Absent on alloys and on overviews built
+  // before this existed.
+  migration?: {
+    from: string
+    to: string
+    redemption?: boolean
+    // Pool creation date (UTC). Absent on overviews built before it existed.
+    created?: string
+  }
   type: "cosmwasm-transmuter" | "cosmwasm"
   contractAddress: string
   codeId: string
@@ -77,6 +94,10 @@ export type PoolOverview = {
     // Origin chain and bridge/issuer, resolved through the chain registry.
     // Absent on overviews built before this existed or when resolution failed.
     provenance?: { origin: string | null; issuer: string | null } | null
+    // Alloy units per one of this variant, from the contract's normalization
+    // factors. Set only on redemption pools, whose stToken is worth more than
+    // one alloy; absent means 1 (the variants of an alloy share its unit).
+    unitRate?: number
   }[]
   spreadFactor: Rate
   totalFiatValueLocked: FiatAmount
