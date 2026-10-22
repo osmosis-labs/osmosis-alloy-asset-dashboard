@@ -15,7 +15,8 @@ const json = (body: unknown, status = 200) =>
 export async function loader({ request, params }: Route.LoaderArgs) {
   const range = new URL(request.url).searchParams.get("range") ?? "24h"
   const id = params.id
-  if (!(range in ACTIVITY_RANGE_DAYS) || !/^\d+$/.test(id)) {
+  // Own keys only: `in` would accept inherited names such as "constructor".
+  if (!Object.hasOwn(ACTIVITY_RANGE_DAYS, range) || !/^\d+$/.test(id)) {
     return json({ error: "bad request" }, 400)
   }
   // Only pools the dashboard lists. Any other id would send the live

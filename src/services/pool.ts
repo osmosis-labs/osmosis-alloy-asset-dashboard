@@ -849,7 +849,9 @@ const readStoreActivity = async (
 ): Promise<PoolActivity> => {
   const coveredFrom = new Date(coveredFromIso).getTime()
   // null means "all" (from coveredFrom); `??` would turn it into 1 day.
-  const days = range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+  const days = Object.hasOwn(ACTIVITY_RANGE_DAYS, range)
+    ? ACTIVITY_RANGE_DAYS[range]
+    : 1
   const requested = days === null ? coveredFrom : Date.now() - days * DAY_MS
   const from = Math.max(requested, coveredFrom)
   const points = await readFlowPoints(poolId, new Date(from))
@@ -889,7 +891,9 @@ export const getPoolInOutAssets = async (
 ): Promise<PoolActivity> => {
   const coveredFrom = await storeCoveredFrom(poolId)
   if (coveredFrom !== null) {
-    const days = range in ACTIVITY_RANGE_DAYS ? ACTIVITY_RANGE_DAYS[range] : 1
+    const days = Object.hasOwn(ACTIVITY_RANGE_DAYS, range)
+      ? ACTIVITY_RANGE_DAYS[range]
+      : 1
     const cache =
       days !== null && days <= 7
         ? STORE_ACTIVITY_CACHE.short

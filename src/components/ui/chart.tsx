@@ -66,9 +66,23 @@ const ChartContainer = React.forwardRef<
 })
 ChartContainer.displayName = "Chart"
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+// Config keys and colors can come from third-party registry data (issuer
+// names, variant symbols, assetlist theme colors), and this CSS is written
+// into a raw <style> element. Only keys that are plain CSS identifiers and
+// colors in the forms this app produces itself are emitted; anything else is
+// dropped, so registry text can never close the element or inject rules.
+const SAFE_KEY = /^[A-Za-z0-9_-]+$/
+const PALETTE_COLOR = String.raw`hsl\(var\(--[a-z0-9-]+\)\)`
+const SAFE_COLOR = new RegExp(
+  String.raw`^(#[0-9a-fA-F]{3,8}|${PALETTE_COLOR}|color-mix\(in srgb, ${PALETTE_COLOR} \d{1,3}%, black\))$`
+)
+
+export const isSafeChartColor = (color: unknown): color is string =>
+  typeof color === "string" && SAFE_COLOR.test(color)
+
+export const buildChartCss = (id: string, config: ChartConfig) => {
   const colorConfig = Object.entries(config).filter(
-    ([_, config]) => config.theme || config.color
+    ([key, config]) => SAFE_KEY.test(key) && (config.theme || config.color)
   )
 
   if (!colorConfig.length) {
@@ -76,27 +90,36 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
+    Object.entries(THEMES)
+      .map(
+        ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    return isSafeChartColor(color) ? `  --color-${key}: ${color};` : null
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `
-          )
-          .join("\n"),
-      }}
-    />
+      )
+      .join("\n")
+      // Backstop: no markup can survive inside the element.
+      .replaceAll("<", "\\3C ")
   )
+}
+
+const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+  const css = buildChartCss(id, config)
+
+  if (!css) {
+    return null
+  }
+
+  return <style dangerouslySetInnerHTML={{ __html: css }} />
 }
 
 const ChartTooltip = RechartsPrimitive.Tooltip

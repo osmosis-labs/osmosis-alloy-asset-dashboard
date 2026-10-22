@@ -83,11 +83,16 @@ const sqsQuote = () => ({
   ],
 })
 
+const SAME_DECIMALS = { in: 6, out: 6 }
+
 test("the swap route is built from the selection, not the quote", () => {
-  assert.deepEqual(directSwapFromQuote(sqsQuote(), quoteFor100), {
-    routes: [{ poolId: "1816", tokenOutDenom: "factory/x/alloyed/allUSDT" }],
-    minAmountOut: "100000000",
-  })
+  assert.deepEqual(
+    directSwapFromQuote(sqsQuote(), quoteFor100, SAME_DECIMALS),
+    {
+      routes: [{ poolId: "1816", tokenOutDenom: "factory/x/alloyed/allUSDT" }],
+      minAmountOut: "100000000",
+    }
+  )
 })
 
 test("a quote routed elsewhere or for another swap is refused", () => {
@@ -103,12 +108,13 @@ test("a quote routed elsewhere or for another swap is refused", () => {
     "another input amount": (q) => (q.amount_in.amount = "1"),
     "a zero output": (q) => (q.amount_out = "0"),
     "a non-integer output": (q) => (q.amount_out = "1.5"),
+    "more out than in": (q) => (q.amount_out = "100000001"),
   }
   for (const [name, mutate] of Object.entries(cases)) {
     const q = sqsQuote()
     mutate(q)
     assert.throws(
-      () => directSwapFromQuote(q, quoteFor100),
+      () => directSwapFromQuote(q, quoteFor100, SAME_DECIMALS),
       /does not match/,
       name
     )
@@ -127,4 +133,44 @@ test("an alloyed denom names its transmuter contract", () => {
     null
   )
   assert.equal(alloyContract(`factory/${contract}/alloyed/a/b`), null)
+})
+
+test("the output is bounded by 1:1 across differing decimals", () => {
+  // nBTC (14 decimals) into the 8-decimal alloy: 1.23456789012345 in.
+  const input = { ...quoteFor100, amountIn: "123456789012345" }
+  const quote = (amount_out: string) => ({
+    ...sqsQuote(),
+    amount_in: { denom: "ibc/A", amount: "123456789012345" },
+    amount_out,
+  })
+  const decimals = { in: 14, out: 8 }
+  assert.equal(
+    directSwapFromQuote(quote("123456789"), input, decimals).minAmountOut,
+    "123456789"
+  )
+  // Less than 1:1 is allowed (the chain pays 1:1 regardless).
+  assert.equal(
+    directSwapFromQuote(quote("123456000"), input, decimals).minAmountOut,
+    "123456000"
+  )
+  assert.throws(
+    () => directSwapFromQuote(quote("123456790"), input, decimals),
+    /does not match/
+  )
+  // And the other way: 8-decimal alloy out to a 14-decimal variant.
+  const exit = { ...quoteFor100, amountIn: "100000000" }
+  const exitQuote = { ...sqsQuote(), amount_out: "100000000000000" }
+  assert.equal(
+    directSwapFromQuote(exitQuote, exit, { in: 8, out: 14 }).minAmountOut,
+    "100000000000000"
+  )
+  assert.throws(
+    () =>
+      directSwapFromQuote(
+        { ...exitQuote, amount_out: "100000000000001" },
+        exit,
+        { in: 8, out: 14 }
+      ),
+    /does not match/
+  )
 })
