@@ -5,7 +5,9 @@
 // Returned values are stored as JSON. A thrown error is not stored: a failed
 // refresh leaves the previous value in place and serves it stale, and a miss
 // that throws is retried on the next call. That is the contract the pool and
-// asset-list caches rely on to avoid caching an empty dashboard.
+// asset-list caches rely on to avoid caching an empty dashboard. With
+// `staleOnError: false` a failed refresh throws instead, for data whose
+// absence the caller must be able to report (the assetlist halt flags).
 
 type DataCacheKv = {
   get(key: string, type: "text"): Promise<string | null>
@@ -20,7 +22,12 @@ declare global {
   var __DATA_CACHE__: DataCacheKv | undefined
 }
 
-type CacheOptions = { revalidate?: number | false; tags?: string[] }
+type CacheOptions = {
+  revalidate?: number | false
+  tags?: string[]
+  // Serve the expired value when a refresh fails (default true).
+  staleOnError?: boolean
+}
 
 type Entry = { v: unknown; exp: number }
 
@@ -88,7 +95,7 @@ export const dataCache = <Args extends unknown[], R>(
         }
         return value
       } catch (e) {
-        if (hit) return hit.v as R
+        if (hit && options?.staleOnError !== false) return hit.v as R
         throw e
       }
     })()

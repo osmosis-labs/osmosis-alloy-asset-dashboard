@@ -38,9 +38,8 @@ const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPo
 const BASE_ASSET_URL = "https://app.osmosis.zone"
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
-const BASE_PRICE_URL =
-  "https://sqsprod.osmosis.zone/tokens/prices?base={denoms}"
-const BASE_SQS_POOLS_URL = "https://sqsprod.osmosis.zone/pools?IDs={ids}"
+const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
+const BASE_SQS_POOLS_URL = "https://sqs.osmosis.zone/pools?IDs={ids}"
 const BASE_POOLMANAGER_POOL_URL =
   "https://osmosis-rest.publicnode.com/osmosis/poolmanager/v1beta1/pools/{poolId}"
 const BASE_ASSET_LIST =

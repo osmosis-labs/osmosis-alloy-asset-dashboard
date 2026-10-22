@@ -10,6 +10,7 @@ import useSWRImmutable from "swr/immutable"
 
 import { buildSwapPools } from "@/lib/swap-pools"
 import { Button } from "@/components/ui/button"
+import { DataFreshnessNotice } from "@/components/data-freshness"
 
 import { SwapCard } from "./swap-card"
 import WalletProvider from "./wallet-provider"
@@ -20,11 +21,11 @@ export function SwapPage({ initialPoolId }: { initialPoolId?: string }) {
   const { data, error, isValidating, mutate } = useSWRImmutable(
     "/api/pools",
     async () => {
-      const [pools, assets] = await Promise.all([
+      const [{ pools, source, builtAt }, assets] = await Promise.all([
         getPoolsFromAPI(),
         getAssetListUncached().then((d) => _.keyBy(d, "denom")),
       ])
-      return buildSwapPools(pools, assets)
+      return { pools: buildSwapPools(pools, assets), source, builtAt }
     }
   )
 
@@ -33,8 +34,11 @@ export function SwapPage({ initialPoolId }: { initialPoolId?: string }) {
       {/* Sits directly under the page heading, not centred in the space
           left below it. */}
       <div className="flex w-full flex-col items-center gap-6">
-        {data && data.length > 0 ? (
-          <SwapCard pools={data} initialPoolId={initialPoolId} />
+        {data && data.pools.length > 0 ? (
+          <>
+            <DataFreshnessNotice source={data.source} builtAt={data.builtAt} />
+            <SwapCard pools={data.pools} initialPoolId={initialPoolId} />
+          </>
         ) : error && !isValidating ? (
           <div className="flex flex-col items-center gap-3">
             <p className="text-muted-foreground">

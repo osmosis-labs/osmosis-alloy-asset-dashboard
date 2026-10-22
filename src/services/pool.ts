@@ -28,7 +28,12 @@ import {
   parseReserveCoins,
 } from "@/lib/pool-build"
 import { reserveAmount } from "@/lib/pool-sources"
-import { fetchLcd, fetchWithRetry, getAssetImageUrl } from "@/lib/utils"
+import {
+  fetchLcd,
+  fetchWithRetry,
+  getAssetImageUrl,
+  sqsHeaders,
+} from "@/lib/utils"
 
 import { getStoreCoverage, readFlowPoints, readSwaps } from "./activity-store"
 import {
@@ -47,7 +52,11 @@ import {
   SwapEvent,
   swapEventsFromTx,
 } from "./swap-rows"
-import { getPoolContractStatus, getTotalPoolLiquidity } from "./transmuter"
+import {
+  getNormalizationFactors,
+  getPoolContractStatus,
+  getTotalPoolLiquidity,
+} from "./transmuter"
 
 const MIN_LIQUIDITY = 10
 // Alloys with less than this much value locked are treated as unsupported
@@ -57,10 +66,12 @@ const MIN_SUPPORTED_TVL_USD = 10_000
 const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
-// The same SQS deployment the Osmosis frontend reads.
-const BASE_PRICE_URL =
-  "https://sqsprod.osmosis.zone/tokens/prices?base={denoms}"
-const BASE_SQS_POOLS_URL = "https://sqsprod.osmosis.zone/pools?IDs={ids}"
+// The public SQS deployment. The frontend's own host (sqsprod) answers 403 to
+// any request without an app.osmosis.zone or dashboard Origin, which a Worker
+// fetch never sends; the browser-side swap quotes (src/services/quote.ts) keep
+// using it. The integrator token is sent when set (sqsHeaders).
+const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
+const BASE_SQS_POOLS_URL = "https://sqs.osmosis.zone/pools?IDs={ids}"
 // Same LCD the contract queries use (src/services/transmuter.ts).
 const BASE_POOLMANAGER_POOL_URL =
   "https://osmosis-rest.publicnode.com/osmosis/poolmanager/v1beta1/pools/{poolId}"
@@ -116,7 +127,8 @@ const withFrontendName = (
 const fillPoolOverview = async (
   pool: RawPoolOverview,
   assetMap?: _.Dictionary<AssetWithDecimal>,
-  statusMap: Record<string, AssetStatus> = {},
+  // null: the frontend assetlist could not be read (flags unknown).
+  statusMap: Record<string, AssetStatus> | null = {},
   frontendNames: Record<string, string> = {},
   provenance: Record<string, Provenance> = {}
 ) => {
@@ -172,14 +184,51 @@ const fillPoolOverview = async (
   //   1. Dust alloys: less than MIN_SUPPORTED_TVL_USD of value locked
   //      (migration alloys are exempt).
   //   2. Any variant without decimals: its amounts cannot be shown.
+  //   3. Decimals that disagree with the contract's normalization factors, or
+  //      a variant whose pools-API decimals differ from its assetlist
+  //      decimals (the swap form converts amounts with the assetlist's):
+  //      shares, headroom and signed swap amounts would all be wrong.
   const tvlUsd = Number(market.totalFiatValueLocked.amount)
   const isBelowMinTvl =
     !migration && Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
   const hasUnknownDecimals = reserveCoins.some(
     (c) => typeof c.currency.currency.coinDecimals !== "number"
   )
+  const decimalSourcesDisagree = reserveCoins.filter(
+    (c) => c.asset && c.asset.decimal !== c.currency.currency.coinDecimals
+  )
+  if (decimalSourcesDisagree.length > 0) {
+    console.error(
+      `[fillPoolOverview] pool ${pool.id}: pools API and assetlist decimals differ for ${decimalSourcesDisagree.map((c) => c.currency.currency.coinMinimalDenom).join(", ")}`
+    )
+  }
+  // "unknown" when the factors could not be read: the pool stays listed (a
+  // transient LCD failure must not move it to the unsupported table), but its
+  // decimals are not marked verified, so the swap form leaves it out.
+  const normalization =
+    !alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals
+      ? "unknown"
+      : decimalSourcesDisagree.length > 0
+        ? "mismatch"
+        : checkNormalization(
+            await getNormalizationFactors(pool.raw.contract_address),
+            [
+              ...reserveCoins.map((c) => ({
+                denom: c.currency.currency.coinMinimalDenom,
+                decimals: c.currency.currency.coinDecimals,
+              })),
+              { denom: alloyDenom, decimals: alloyAssetDetail.decimal },
+            ],
+            pool.id
+          )
+  const hasMismatchedNormalization = normalization === "mismatch"
 
-  if (!alloyAssetDetail || isBelowMinTvl || hasUnknownDecimals) {
+  if (
+    !alloyAssetDetail ||
+    isBelowMinTvl ||
+    hasUnknownDecimals ||
+    hasMismatchedNormalization
+  ) {
     return {
       id: pool.id,
       type: pool.type,
@@ -230,7 +279,10 @@ const fillPoolOverview = async (
         console.error(`Error fetching liquidity chart: ${e}`)
         return []
       }),
-    fetchWithRetry(BASE_PRICE_URL.replace("{denoms}", reserveDenoms.join(",")))
+    fetchWithRetry(
+      BASE_PRICE_URL.replace("{denoms}", reserveDenoms.join(",")),
+      { headers: sqsHeaders() }
+    )
       .then(async (d) => {
         if (!d.ok) {
           console.warn(`Failed to fetch prices: ${d.status} ${d.statusText}`)
@@ -302,12 +354,40 @@ const fillPoolOverview = async (
       price: alloyAssetPrice,
     },
     limiters,
+    decimalsVerified: normalization === "match",
     status: {
       ...contractStatus,
-      alloy: statusMap[alloyDenom] ?? null,
-      reserves: _.pick(statusMap, reserveDenoms),
+      alloy: statusMap?.[alloyDenom] ?? null,
+      reserves: statusMap ? _.pick(statusMap, reserveDenoms) : {},
+      flagsUnavailable: statusMap === null,
     },
   } as PoolOverview
+}
+
+// Whether the contract's normalization factors agree with the assetlist
+// decimals: one display unit of every asset must normalize to the same amount
+// (factor / 10^decimals equal across assets). An asset the contract does not
+// list is a mismatch too. "unknown" when the factors could not be read.
+const checkNormalization = (
+  factors: Record<string, string> | null,
+  assets: { denom: string; decimals: number }[],
+  poolId: string
+): "match" | "mismatch" | "unknown" => {
+  if (!factors) return "unknown"
+  const units = assets.map(({ denom, decimals }) =>
+    factors[denom] === undefined
+      ? null
+      : new BigNumber(factors[denom]).shiftedBy(-decimals)
+  )
+  const [first] = units
+  const matches =
+    !!first && units.every((u) => u !== null && u.isEqualTo(first))
+  if (!matches) {
+    console.error(
+      `[fillPoolOverview] pool ${poolId}: normalization factors ${JSON.stringify(factors)} disagree with decimals ${JSON.stringify(assets)}`
+    )
+  }
+  return matches ? "match" : "mismatch"
 }
 
 // Migration pools the pools API leaves out (it drops pools it cannot price,
@@ -326,7 +406,8 @@ const getMigrationRawPools = async (
   let caps: Record<string, string> = {}
   try {
     const res = await fetchWithRetry(
-      BASE_SQS_POOLS_URL.replace("{ids}", poolIds.join(","))
+      BASE_SQS_POOLS_URL.replace("{ids}", poolIds.join(",")),
+      { headers: sqsHeaders() }
     )
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
     const data = (await res.json()) as {
@@ -563,7 +644,8 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
 //
 // Cache keys carry a version: the KV namespace is shared across deployments,
 // and entries from before migration kinds, nullable volumes and the $10k
-// cutoff must not be read.
+// cutoff must not be read. v3: entries from before fallback tiers dropped
+// their prices, and before the decimals checks, must not be read either.
 const getLastKnownGoodPools = dataCache(
   async (): Promise<PoolsOverviewResult> => {
     const fresh = await buildPoolsOverview()
@@ -573,7 +655,7 @@ const getLastKnownGoodPools = dataCache(
     }
     return fresh
   },
-  ["pools-overview-last-good-v2"],
+  ["pools-overview-last-good-v3"],
   {
     revalidate: 604800, // 7 days
   }
@@ -595,6 +677,19 @@ const getLastKnownGoodPools = dataCache(
 // fillPoolOverview field-for-field.
 const COMMITTED_SNAPSHOT =
   lastKnownGoodPoolsSnapshot as unknown as PoolsOverviewResult
+
+// A fallback tier's data can be days or weeks old. Supply, composition,
+// volumes and charts may be shown with their age (the freshness notice), but
+// prices must not: a stale price, and the TVL and USD values computed from it,
+// look as current as a live one. They are served as unknown instead.
+const withoutPrices = (result: PoolsOverviewResult): PoolsOverviewResult => ({
+  ...result,
+  pools: result.pools.map((p) => ({
+    ...p,
+    prices: {},
+    alloy: { ...p.alloy, price: null },
+  })),
+})
 
 // Resolves the best available overview WITHOUT caching, walking the fallback
 // tiers in preference order:
@@ -634,7 +729,7 @@ const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
   try {
     const cached = await getLastKnownGoodPools()
     if (hasAlloys(cached)) {
-      return { ...cached, source: "runtime" }
+      return withoutPrices({ ...cached, source: "runtime" })
     }
   } catch (e) {
     // No good snapshot has ever been cached, or its scheduled rebuild failed.
@@ -649,7 +744,7 @@ const resolvePoolsOverview = async (): Promise<PoolsOverviewResult> => {
     console.warn(
       "[getPoolsOverview] Falling back to committed last-known-good snapshot"
     )
-    return { ...COMMITTED_SNAPSHOT, source: "snapshot" }
+    return withoutPrices({ ...COMMITTED_SNAPSHOT, source: "snapshot" })
   }
 
   return result
@@ -674,7 +769,8 @@ export const getPoolsOverview = dataCache(
 
     return result
   },
-  ["pools-overview-v2"],
+  // v3: see getLastKnownGoodPools.
+  ["pools-overview-v3"],
   {
     revalidate: 1800,
   }

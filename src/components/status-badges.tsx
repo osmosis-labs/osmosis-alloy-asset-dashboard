@@ -176,6 +176,30 @@ const PoolStatusBadges = ({
           <AssetStatusLines status={alloyStatus} />
         </StatusTooltip>
       )}
+      {status !== null && status.corruptedDenoms === null && (
+        <StatusTooltip
+          title={POOL_STATUS.corruptedUnknown.title}
+          trigger={
+            <Badge size={size} variant="outline" className="gap-1">
+              <CircleHelp className="size-3" /> Corrupted Unknown
+            </Badge>
+          }
+        >
+          <p className="text-xs">{POOL_STATUS.corruptedUnknown.description}</p>
+        </StatusTooltip>
+      )}
+      {status?.flagsUnavailable && (
+        <StatusTooltip
+          title={POOL_STATUS.flagsUnavailable.title}
+          trigger={
+            <Badge size={size} variant="outline" className="gap-1">
+              <CircleHelp className="size-3" /> Flags Unavailable
+            </Badge>
+          }
+        >
+          <p className="text-xs">{POOL_STATUS.flagsUnavailable.description}</p>
+        </StatusTooltip>
+      )}
       {corrupted.length > 0 && (
         <StatusTooltip
           title={POOL_STATUS.corrupted.title}

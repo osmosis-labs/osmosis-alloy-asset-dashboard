@@ -201,8 +201,17 @@ const getFrontendAssetMeta = dataCache(
   { revalidate: 1800 }
 )
 
-export const getAssetStatusMap = async () =>
-  (await getFrontendAssetMeta()).statusMap
+// The halt and unstable flags get their own entry that is never served
+// stale: after a failed refresh the caller must see the failure (and show
+// "flags unavailable"), not flags that may predate a new halt. Names and
+// symbols above may stay stale. On a refresh both entries download the list.
+const getFrontendAssetStatus = dataCache(
+  async () => (await fetchFrontendAssetMeta()).statusMap,
+  ["frontend-asset-status-v1"],
+  { revalidate: 1800, staleOnError: false }
+)
+
+export const getAssetStatusMap = () => getFrontendAssetStatus()
 
 // Non-throwing: a missing symbol map only falls back to chain-registry symbols.
 export const getFrontendAssetSymbolsSafe = async (): Promise<
@@ -228,19 +237,21 @@ export const getFrontendAssetNamesSafe = async (): Promise<
   }
 }
 
-// Non-throwing variant. The status flags are supplementary: the authoritative
-// frozen signal is the contract's own is_active query, so a missing map only
-// hides the assetlist tooltips, it never claims a pool is healthy. Like
-// getAssetList, the cached function throws on failure so an empty map is never
-// cached over a good one.
-export const getAssetStatusMapSafe = async (): Promise<
-  Record<string, AssetStatus>
-> => {
+// Non-throwing variant: null when the frontend assetlist could not be read.
+// The authoritative frozen signal is the contract's own is_active query, but
+// halts and unstable flags only come from here, so callers must report a null
+// map as "flags unavailable" rather than as "no flags". Like getAssetList, the
+// cached function throws on failure so an empty map is never cached over a
+// good one.
+export const getAssetStatusMapSafe = async (): Promise<Record<
+  string,
+  AssetStatus
+> | null> => {
   try {
     return await getAssetStatusMap()
   } catch (e) {
     console.error(`Error fetching asset status map: ${e}`)
-    return {}
+    return null
   }
 }
 

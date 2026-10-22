@@ -13,6 +13,16 @@ export const POOL_STATUS = {
     description:
       "The contract's active status could not be queried. The pool may or may not be frozen; check the contract directly before transacting.",
   },
+  corruptedUnknown: {
+    title: "Corrupted Assets Unknown",
+    description:
+      "The contract's list of corrupted constituents could not be queried. Some variants may be corrupted (they can only leave the pool); check the contract directly before transacting.",
+  },
+  flagsUnavailable: {
+    title: "Asset Flags Unavailable",
+    description:
+      "The Osmosis assetlist could not be loaded, so halted, disabled and unstable flags are not shown. Some variants may be flagged; check app.osmosis.zone before transacting.",
+  },
   corrupted: {
     title: "Corrupted Asset",
     description:

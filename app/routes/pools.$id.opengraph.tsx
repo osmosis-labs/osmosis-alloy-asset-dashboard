@@ -1,17 +1,17 @@
-import { ImageResponse } from "@vercel/og"
 import { getPoolOverview, isMigrationPool } from "@/services/pool"
+import { ImageResponse } from "@vercel/og"
 
 import { Asset } from "@/types/asset"
 import { NumberFormatter } from "@/lib/number"
-import { reserveAmount, variantSymbol } from "@/lib/pool-sources"
+import { poolBacking, reserveAmount, variantSymbol } from "@/lib/pool-sources"
 import {
   SHARE_IMAGE_SIZE,
   ShareImage,
   ShareRow,
 } from "@/components/og/share-image"
 
-import type { Route } from "./+types/pools.$id.opengraph"
 import { cachedImage } from "../og-response"
+import type { Route } from "./+types/pools.$id.opengraph"
 
 // The alloy's logo as a data: URI, so a slow or missing image host cannot
 // fail the whole image. null when neither the PNG nor the SVG loads in time.
@@ -45,9 +45,11 @@ export async function loader({ params }: Route.LoaderArgs) {
     (acc, c) => acc + reserveAmount(c.currency),
     0
   )
-  const tvl = pool.alloy.price
-    ? `$${NumberFormatter.formatCompactValue(Number(pool.alloy.price.amount) * total)} backing`
-    : null
+  // The backed variants at their own prices (see poolBacking), so a share
+  // image never shows unbacked variants as backing.
+  const { usd } = poolBacking(pool)
+  const tvl =
+    usd !== null ? `$${NumberFormatter.formatCompactValue(usd)} backing` : null
   const shares: ShareRow[] = pool.reserveCoins.map((c) => ({
     label: variantSymbol(c) ?? "Unknown",
     percent: total > 0 ? (reserveAmount(c.currency) / total) * 100 : 0,

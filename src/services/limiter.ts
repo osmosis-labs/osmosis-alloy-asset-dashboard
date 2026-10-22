@@ -22,12 +22,24 @@ export const getLimiters = async (
 
     const response = await res.json()
 
-    const limiters = response.data.limiters as [
-      [string, string],
-      RawLimiterResponse,
-    ][]
+    // An unexpected shape is unknown, not "no limiters".
+    const limiters = response?.data?.limiters
+    if (
+      !Array.isArray(limiters) ||
+      !limiters.every(
+        (l) =>
+          Array.isArray(l) &&
+          Array.isArray(l[0]) &&
+          typeof l[0][0] === "string" &&
+          _.isPlainObject(l[1]) &&
+          ("static_limiter" in l[1] || "change_limiter" in l[1])
+      )
+    ) {
+      console.warn(`Unexpected limiters response for ${contractAddress}`)
+      return null
+    }
 
-    return _.chain(limiters)
+    return _.chain(limiters as [[string, string], RawLimiterResponse][])
       .map(([[denom], v]): [string, Limiter] | null => {
         if ("static_limiter" in v) {
           return [denom, { type: "static", ...v.static_limiter }]

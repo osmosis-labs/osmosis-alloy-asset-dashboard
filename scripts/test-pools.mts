@@ -200,3 +200,82 @@ test("an unmapped reason code gets the app's generic sentence", () => {
     ["Unstable, exercise caution."]
   )
 })
+
+const { poolBacking, backingNote } = await import(
+  pathToFileURL(path.resolve("src/lib/pool-sources.ts")).href
+)
+
+// A two-variant pool: 3 WBTC (8 decimals) and 1 nBTC (14 decimals).
+const backingPool = (over: Record<string, unknown> = {}) => ({
+  reserveCoins: [
+    {
+      currency: {
+        amount: "300000000",
+        currency: {
+          coinMinimalDenom: "wbtc",
+          coinDenom: "WBTC",
+          coinDecimals: 8,
+        },
+      },
+    },
+    {
+      currency: {
+        amount: "100000000000000",
+        currency: {
+          coinMinimalDenom: "nbtc",
+          coinDenom: "nBTC",
+          coinDecimals: 14,
+        },
+      },
+    },
+  ],
+  prices: { wbtc: 100, nbtc: 40 },
+  alloy: { price: { amount: "90" } },
+  status: { corruptedDenoms: [], reserves: {} },
+  ...over,
+})
+
+test("backing values each variant at its own price", () => {
+  const b = poolBacking(backingPool())
+  assert.equal(b.usd, 3 * 100 + 1 * 40)
+  assert.equal(backingNote(b), null)
+})
+
+test("a variant with no price of its own counts at the alloy price, noted", () => {
+  const b = poolBacking(backingPool({ prices: { wbtc: 100 } }))
+  assert.equal(b.usd, 300 + 90)
+  assert.deepEqual(b.atAlloyPrice, ["nBTC"])
+  assert.equal(backingNote(b), "nBTC at the alloy price")
+})
+
+test("fully halted and corrupted variants are not backing", () => {
+  const halted = poolBacking(
+    backingPool({
+      status: {
+        corruptedDenoms: [],
+        reserves: { nbtc: { haltDeposits: true, haltWithdrawals: true } },
+      },
+    })
+  )
+  assert.equal(halted.usd, 300)
+  assert.equal(backingNote(halted), "excludes nBTC (unbacked)")
+  const corrupted = poolBacking(
+    backingPool({ status: { corruptedDenoms: ["nbtc"], reserves: {} } })
+  )
+  assert.equal(corrupted.usd, 300)
+  // Deposits halted alone still backs the alloy (it can be withdrawn).
+  const depositsOnly = poolBacking(
+    backingPool({
+      status: {
+        corruptedDenoms: [],
+        reserves: { nbtc: { haltDeposits: true } },
+      },
+    })
+  )
+  assert.equal(depositsOnly.usd, 340)
+})
+
+test("no price at all is unknown, not zero", () => {
+  const b = poolBacking(backingPool({ prices: {}, alloy: { price: null } }))
+  assert.equal(b.usd, null)
+})

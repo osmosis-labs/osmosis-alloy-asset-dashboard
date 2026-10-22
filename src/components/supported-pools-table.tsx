@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { variantSymbol } from "@/lib/pool-sources"
+import { backingNote, poolBacking, variantSymbol } from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -45,7 +45,6 @@ import {
 } from "@/components/ui/tooltip"
 import { SmallDecimals } from "@/components/decimal-span"
 
-import { valueFormatter } from "./pool-card"
 import {
   assetRingClass,
   AssetStatusLines,
@@ -166,26 +165,20 @@ const columns: ColumnDef<PoolOverview>[] = [
   },
   {
     header: "TVL ($)",
-    accessorFn: (row) => ({
-      price: row.alloy.price?.amount,
-      totalAmount:
-        row.reserveCoins?.reduce(
-          (acc, a) => acc + valueFormatter(a.currency),
-          0
-        ) || 0,
-    }),
+    // Each variant at its own price, unbacked variants left out (see
+    // poolBacking); a qualifier is marked with * and spelled out on hover.
+    accessorFn: (row) => poolBacking(row),
     cell: (row) => {
-      const { price, totalAmount } = row.getValue() as {
-        price?: string
-        totalAmount: number
-      }
+      const backing = row.getValue() as ReturnType<typeof poolBacking>
+      const note = backingNote(backing)
       return (
-        <span className="tabular-nums">
+        <span className="tabular-nums" title={note ?? undefined}>
           <SmallDecimals>
-            {price
-              ? NumberFormatter.formatValue(Number(price) * totalAmount)
+            {backing.usd !== null
+              ? NumberFormatter.formatValue(backing.usd)
               : "-"}
           </SmallDecimals>
+          {note && backing.usd !== null && "*"}
         </span>
       )
     },

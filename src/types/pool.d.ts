@@ -51,6 +51,10 @@ export type PoolStatus = {
   alloy: AssetStatus | null
   // Frontend-assetlist flags per constituent, keyed by minimal denom.
   reserves: Record<string, AssetStatus>
+  // True when the frontend assetlist could not be read: `alloy` and
+  // `reserves` are then empty because the flags are unknown, not because
+  // there are none. Absent on overviews built before this field existed.
+  flagsUnavailable?: boolean
 }
 
 // "alloy": an alloyed asset listed on the overview. "migration": an alloy that
@@ -96,6 +100,9 @@ export type PoolOverview = {
   // Limiters by variant denom (a denom can have several); null when the
   // limiter query failed (unknown, not "no limiters").
   limiters: _.Dictionary<Limiter[]> | null
+  // True when the decimals were checked against the contract's normalization
+  // factors in this build. Absent (unverified) on snapshot entries.
+  decimalsVerified?: boolean
   status: PoolStatus
 }
 
@@ -135,8 +142,13 @@ export type MinimalPool = {
   assets: string[]
   assetSymbols?: Record<string, string>
   assetNames?: Record<string, string>
+  // Decimals by denom, and whether the server verified them against the
+  // contract (both absent on responses from before the fields).
+  assetDecimals?: Record<string, number>
+  decimalsVerified?: boolean
   alloy: {
     asset: string
+    decimals?: number
     // USD price, or null when unknown.
     price: string | null
   }
