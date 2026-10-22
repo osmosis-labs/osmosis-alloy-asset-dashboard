@@ -11,6 +11,12 @@
   // modules. global_fetch_strictly_public: fetches to the site's own public
   // hostname go over the internet rather than looping back into the Worker.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Production is served only on the custom domains (alloyed.osmosis.zone,
+  // alloy.osmosis.zone), so wallets and WalletConnect see one origin; the
+  // <name>.<subdomain>.workers.dev route is off. Version preview URLs stay on
+  // for Workers Builds previews (they would otherwise follow workers_dev).
+  "workers_dev": false,
+  "preview_urls": true,
   // The Vite plugin builds the Worker and ignores wrangler `build.command`.
   // Workers Builds must run `pnpm cf:build` first: that generates the Prisma
   // client, then `react-router build` bundles this file.

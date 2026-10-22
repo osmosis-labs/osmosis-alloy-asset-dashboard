@@ -8,7 +8,6 @@ export default [
   route("alloys/:symbol", "routes/alloys.$symbol.tsx"),
   route("api/pools", "routes/api.pools.ts"),
   route("api/pools/:id/activity", "routes/api.pools.$id.activity.ts"),
-  route("api/cron/activity", "routes/api.cron.activity.ts"),
   route("api/price-volume", "routes/api.price-volume.ts"),
   route("sitemap.xml", "routes/sitemap.ts"),
   route("robots.txt", "routes/robots.ts"),
