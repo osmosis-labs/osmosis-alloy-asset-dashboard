@@ -9,6 +9,8 @@ import { NumberFormatter } from "@/lib/number"
 import { isMigrationPool } from "@/lib/pool-build"
 import {
   getPoolSources,
+  isCorruptedVariant,
+  isPayoutVariant,
   reserveValue,
   SOURCE_GROUPINGS,
 } from "@/lib/pool-sources"
@@ -203,9 +205,8 @@ export default function PoolPage({ loaderData }: Route.ComponentProps) {
                         totalAmount={totalAmount}
                         limiters={limitersFor(pool, a.asset.base)}
                         status={pool.status?.reserves?.[a.asset.base]}
-                        corrupted={pool.status?.corruptedDenoms?.includes(
-                          a.asset.base
-                        )}
+                        corrupted={isCorruptedVariant(pool.status, a.asset.base)}
+                        payout={isPayoutVariant(pool.status, a.asset.base)}
                       />
                     ))}
                   </div>
@@ -251,7 +252,12 @@ export default function PoolPage({ loaderData }: Route.ComponentProps) {
                               totalAmount={totalAmount}
                               limiters={limitersFor(pool, a.asset.base)}
                               status={pool.status?.reserves?.[a.asset.base]}
-                              corrupted={pool.status?.corruptedDenoms?.includes(
+                              corrupted={isCorruptedVariant(
+                                pool.status,
+                                a.asset.base
+                              )}
+                              payout={isPayoutVariant(
+                                pool.status,
                                 a.asset.base
                               )}
                             />

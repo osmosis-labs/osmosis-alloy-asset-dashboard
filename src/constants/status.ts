@@ -28,6 +28,11 @@ export const POOL_STATUS = {
     description:
       "The pool moderator has marked this constituent as corrupted. Its amount and weight in the pool can never increase: swaps into it are rejected, and it can only be taken out of the pool. Other assets can only be redeemed if this asset is redeemed alongside them in proportion.",
   },
+  payout: {
+    title: "Redemption Payout",
+    description:
+      "The pool moderator has marked this native token as corrupted so the pool only redeems: stTokens can be swapped in for it, but it can never be deposited or swapped into. It is the pool's payout reserve, so it counts as backing.",
+  },
   unstable: {
     title: "Unstable",
     description:

@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js"
 import _ from "lodash"
 
 import { CurrencyAmount } from "@/types/asset"
-import { PoolOverview } from "@/types/pool"
+import { PoolOverview, PoolStatus } from "@/types/pool"
 
 // Loose on purpose: callers pass reserve coins typed with Asset or
 // AssetWithDecimal, and older cached overviews may lack either field.
@@ -26,6 +26,43 @@ export const reserveValue = (coin: {
   currency: CurrencyAmount
   unitRate?: number
 }) => reserveAmount(coin.currency) * (coin.unitRate ?? 1)
+
+// How far a migration pool has migrated: the legacy token's share of the
+// pool in alloy units (reserveValue). The pool starts out holding the
+// replacement (the native, for a Stride redemption pool); holders deposit the
+// legacy token (STARS.og, stTIA) and withdraw the replacement, so the share
+// rises towards 1. null when the pool is not a migration pool or holds
+// nothing.
+export const migrationProgress = (
+  pool: Pick<PoolOverview, "migration" | "reserveCoins">
+): number | null => {
+  if (!pool.migration) return null
+  const total = _.sumBy(pool.reserveCoins ?? [], reserveValue)
+  if (!(total > 0)) return null
+  const from = (pool.reserveCoins ?? []).find(
+    (c) => variantDenom(c) === pool.migration!.from
+  )
+  return from ? reserveValue(from) / total : 0
+}
+
+// A redemption pool's payout reserve (PoolStatus.payoutDenoms): corrupted
+// onchain, but on purpose, so it is shown and counted as the payout.
+export const isPayoutVariant = (
+  status: Pick<PoolStatus, "payoutDenoms"> | null | undefined,
+  denom: string
+) => status?.payoutDenoms?.includes(denom) ?? false
+
+// Corrupted in the sense the UI warns about: marked by the moderator and not
+// a redemption payout.
+export const isCorruptedVariant = (
+  status:
+    | Pick<PoolStatus, "corruptedDenoms" | "payoutDenoms">
+    | null
+    | undefined,
+  denom: string
+) =>
+  (status?.corruptedDenoms?.includes(denom) ?? false) &&
+  !isPayoutVariant(status, denom)
 
 // The symbol the Osmosis frontend shows for a variant (USDC.noble,
 // WBTC.eth.axl). The frontend pools API builds `coinDenom` from the frontend
@@ -142,8 +179,10 @@ export const getVariantStyles = (pool: PoolOverview) => {
 // A variant with no price of its own is valued at the alloy price and named
 // in `atAlloyPrice`. Variants that cannot back the alloy are left out and
 // listed in `unbacked`: corrupted ones (they can only leave the pool) and ones
-// the assetlist has halted in both directions. `usd` is null when a backed
-// variant has no price at all (neither its own nor the alloy's).
+// the assetlist has halted in both directions. A redemption pool's payout
+// reserve is corrupted on purpose and stays backing: paying it out is what
+// the pool is for. `usd` is null when a backed variant has no price at all
+// (neither its own nor the alloy's).
 export type PoolBacking = {
   usd: number | null
   atAlloyPrice: string[]
@@ -154,14 +193,13 @@ export const poolBacking = (
   pool: Pick<PoolOverview, "reserveCoins" | "prices" | "alloy" | "status">
 ): PoolBacking => {
   const alloyPrice = pool.alloy.price ? Number(pool.alloy.price.amount) : null
-  const corrupted = pool.status?.corruptedDenoms ?? []
   const backing: PoolBacking = { usd: 0, atAlloyPrice: [], unbacked: [] }
   for (const coin of pool.reserveCoins ?? []) {
     const denom = variantDenom(coin) ?? ""
     const symbol = variantSymbol(coin) ?? denom
     const flags = pool.status?.reserves?.[denom]
     if (
-      corrupted.includes(denom) ||
+      isCorruptedVariant(pool.status, denom) ||
       (flags?.haltDeposits && flags?.haltWithdrawals)
     ) {
       backing.unbacked.push(symbol)

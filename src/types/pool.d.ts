@@ -47,6 +47,12 @@ export type PoolStatus = {
   // increase in amount or weight; it can only leave the pool. null = the query
   // failed or the code id does not support it.
   corruptedDenoms: string[] | null
+  // Redemption payouts: a redemption pool's native that the moderator marked
+  // corrupted on purpose, so the pool only redeems (stToken in, native out).
+  // Also in corruptedDenoms, which reports the contract as is; the UI shows
+  // these as the payout reserve rather than as corrupted, and counts them as
+  // backing. Absent on overviews built before this existed.
+  payoutDenoms?: string[]
   // Frontend-assetlist flags for the alloyed denom itself.
   alloy: AssetStatus | null
   // Frontend-assetlist flags per constituent, keyed by minimal denom.
@@ -69,6 +75,10 @@ export type PoolOverview = {
   id: string
   // Absent on overviews cached before kinds existed: treat as "alloy".
   kind?: PoolKind
+  // A migration pool's legacy (`from`) and replacement (`to`) denoms, from
+  // src/constants/migration.ts. Absent on alloys and on overviews built
+  // before this existed.
+  migration?: { from: string; to: string; redemption?: boolean }
   type: "cosmwasm-transmuter" | "cosmwasm"
   contractAddress: string
   codeId: string

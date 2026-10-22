@@ -384,6 +384,7 @@ const fillPoolOverview = async (
   return {
     id: pool.id,
     kind,
+    ...(migration && { migration }),
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
@@ -399,12 +400,27 @@ const fillPoolOverview = async (
     decimalsVerified: normalization === "match",
     status: {
       ...contractStatus,
+      payoutDenoms: redemptionPayoutDenoms(
+        migration,
+        contractStatus.corruptedDenoms
+      ),
       alloy: statusMap?.[alloyDenom] ?? null,
       reserves: statusMap ? _.pick(statusMap, reserveDenoms) : {},
       flagsUnavailable: statusMap === null,
     },
   } as PoolOverview
 }
+
+// A redemption pool's native, when the moderator has marked it corrupted: the
+// one-way setup, where stTokens are swapped in for it and it can only be paid
+// out (see PoolStatus.payoutDenoms). Empty for every other pool.
+const redemptionPayoutDenoms = (
+  migration: { to: string; redemption?: boolean } | undefined,
+  corruptedDenoms: string[] | null
+) =>
+  migration?.redemption && corruptedDenoms?.includes(migration.to)
+    ? [migration.to]
+    : []
 
 // Alloy units per one of each variant of a redemption pool: the alloy's
 // normalization factor over the variant's (the contract converts amounts by

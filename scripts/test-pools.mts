@@ -220,7 +220,15 @@ test("an unmapped reason code gets the app's generic sentence", () => {
   )
 })
 
-const { poolBacking, backingNote, reserveValue, getPoolSources } = await import(
+const {
+  poolBacking,
+  backingNote,
+  reserveValue,
+  getPoolSources,
+  isCorruptedVariant,
+  isPayoutVariant,
+  migrationProgress,
+} = await import(
   pathToFileURL(path.resolve("src/lib/pool-sources.ts")).href
 )
 
@@ -354,4 +362,35 @@ test("an unpriced stToken is backed at the alloy price times its rate", () => {
   const b = poolBacking(redemptionPool({ prices: { tia: 10 } }))
   assert.equal(b.usd, 2 * 10 * 1.5 + 1 * 10)
   assert.deepEqual(b.atAlloyPrice, ["stTIA"])
+})
+
+test("a redemption pool's corrupted native is its payout, and stays backing", () => {
+  const status = {
+    corruptedDenoms: ["tia"],
+    payoutDenoms: ["tia"],
+    reserves: {},
+  }
+  assert.equal(isPayoutVariant(status, "tia"), true)
+  assert.equal(isCorruptedVariant(status, "tia"), false)
+  const b = poolBacking(redemptionPool({ status }))
+  assert.equal(b.usd, 2 * 15 + 1 * 10)
+  assert.deepEqual(b.unbacked, [])
+})
+
+test("a corrupted variant that is not a payout is still unbacked", () => {
+  const status = { corruptedDenoms: ["tia"], reserves: {} }
+  assert.equal(isCorruptedVariant(status, "tia"), true)
+  const b = poolBacking(redemptionPool({ status }))
+  assert.equal(b.usd, 2 * 15)
+  assert.deepEqual(b.unbacked, ["TIA"])
+})
+
+test("migration progress is the legacy token's share in alloy units", () => {
+  const migration = { from: "sttia", to: "tia", redemption: true }
+  // 2 stTIA at 1.5 (3 alloy units) against 1 TIA: 75% migrated.
+  assert.equal(migrationProgress({ ...redemptionPool(), migration }), 0.75)
+  assert.equal(migrationProgress(redemptionPool()), null)
+  const empty = redemptionPool()
+  empty.reserveCoins.forEach((c) => (c.currency.amount = "0"))
+  assert.equal(migrationProgress({ ...empty, migration }), null)
 })

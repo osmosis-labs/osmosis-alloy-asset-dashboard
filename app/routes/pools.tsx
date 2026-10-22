@@ -60,11 +60,12 @@ export default function Pools({ loaderData }: Route.ComponentProps) {
               as STARS.og to STARS, and Stride&apos;s wind-down pools, which
               redeem an stToken for its native token at the redemption rate.
               They exist for the migration and are not alloyed assets in their
-              own right.
+              own right. Migrated is the share of the pool held in the legacy
+              token, deposited by holders as they withdraw its replacement.
             </p>
           </div>
           <div className="rounded-md border">
-            <SupportedPoolsTable pools={migrationPools} />
+            <SupportedPoolsTable pools={migrationPools} migration />
           </div>
         </>
       )}

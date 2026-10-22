@@ -574,6 +574,7 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
   return {
     id: pool.id,
     kind: migration ? "migration" : "alloy",
+    ...(migration && { migration }),
     type: pool.type,
     codeId: pool.raw.code_id,
     contractAddress: pool.raw.contract_address,
@@ -589,6 +590,12 @@ const fillPoolOverview = async (pool, assetMap, statusMap = {}) => {
     limiters,
     status: {
       ...contractStatus,
+      // Mirror of redemptionPayoutDenoms in src/services/pool.ts.
+      payoutDenoms:
+        migration?.redemption &&
+        contractStatus.corruptedDenoms?.includes(migration.to)
+          ? [migration.to]
+          : [],
       alloy: statusMap[alloyDenom] ?? null,
       reserves: Object.fromEntries(
         reserveDenoms.filter((d) => statusMap[d]).map((d) => [d, statusMap[d]])

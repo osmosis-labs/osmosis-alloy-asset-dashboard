@@ -17,7 +17,15 @@ import { toast } from "sonner"
 import { PoolOverview } from "@/types/pool"
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
 import { NumberFormatter } from "@/lib/number"
-import { backingNote, poolBacking, variantSymbol } from "@/lib/pool-sources"
+import {
+  backingNote,
+  isCorruptedVariant,
+  isPayoutVariant,
+  migrationProgress,
+  poolBacking,
+  variantDenom,
+  variantSymbol,
+} from "@/lib/pool-sources"
 import { capitalName, cn, getAssetImageUrl } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -29,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Progress } from "@/components/ui/progress"
 import {
   Table,
   TableBody,
@@ -95,8 +104,8 @@ const columns: ColumnDef<PoolOverview>[] = [
         <div className="flex items-center gap-2">
           {assets?.map((asset) => {
             const assetStatus = status?.reserves?.[asset.asset.base]
-            const corrupted =
-              status?.corruptedDenoms?.includes(asset.asset.base) ?? false
+            const corrupted = isCorruptedVariant(status, asset.asset.base)
+            const payout = isPayoutVariant(status, asset.asset.base)
             const Image = (
               <Avatar
                 className={cn("size-5", assetRingClass(assetStatus, corrupted))}
@@ -112,9 +121,11 @@ const columns: ColumnDef<PoolOverview>[] = [
             // its name includes the status the ring color shows.
             const statusText = corrupted
               ? "corrupted"
-              : isFlagged(assetStatus)
-                ? "flagged in the assetlist"
-                : null
+              : payout
+                ? "redemption payout"
+                : isFlagged(assetStatus)
+                  ? "flagged in the assetlist"
+                  : null
             return (
               <Tooltip key={asset.asset.denom}>
                 <TooltipTrigger asChild>
@@ -133,6 +144,11 @@ const columns: ColumnDef<PoolOverview>[] = [
                   {corrupted && (
                     <p className="text-xs font-semibold text-destructive">
                       Corrupted asset (marked by the pool moderator)
+                    </p>
+                  )}
+                  {payout && (
+                    <p className="text-xs font-semibold">
+                      Redemption payout (can only be paid out of the pool)
                     </p>
                   )}
                   {isFlagged(assetStatus) && (
@@ -296,9 +312,52 @@ function getCommonPinningStyles<TData>({
   }
 }
 
-const SupportedPoolsTable = ({ pools }: { pools: PoolOverview[] }) => {
+// Migration alloys have no market price of their own, so their table shows
+// how far the migration has got in place of the Price column: the legacy
+// token's share of the pool (migrationProgress).
+const symbolOf = (pool: PoolOverview, denom: string | undefined) => {
+  const coin = pool.reserveCoins?.find((c) => variantDenom(c) === denom)
+  return (coin && variantSymbol(coin)) ?? denom
+}
+const progressColumn: ColumnDef<PoolOverview> = {
+  id: "progress",
+  header: "Migrated",
+  accessorFn: (row) => migrationProgress(row),
+  cell: ({ row, getValue }) => {
+    const progress = getValue() as number | null
+    if (progress === null) return <span>-</span>
+    const pool = row.original
+    const from = symbolOf(pool, pool.migration?.from)
+    const to = symbolOf(pool, pool.migration?.to)
+    const percent = progress * 100
+    const label = `Share of the pool held in ${from}: ${from} deposited, ${to} withdrawn`
+    return (
+      <div className="flex min-w-32 items-center gap-2" title={label}>
+        <Progress value={percent} className="h-2 flex-1" aria-label={label} />
+        <span className="text-xs tabular-nums">
+          {percent >= 99.95 || percent < 0.05
+            ? percent.toFixed(0)
+            : percent.toFixed(1)}
+          %
+        </span>
+      </div>
+    )
+  },
+}
+const migrationColumns = columns.map((c) =>
+  c.id === "price" ? progressColumn : c
+)
+
+const SupportedPoolsTable = ({
+  pools,
+  migration = false,
+}: {
+  pools: PoolOverview[]
+  // The Migration Alloys table: Migrated in place of Price.
+  migration?: boolean
+}) => {
   const table = useReactTable({
-    columns,
+    columns: migration ? migrationColumns : columns,
     data: pools,
     getCoreRowModel: getCoreRowModel(),
     state: {
