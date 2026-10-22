@@ -2,6 +2,7 @@ import "@/styles/globals.css"
 import "@fontsource-variable/geist"
 import "@fontsource-variable/geist-mono"
 
+import { useContext } from "react"
 import {
   isRouteErrorResponse,
   Links,
@@ -12,6 +13,7 @@ import {
 } from "react-router"
 
 import { siteConfig } from "@/config/site"
+import { NonceContext } from "@/lib/nonce"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/sonner"
 import { AutoRefresh } from "@/components/auto-refresh"
@@ -32,6 +34,7 @@ export const links: Route.LinksFunction = () => [
 ]
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const nonce = useContext(NonceContext)
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -56,6 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          nonce={nonce}
         >
           <Toaster closeButton />
           <AutoRefresh />

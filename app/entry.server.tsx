@@ -3,6 +3,9 @@ import { renderToReadableStream } from "react-dom/server"
 import type { EntryContext, RouterContextProvider } from "react-router"
 import { ServerRouter } from "react-router"
 
+import { NonceContext } from "@/lib/nonce"
+import { requestStore } from "@/lib/request-context"
+
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -12,10 +15,17 @@ export default async function handleRequest(
 ) {
   let shellRendered = false
   const userAgent = request.headers.get("user-agent")
+  // The CSP nonce the Worker sends for this request (workers/app.ts).
+  // ServerRouter hands it to <Scripts>, <Links> and its streamed data
+  // scripts; NonceContext carries it to the theme script.
+  const nonce = requestStore.getStore()?.nonce
 
   const body = await renderToReadableStream(
-    <ServerRouter context={routerContext} url={request.url} />,
+    <NonceContext.Provider value={nonce}>
+      <ServerRouter context={routerContext} url={request.url} nonce={nonce} />
+    </NonceContext.Provider>,
     {
+      nonce,
       onError(error: unknown) {
         responseStatusCode = 500
         if (shellRendered) console.error(error)
