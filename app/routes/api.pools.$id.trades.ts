@@ -43,7 +43,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return json(page, page.status === "error" ? 502 : 200)
   }
   // Symbols and decimals for variants missing from the current reserves
-  // (drained to zero), from the assetlist.
-  const extraDenoms = await extraDenomMeta(pool, page.swaps)
+  // (drained to zero), from the assetlist. No prices: each row carries the USD
+  // value SQS recorded.
+  const extraDenoms = await extraDenomMeta(pool, page.swaps, {
+    withPrices: false,
+  })
   return json({ ...page, extraDenoms })
 }

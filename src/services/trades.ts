@@ -89,9 +89,12 @@ export const getPoolTradesPage = async (
     // must reach the status mapping below, not be retried. The table refetches
     // on its own interval.
     const res = await fetch(url, {
-      // The integrator token goes only to sqs.osmosis.zone, never to a local
-      // or other SQS.
-      headers: url.hostname === "sqs.osmosis.zone" ? sqsHeaders() : {},
+      // The integrator token goes only to sqs.osmosis.zone over https, never
+      // to a local or other SQS.
+      headers:
+        url.protocol === "https:" && url.hostname === "sqs.osmosis.zone"
+          ? sqsHeaders()
+          : {},
       signal: AbortSignal.timeout(10000),
     })
     if (res.status === 503) {

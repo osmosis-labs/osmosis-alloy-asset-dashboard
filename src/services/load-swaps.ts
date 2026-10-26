@@ -22,10 +22,12 @@ export type SwapsResult =
 // Symbol, decimals and price for swap denoms missing from the pool's current
 // reserves. The pools API omits a variant whose balance is zero, which happens
 // whenever a variant is drained; its swaps still need a value. Non-throwing:
-// a denom that cannot be resolved stays unpriced.
+// a denom that cannot be resolved stays unpriced. Without prices (the SQS
+// trade feed, whose rows carry their own USD value) only metadata is read.
 export const extraDenomMeta = async (
   pool: PoolOverview,
-  swaps: PoolSwap[]
+  swaps: PoolSwap[],
+  { withPrices = true }: { withPrices?: boolean } = {}
 ): Promise<Record<string, ExtraDenomMeta>> => {
   const known = new Set(
     _.compact([
@@ -39,7 +41,9 @@ export const extraDenomMeta = async (
   if (missing.length === 0) return {}
   const [meta, prices] = await Promise.all([
     getDenomMetaSafe(missing),
-    Promise.all(missing.map((d) => getAssetPrice(d))),
+    withPrices
+      ? Promise.all(missing.map((d) => getAssetPrice(d)))
+      : Promise.resolve([]),
   ])
   return _.fromPairs(
     _.compact(

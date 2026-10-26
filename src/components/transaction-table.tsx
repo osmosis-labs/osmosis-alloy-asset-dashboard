@@ -39,6 +39,8 @@ const Loading = () => (
   </Message>
 )
 
+type UnavailableReason = "not-ingested" | "disabled"
+
 // The /api/pools/:id/trades body.
 type TradesResponse =
   | {
@@ -47,20 +49,28 @@ type TradesResponse =
       nextCursor: string | null
       extraDenoms: Record<string, ExtraDenomMeta>
     }
-  | { status: "unavailable"; reason: "not-ingested" | "disabled" }
+  | { status: "unavailable"; reason: UnavailableReason }
   | { status: "error" }
 
-const fetchTrades = async (url: string): Promise<TradesResponse> => {
-  const res = await fetch(url)
-  const body = (await res.json().catch(() => null)) as TradesResponse | null
-  // A 502 carries { status: "error" }; anything unparseable is an error too.
-  if (!body || typeof body.status !== "string") {
-    throw new Error(`trades ${res.status}`)
+type TradesPage = Extract<TradesResponse, { status: "ok" }>
+
+// Unavailable and failed answers throw, so a refresh that hits a restarting
+// or failing SQS keeps the page already shown (SWR keeps the last data and
+// sets the error) instead of replacing it with a notice.
+class TradesError extends Error {
+  constructor(readonly reason: UnavailableReason | null) {
+    super(reason ?? "trades error")
   }
-  return body
 }
 
-const UNAVAILABLE_TEXT: Record<"not-ingested" | "disabled", string> = {
+const fetchTrades = async (url: string): Promise<TradesPage> => {
+  const res = await fetch(url)
+  const body = (await res.json().catch(() => null)) as TradesResponse | null
+  if (body?.status === "ok") return body
+  throw new TradesError(body?.status === "unavailable" ? body.reason : null)
+}
+
+const UNAVAILABLE_TEXT: Record<UnavailableReason, string> = {
   "not-ingested":
     "Swap history is not available yet: SQS has not finished ingesting its first block. It appears here once it has.",
   disabled: "Swap history is unavailable: the SQS trade feed is turned off.",
@@ -80,21 +90,20 @@ const TradesFeedTable = ({ pool }: { pool: PoolOverview }) => {
   if (cursor) params.set("cursor", cursor)
   // No keepPreviousData: what is shown is always the requested page's own
   // result (or its loading or error state), never the page before it.
-  const { data, error, isLoading, isValidating, mutate } = useSWR(
-    `/api/pools/${pool.id}/trades?${params}`,
-    fetchTrades,
-    {
-      revalidateOnFocus: false,
-      // The first page refreshes for new swaps. Unavailable and failed pages
-      // (any page) retry on an interval; a loaded older page does not change.
-      refreshInterval: (latest) =>
-        latest && latest.status !== "ok"
-          ? 30 * 1000
-          : page === 1
-            ? 60 * 1000
-            : 0,
-    }
-  )
+  const { data, error, isLoading, isValidating, mutate } = useSWR<
+    TradesPage,
+    TradesError
+  >(`/api/pools/${pool.id}/trades?${params}`, fetchTrades, {
+    revalidateOnFocus: false,
+    // The first page refreshes for new swaps; a loaded older page does not
+    // change. SWR pauses the interval while the last fetch failed.
+    refreshInterval: page === 1 ? 60 * 1000 : 0,
+    // Failed and unavailable fetches (any page) retry every 30 s, not on
+    // SWR's growing backoff.
+    onErrorRetry: (_err, _key, _config, revalidate, opts) => {
+      setTimeout(() => revalidate(opts), 30 * 1000)
+    },
+  })
 
   const onFirst = () => setCursors([null])
   const onPrev = () => setCursors((c) => (c.length > 1 ? c.slice(0, -1) : c))
@@ -151,21 +160,22 @@ const TradesFeedTable = ({ pool }: { pool: PoolOverview }) => {
     </div>
   )
 
+  // A notice only when this page has nothing to show yet; once loaded, a
+  // failed refresh leaves the rows in place.
   if (!data) {
-    return error && !isLoading
-      ? notice("Unable to load swaps", true)
-      : notice(null, false)
+    if (!error || isLoading) return notice(null, false)
+    return notice(
+      error.reason ? UNAVAILABLE_TEXT[error.reason] : "Unable to load swaps",
+      true
+    )
   }
-  if (data.status === "unavailable") {
-    return notice(UNAVAILABLE_TEXT[data.reason], true)
-  }
-  if (data.status === "error") return notice("Unable to load swaps", true)
 
   const nextCursor = data.nextCursor
   const paging: CursorPaging = {
     page,
     hasNext: nextCursor !== null,
-    loading: isLoading,
+    // Locks the paging buttons while this page refetches.
+    loading: isValidating,
     limit,
     onFirst,
     onPrev,
