@@ -1,9 +1,14 @@
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import { Await } from "react-router"
-import { Loader2 } from "lucide-react"
+import type { SwapsResult } from "@/services/load-swaps"
+import { ChevronLeft, ChevronsLeft, Loader2, RotateCw } from "lucide-react"
+import useSWR from "swr"
 
-import { ACTIVITY_MAX_SWAPS } from "@/lib/activity"
 import { PoolOverview } from "@/types/pool"
+import { SwapRow } from "@/types/tx"
+import { ACTIVITY_MAX_SWAPS } from "@/lib/activity"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -12,54 +17,239 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import type { SwapsResult } from "@/services/load-swaps"
-import { TransactionTableContent } from "./transaction-table-content"
+import {
+  TransactionTableContent,
+  type CursorPaging,
+  type ExtraDenomMeta,
+} from "./transaction-table-content"
+
+// Same box as the table so the card does not jump while loading or on error.
+const Message = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex h-[300px] w-full items-center justify-center text-center">
+    {children}
+  </div>
+)
+
+const Loading = () => (
+  <Message>
+    <div role="status">
+      <Loader2 className="size-8 animate-spin" />
+      <span className="sr-only">Loading swaps</span>
+    </div>
+  </Message>
+)
+
+// The /api/pools/:id/trades body.
+type TradesResponse =
+  | {
+      status: "ok"
+      swaps: SwapRow[]
+      nextCursor: string | null
+      extraDenoms: Record<string, ExtraDenomMeta>
+    }
+  | { status: "unavailable"; reason: "not-ingested" | "disabled" }
+  | { status: "error" }
+
+const fetchTrades = async (url: string): Promise<TradesResponse> => {
+  const res = await fetch(url)
+  const body = (await res.json().catch(() => null)) as TradesResponse | null
+  // A 502 carries { status: "error" }; anything unparseable is an error too.
+  if (!body || typeof body.status !== "string") {
+    throw new Error(`trades ${res.status}`)
+  }
+  return body
+}
+
+const UNAVAILABLE_TEXT: Record<"not-ingested" | "disabled", string> = {
+  "not-ingested":
+    "Swap history is not available yet: SQS has not finished ingesting its first block. It appears here once it has.",
+  disabled: "Swap history is unavailable: the SQS trade feed is turned off.",
+}
+
+// Swaps from the SQS trade feed, newest first. The feed has no total count,
+// so paging is by cursor: `cursors` holds the cursor that fetched each page
+// visited so far (null for the first), and previous pops it. Mounted keyed by
+// pool id, so another pool starts again from its own first page.
+const TradesFeedTable = ({ pool }: { pool: PoolOverview }) => {
+  const [limit, setLimit] = useState<CursorPaging["limit"]>("20")
+  const [cursors, setCursors] = useState<(string | null)[]>([null])
+  const cursor = cursors[cursors.length - 1]
+  const page = cursors.length
+
+  const params = new URLSearchParams({ limit })
+  if (cursor) params.set("cursor", cursor)
+  // No keepPreviousData: what is shown is always the requested page's own
+  // result (or its loading or error state), never the page before it.
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    `/api/pools/${pool.id}/trades?${params}`,
+    fetchTrades,
+    {
+      revalidateOnFocus: false,
+      // The first page refreshes for new swaps. Unavailable and failed pages
+      // (any page) retry on an interval; a loaded older page does not change.
+      refreshInterval: (latest) =>
+        latest && latest.status !== "ok"
+          ? 30 * 1000
+          : page === 1
+            ? 60 * 1000
+            : 0,
+    }
+  )
+
+  const onFirst = () => setCursors([null])
+  const onPrev = () => setCursors((c) => (c.length > 1 ? c.slice(0, -1) : c))
+
+  // Loading, failed or unavailable: the message for this page, with a way
+  // back to newer pages and a retry.
+  const notice = (text: string | null, retry: boolean) => (
+    <div className="w-full space-y-2">
+      <div className="flex items-center justify-end gap-2">
+        <span className="text-sm text-muted-foreground" aria-live="polite">
+          Page {page}
+        </span>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          disabled={page === 1}
+          onClick={onFirst}
+          aria-label="First page"
+        >
+          <ChevronsLeft className="size-4" />
+        </Button>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          disabled={page === 1}
+          onClick={onPrev}
+          aria-label="Previous page"
+        >
+          <ChevronLeft className="size-4" />
+        </Button>
+      </div>
+      {text === null ? (
+        <Loading />
+      ) : (
+        <Message>
+          <div className="flex max-w-md flex-col items-center gap-3">
+            <p className="text-muted-foreground">{text}</p>
+            {retry && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isValidating}
+                onClick={() => mutate()}
+              >
+                <RotateCw
+                  className={cn("mr-2 size-3", isValidating && "animate-spin")}
+                />
+                Retry
+              </Button>
+            )}
+          </div>
+        </Message>
+      )}
+    </div>
+  )
+
+  if (!data) {
+    return error && !isLoading
+      ? notice("Unable to load swaps", true)
+      : notice(null, false)
+  }
+  if (data.status === "unavailable") {
+    return notice(UNAVAILABLE_TEXT[data.reason], true)
+  }
+  if (data.status === "error") return notice("Unable to load swaps", true)
+
+  const nextCursor = data.nextCursor
+  const paging: CursorPaging = {
+    page,
+    hasNext: nextCursor !== null,
+    loading: isLoading,
+    limit,
+    onFirst,
+    onPrev,
+    onNext: () => {
+      if (nextCursor) setCursors((c) => [...c, nextCursor])
+    },
+    onLimitChange: (next) => {
+      // Cursors are positions in the feed, but a page boundary depends on the
+      // page size: start again from the newest swap.
+      setLimit(next)
+      setCursors([null])
+    },
+  }
+
+  return (
+    <TransactionTableContent
+      pool={pool}
+      swaps={data.swaps}
+      extraDenoms={data.extraDenoms}
+      paging={paging}
+      emptyMessage={
+        page === 1
+          ? "No swaps recorded by SQS for this pool yet."
+          : "No older swaps."
+      }
+    />
+  )
+}
 
 const TransactionTable = ({
   pool,
   swaps,
+  tradesFeed = false,
 }: {
   pool: PoolOverview
-  swaps: Promise<SwapsResult>
+  swaps: Promise<SwapsResult> | null
+  // Read the SQS trade feed (client-fetched) instead of the streamed swaps.
+  tradesFeed?: boolean
 }) => {
   return (
     <Card className="w-full">
       <CardHeader className="text-center md:text-start">
         <CardTitle>Recent Swaps</CardTitle>
         <CardDescription>
-          Up to the latest {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")} swaps
-          from the past 7 days, with the amounts that entered and left the pool
+          {tradesFeed ? (
+            <>
+              Swaps through the pool, newest first, from the Osmosis SQS trade
+              feed (only what SQS has recorded recently). Value is the USD value
+              when SQS recorded the swap.
+            </>
+          ) : (
+            <>
+              Up to the latest {ACTIVITY_MAX_SWAPS.toLocaleString("en-US")}{" "}
+              swaps from the past 7 days, with the amounts that entered and left
+              the pool
+            </>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense
-          fallback={
-            <div
-              role="status"
-              className="flex h-[300px] w-full items-center justify-center"
-            >
-              <Loader2 className="size-8 animate-spin" />
-              <span className="sr-only">Loading swaps</span>
-            </div>
-          }
-        >
-          <Await resolve={swaps}>
-            {(result) =>
-              result.ok ? (
-                <TransactionTableContent
-                  pool={pool}
-                  swaps={result.swaps}
-                  contractNames={result.contractNames}
-                  extraDenoms={result.extraDenoms}
-                />
-              ) : (
-                <div className="flex h-[300px] w-full items-center justify-center">
-                  <p className="text-muted-foreground">Unable to load swaps</p>
-                </div>
-              )
-            }
-          </Await>
-        </Suspense>
+        {tradesFeed || !swaps ? (
+          <TradesFeedTable key={pool.id} pool={pool} />
+        ) : (
+          <Suspense fallback={<Loading />}>
+            <Await resolve={swaps}>
+              {(result) =>
+                result.ok ? (
+                  <TransactionTableContent
+                    pool={pool}
+                    swaps={result.swaps}
+                    contractNames={result.contractNames}
+                    extraDenoms={result.extraDenoms}
+                  />
+                ) : (
+                  <Message>
+                    <p className="text-muted-foreground">
+                      Unable to load swaps
+                    </p>
+                  </Message>
+                )
+              }
+            </Await>
+          </Suspense>
+        )}
       </CardContent>
     </Card>
   )

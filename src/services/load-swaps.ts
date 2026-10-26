@@ -23,7 +23,7 @@ export type SwapsResult =
 // reserves. The pools API omits a variant whose balance is zero, which happens
 // whenever a variant is drained; its swaps still need a value. Non-throwing:
 // a denom that cannot be resolved stays unpriced.
-const extraDenomMeta = async (
+export const extraDenomMeta = async (
   pool: PoolOverview,
   swaps: PoolSwap[]
 ): Promise<Record<string, ExtraDenomMeta>> => {

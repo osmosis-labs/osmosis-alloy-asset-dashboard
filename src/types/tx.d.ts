@@ -18,3 +18,8 @@ export type PoolSwap = {
   in: { amount: string; denom: string }
   out: { amount: string; denom: string }
 }
+
+// A row of the swap table. Rows from the SQS trade feed also carry the USD
+// value SQS assigned when it ingested the block (null when it could not price
+// the swap); rows from the activity store or the LCD do not have the field.
+export type SwapRow = PoolSwap & { usdValueAtIngest?: string | null }

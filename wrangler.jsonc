@@ -33,12 +33,15 @@
   "vars": {
     // robots.txt only allows indexing when this is "production".
     "SITE_ENV": "production",
+    // The Recent Swaps table reads SQS's trade feed (/trades/list).
+    "SQS_TRADES_URL": "https://sqs.osmosis.zone",
   },
   // Pull-request previews require an explicit preview value for every var.
   // Anything but "production" keeps previews out of search.
   "previews": {
     "vars": {
       "SITE_ENV": "preview",
+      "SQS_TRADES_URL": "https://sqs.osmosis.zone",
     },
     // Previews do not inherit top-level bindings. A separate namespace, so a
     // branch build never writes into the production cache. No database secret:
