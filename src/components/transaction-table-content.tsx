@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 
 import { PoolOverview } from "@/types/pool"
-import { PoolSwap } from "@/types/tx"
+import { SwapRow } from "@/types/tx"
 import { BlockExplorer, chainNameForAddress } from "@/lib/block-explorer"
 import dayjs from "@/lib/dayjs"
 import { variantDenom, variantSymbol } from "@/lib/pool-sources"
@@ -99,10 +99,23 @@ const AssetAmountWithTooltip = ({
 
 const LIMITS = ["20", "50", "100"] as const
 
+// Cursor pagination for a feed with no total count (the SQS trade feed): the
+// table shows the rows it is given and offers first, previous and next only.
+export type CursorPaging = {
+  page: number
+  hasNext: boolean
+  loading: boolean
+  limit: (typeof LIMITS)[number]
+  onFirst: () => void
+  onPrev: () => void
+  onNext: () => void
+  onLimitChange: (limit: (typeof LIMITS)[number]) => void
+}
+
 type SwapKind = "Mint" | "Burn" | "Rebalance"
 // Alloy out of the pool = minted by the transmuter, alloy in = burned,
 // variant to variant = a rebalance of the backing.
-const swapKind = (swap: PoolSwap, alloyDenom?: string): SwapKind =>
+const swapKind = (swap: SwapRow, alloyDenom?: string): SwapKind =>
   swap.out.denom === alloyDenom
     ? "Mint"
     : swap.in.denom === alloyDenom
@@ -119,7 +132,7 @@ const shortAddress = (a: string) => `${a.slice(0, 8)}..${a.slice(-4)}`
 // How the swap reached the pool, from the message that emitted it, naming the
 // routing contract when there is one (e.g. "IBC · Injective · Skip").
 const swapRoute = (
-  swap: PoolSwap,
+  swap: SwapRow,
   contractNames: Record<string, string | null>
 ) => {
   const contract = swap.contract
@@ -138,14 +151,21 @@ const TransactionTableContent = ({
   swaps,
   contractNames = {},
   extraDenoms = {},
+  paging,
+  emptyMessage = "No swaps in the last 24 hours.",
 }: {
   pool: PoolOverview
-  swaps: PoolSwap[]
+  swaps: SwapRow[]
   contractNames?: Record<string, string | null>
   extraDenoms?: Record<string, ExtraDenomMeta>
+  // Set for a cursor-paged feed; otherwise the table pages through `swaps`.
+  paging?: CursorPaging
+  emptyMessage?: string
 }) => {
-  const [limit, setLimit] = useState<(typeof LIMITS)[number]>("20")
-  const [page, setPage] = useState(1)
+  const [localLimit, setLocalLimit] = useState<(typeof LIMITS)[number]>("20")
+  const [localPage, setPage] = useState(1)
+  const limit = paging?.limit ?? localLimit
+  const page = paging?.page ?? localPage
 
   // Symbols and decimals for the pool's variants (frontend symbols) and the
   // alloy itself: the only denoms a swap through this pool can carry. Variants
@@ -194,8 +214,12 @@ const TransactionTableContent = ({
     return (denom: string) => prices[denom]
   }, [pool, extraDenoms])
 
-  const columns: ColumnDef<PoolSwap>[] = useMemo(() => {
-    return [
+  // The SQS trade feed carries no message or contract, so it has no route to
+  // show: its rows only say pool swap or orderbook fill, and alloy pools are
+  // transmuters with no orderbook.
+  const showRoute = !paging
+  const columns: ColumnDef<SwapRow>[] = useMemo(() => {
+    const all: ColumnDef<SwapRow>[] = [
       {
         id: "hash",
         header: "Hash",
@@ -273,7 +297,21 @@ const TransactionTableContent = ({
         id: "value",
         header: "Value",
         cell: ({ row }) => {
-          const { in: input } = row.original
+          const { in: input, usdValueAtIngest } = row.original
+          // SQS trade feed rows: the value SQS recorded when it ingested the
+          // block. Null means SQS could not price it; that stays unpriced
+          // rather than being re-valued at today's price.
+          if (usdValueAtIngest !== undefined) {
+            const usd = Number(usdValueAtIngest)
+            if (usdValueAtIngest === null || !Number.isFinite(usd)) {
+              return <span className="text-muted-foreground">-</span>
+            }
+            return (
+              <DecimalSpan mantissa={2} dollar className="font-mono">
+                {usd}
+              </DecimalSpan>
+            )
+          }
           const meta = denomMeta[input.denom]
           const price = priceOf(input.denom)
           if (!meta || price === undefined) {
@@ -329,13 +367,20 @@ const TransactionTableContent = ({
         },
       },
     ]
-  }, [denomMeta, priceOf, pool.alloy.asset?.base, contractNames])
+    return showRoute ? all : all.filter((c) => c.id !== "route")
+  }, [denomMeta, priceOf, pool.alloy.asset?.base, contractNames, showRoute])
 
   const totalPage = Math.max(Math.ceil(swaps.length / Number(limit)), 1)
   const pageRows = useMemo(
-    () => swaps.slice((page - 1) * Number(limit), page * Number(limit)),
-    [swaps, page, limit]
+    () =>
+      paging
+        ? swaps
+        : swaps.slice((page - 1) * Number(limit), page * Number(limit)),
+    [swaps, page, limit, paging]
   )
+  const hasPrev = page > 1
+  const hasNext = paging ? paging.hasNext : page < totalPage
+  const pageLabel = paging ? `Page ${page}` : `Page ${page} of ${totalPage}`
 
   const [columnVisibility, setColumnVisibility] = useState<
     _.Dictionary<boolean>
@@ -379,13 +424,13 @@ const TransactionTableContent = ({
           </DropdownMenu>
           <div className="ml-auto flex items-center justify-end gap-2">
             <span className="text-sm text-muted-foreground" aria-live="polite">
-              Page {page} of {Math.max(totalPage, 1)}
+              {pageLabel}
             </span>
             <Button
               size="icon-sm"
               variant="ghost"
-              disabled={page === 1}
-              onClick={() => setPage(1)}
+              disabled={!hasPrev || paging?.loading}
+              onClick={() => (paging ? paging.onFirst() : setPage(1))}
               aria-label="First page"
             >
               <ChevronsLeft className="size-4" />
@@ -393,8 +438,10 @@ const TransactionTableContent = ({
             <Button
               size="icon-sm"
               variant="ghost"
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
+              disabled={!hasPrev || paging?.loading}
+              onClick={() =>
+                paging ? paging.onPrev() : setPage((prev) => prev - 1)
+              }
               aria-label="Previous page"
             >
               <ChevronLeft className="size-4" />
@@ -402,21 +449,26 @@ const TransactionTableContent = ({
             <Button
               size="icon-sm"
               variant="ghost"
-              disabled={page >= totalPage}
-              onClick={() => setPage((prev) => prev + 1)}
+              disabled={!hasNext || paging?.loading}
+              onClick={() =>
+                paging ? paging.onNext() : setPage((prev) => prev + 1)
+              }
               aria-label="Next page"
             >
               <ChevronRight className="size-4" />
             </Button>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              disabled={page >= totalPage}
-              onClick={() => setPage(totalPage)}
-              aria-label="Last page"
-            >
-              <ChevronsRight className="size-4" />
-            </Button>
+            {/* No last page without a total count. */}
+            {!paging && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                disabled={page >= totalPage}
+                onClick={() => setPage(totalPage)}
+                aria-label="Last page"
+              >
+                <ChevronsRight className="size-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="rounded-md border">
@@ -457,7 +509,7 @@ const TransactionTableContent = ({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No swaps in the last 24 hours.
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               )}
@@ -466,9 +518,9 @@ const TransactionTableContent = ({
         </div>
 
         <div className="flex items-center gap-2 text-sm font-medium">
-          <div>{swaps.length.toLocaleString("en-US")} swaps</div>
+          {!paging && <div>{swaps.length.toLocaleString("en-US")} swaps</div>}
 
-          <div className="ml-4">Rows Per Page</div>
+          <div className={cn(!paging && "ml-4")}>Rows Per Page</div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -482,8 +534,13 @@ const TransactionTableContent = ({
               <DropdownMenuRadioGroup
                 value={limit}
                 onValueChange={(v) => {
-                  setLimit(v as (typeof LIMITS)[number])
-                  setPage(1)
+                  const next = v as (typeof LIMITS)[number]
+                  if (paging) {
+                    paging.onLimitChange(next)
+                  } else {
+                    setLocalLimit(next)
+                    setPage(1)
+                  }
                 }}
               >
                 {LIMITS.map((l) => (
@@ -495,9 +552,7 @@ const TransactionTableContent = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="ml-auto">
-            Page {page} of {totalPage}
-          </div>
+          <div className="ml-auto">{pageLabel}</div>
         </div>
       </div>
     </TooltipProvider>

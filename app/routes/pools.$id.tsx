@@ -2,6 +2,7 @@ import { Link } from "react-router"
 import { getPoolComposition } from "@/services/composition"
 import { getPoolOverview, getPoolsOverview } from "@/services/pool"
 import { loadSwaps } from "@/services/load-swaps"
+import { isTradesFeedEnabled } from "@/services/trades"
 import { ExternalLink } from "lucide-react"
 
 import { BlockExplorer, OsmosisApp } from "@/lib/block-explorer"
@@ -70,18 +71,21 @@ export async function loader({ params }: Route.LoaderArgs) {
   const composition = await getPoolComposition(pool.id)
   // Cached: the same overview getPoolOverview read, for its data freshness.
   const { source, builtAt } = await getPoolsOverview()
+  // With the SQS trade feed configured the table fetches its own pages.
+  const tradesFeed = isTradesFeedEnabled()
   return {
     pool,
     composition,
     source,
     builtAt,
+    tradesFeed,
     // Streamed: the swap table does not hold up the rest of the page.
-    swaps: loadSwaps(pool),
+    swaps: tradesFeed ? null : loadSwaps(pool),
   }
 }
 
 export default function PoolPage({ loaderData }: Route.ComponentProps) {
-  const { pool, composition, source, builtAt, swaps } = loaderData
+  const { pool, composition, source, builtAt, swaps, tradesFeed } = loaderData
   const totalAmount =
     pool.reserveCoins?.reduce((acc, a) => acc + reserveValue(a), 0) ||
     0
@@ -289,7 +293,7 @@ export default function PoolPage({ loaderData }: Route.ComponentProps) {
 
           {!isMigration && <PriceVolumeChart denom={pool.alloy.asset.denom} />}
 
-          <TransactionTable pool={pool} swaps={swaps} />
+          <TransactionTable pool={pool} swaps={swaps} tradesFeed={tradesFeed} />
         </DateRangeProvider>
       </div>
     </main>
