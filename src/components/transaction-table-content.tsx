@@ -135,10 +135,6 @@ const swapRoute = (
   swap: SwapRow,
   contractNames: Record<string, string | null>
 ) => {
-  // SQS trade feed rows only say whether the event was a pool swap or an
-  // orderbook fill.
-  if (swap.action === "swap") return "Swap"
-  if (swap.action === "orderbookFill") return "Orderbook fill"
   const contract = swap.contract
     ? (contractNames[swap.contract] ?? shortAddress(swap.contract))
     : null
@@ -218,8 +214,12 @@ const TransactionTableContent = ({
     return (denom: string) => prices[denom]
   }, [pool, extraDenoms])
 
+  // The SQS trade feed carries no message or contract, so it has no route to
+  // show: its rows only say pool swap or orderbook fill, and alloy pools are
+  // transmuters with no orderbook.
+  const showRoute = !paging
   const columns: ColumnDef<SwapRow>[] = useMemo(() => {
-    return [
+    const all: ColumnDef<SwapRow>[] = [
       {
         id: "hash",
         header: "Hash",
@@ -367,7 +367,8 @@ const TransactionTableContent = ({
         },
       },
     ]
-  }, [denomMeta, priceOf, pool.alloy.asset?.base, contractNames])
+    return showRoute ? all : all.filter((c) => c.id !== "route")
+  }, [denomMeta, priceOf, pool.alloy.asset?.base, contractNames, showRoute])
 
   const totalPage = Math.max(Math.ceil(swaps.length / Number(limit)), 1)
   const pageRows = useMemo(

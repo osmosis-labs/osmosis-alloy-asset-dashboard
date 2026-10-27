@@ -72,8 +72,8 @@ const fetchTrades = async (url: string): Promise<TradesPage> => {
 
 const UNAVAILABLE_TEXT: Record<UnavailableReason, string> = {
   "not-ingested":
-    "Swap history is not available yet: SQS has not finished ingesting its first block. It appears here once it has.",
-  disabled: "Swap history is unavailable: the SQS trade feed is turned off.",
+    "Swap history is not available yet. It appears here once the swap feed has started.",
+  disabled: "Swap history is unavailable: the swap feed is turned off.",
 }
 
 // Swaps from the SQS trade feed, newest first. The feed has no total count,
@@ -197,9 +197,7 @@ const TradesFeedTable = ({ pool }: { pool: PoolOverview }) => {
       extraDenoms={data.extraDenoms}
       paging={paging}
       emptyMessage={
-        page === 1
-          ? "No swaps recorded by SQS for this pool yet."
-          : "No older swaps."
+        page === 1 ? "No swaps recorded for this pool yet." : "No older swaps."
       }
     />
   )
@@ -222,9 +220,8 @@ const TransactionTable = ({
         <CardDescription>
           {tradesFeed ? (
             <>
-              Swaps through the pool, newest first, from the Osmosis SQS trade
-              feed (only what SQS has recorded recently). Value is the USD value
-              when SQS recorded the swap.
+              Swaps through the pool, newest first. Value is the USD value at
+              the time of the swap.
             </>
           ) : (
             <>
