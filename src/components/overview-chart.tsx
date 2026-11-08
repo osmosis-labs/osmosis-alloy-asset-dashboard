@@ -28,14 +28,22 @@ import {
   useDateRange,
 } from "@/components/date-range"
 
-// Hardcoded color mappings for alloy assets by pool ID. Add more pool IDs and their hex colors as needed
+// Brand colors for alloy assets by pool ID, mostly taken from each asset's
+// logo. The assetlists carry no theme colors for these assets, so without an
+// entry here an alloy falls back to the generic chart palette. Add a new
+// alloy here when it is listed.
 const POOL_COLORS: Record<string, string> = {
   "1868": "#F7931A", // Bitcoin - Orange (official)
   "1878": "#627EEA", // Ethereum - Purple/Blue (commonly used, visible on dark backgrounds)
   "1925": "#9945FF", // Solana - Purple (official)
   "1816": "#009393", // Tether - Aqua (official)
   "2434": "#00A5DF", // Ripple - Light Blue
-  "2242": "#C8A014", // Dogecoin - Gold
+  "2242": "#C2A633", // Dogecoin - Gold (official)
+  "3497": "#2775CA", // USDC - Blue (logo)
+  "2676": "#F0B90B", // BNB - Yellow (logo)
+  "2709": "#6966FF", // dYdX - Purple (logo)
+  "1970": "#4B9440", // Pepe - Green (logo)
+  "2710": "#D4497F", // Fetch.ai - Pink (the logo is monochrome)
 }
 
 const OverviewChart = ({
@@ -139,28 +147,31 @@ const OverviewChartContent = ({
       }
     }
 
+    // Assetlist theme colors are third-party data: use them only when they
+    // are plain colors.
+    const ownColor = (pool: PoolOverview) =>
+      POOL_COLORS[pool.id] ||
+      [1, 0]
+        .map((i) => pool.alloy.asset.images?.at(i)?.theme?.primary_color_hex)
+        .find(isSafeChartColor)
+
+    // Pools without their own color take the palette colors in turn, so two
+    // of them never share one (a pool-id modulo could).
+    const paletteIds = _.sortBy(
+      pools.filter((pool) => !ownColor(pool)).map((pool) => pool.id),
+      Number
+    )
+
     const config = _.chain(pools)
-      .map((pool) => {
-        // get random chart color index using pool id as seed
-        const idx = _.range(1, 6)[Number(pool.id) % 5]
-        return [
-          pool.id,
-          {
-            label: pool.alloy.asset.name,
-            // Assetlist theme colors are third-party data: use them only
-            // when they are plain colors.
-            color:
-              POOL_COLORS[pool.id] ||
-              [1, 0]
-                .map(
-                  (i) =>
-                    pool.alloy.asset.images?.at(i)?.theme?.primary_color_hex
-                )
-                .find(isSafeChartColor) ||
-              `hsl(var(--chart-${idx}))`,
-          },
-        ]
-      })
+      .map((pool) => [
+        pool.id,
+        {
+          label: pool.alloy.asset.name,
+          color:
+            ownColor(pool) ||
+            `hsl(var(--chart-${(paletteIds.indexOf(pool.id) % 5) + 1}))`,
+        },
+      ])
       .fromPairs()
       .value() satisfies ChartConfig
 
