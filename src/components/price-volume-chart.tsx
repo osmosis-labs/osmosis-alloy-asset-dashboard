@@ -167,10 +167,7 @@ const PriceVolumeChartContent = ({
     >
       <ComposedChart data={data} accessibilityLayer>
         <CartesianGrid vertical={false} />
-        <ChartLegend
-          content={<ChartLegendContent />}
-          className="flex-wrap gap-y-1"
-        />
+        <ChartLegend content={<ChartLegendContent />} />
         <ChartTooltip
           content={
             <ChartTooltipContent
