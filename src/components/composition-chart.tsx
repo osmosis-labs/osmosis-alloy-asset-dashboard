@@ -248,10 +248,7 @@ const CompositionChart = ({
                 isAnimationActive={false}
               />
             ))}
-            <ChartLegend
-              content={<ChartLegendContent />}
-              className="flex-wrap gap-y-1"
-            />
+            <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
       </CardContent>

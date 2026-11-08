@@ -244,10 +244,7 @@ const ActivityChartContent = ({
             return dayjs(timestamp).format(labelFormat)
           }}
         />
-        <ChartLegend
-          content={<ChartLegendContent />}
-          className="flex-wrap gap-y-1"
-        />
+        <ChartLegend content={<ChartLegendContent />} />
         <XAxis
           dataKey="timestamp"
           tickLine={false}
