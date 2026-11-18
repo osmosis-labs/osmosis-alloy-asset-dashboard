@@ -27,7 +27,7 @@ import {
   migrationAlloyAsset,
   parseReserveCoins,
 } from "@/lib/pool-build"
-import { reserveValue } from "@/lib/pool-sources"
+import { poolBacking, reserveValue } from "@/lib/pool-sources"
 import {
   fetchLcd,
   fetchWithRetry,
@@ -124,40 +124,77 @@ const byPrevalence = <
   coins: T[]
 ) => _.sortBy(coins, (c) => -reserveValue(c))
 
-// The alloy's SQS price, or null. Where SQS cannot price a token onchain it
-// falls back to CoinGecko, so an alloy whose variants have no market left
+// SQS prices for the given denoms, in USD; a denom SQS cannot price is left
+// out, and a failed request gives {}. Where SQS cannot price a token onchain
+// it falls back to CoinGecko, so an alloy whose variants have no market left
 // still gets its real price here. The frontend's getAssetPrice is an onchain
 // spot quote instead, which for such an alloy runs through whatever thin pools
 // remain (allLINK read $2.15 there against LINK's $9.15).
-const getSqsAlloyPrice = async (alloyDenom: string) => {
+const getSqsPrices = async (denoms: string[]) => {
   try {
     const response = await fetchWithRetry(
-      BASE_PRICE_URL.replace("{denoms}", alloyDenom),
+      BASE_PRICE_URL.replace("{denoms}", denoms.join(",")),
       { headers: sqsHeaders() }
     )
-    if (!response.ok) return null
-    const quotes = (await response.json())?.[alloyDenom]
-    const price = Number(_.values(quotes)[0])
-    // Same sanity bound as the alloy price below.
-    return price > 0 && price <= 1_000_000 ? price : null
+    if (!response.ok) return {}
+    return _.chain(await response.json())
+      .mapValues((v) => Number(_.values(v)[0]))
+      .pickBy((v) => Number.isFinite(v) && v > 0)
+      .value() as Record<string, number>
   } catch (e) {
-    console.error(`Error fetching SQS alloy price: ${e}`)
-    return null
+    console.error(`Error fetching SQS prices: ${e}`)
+    return {}
   }
+}
+
+// The alloy's SQS price, or null; same sanity bound as the alloy price below.
+const getSqsAlloyPrice = async (alloyDenom: string) => {
+  const price = (await getSqsPrices([alloyDenom]))[alloyDenom]
+  return price !== undefined && price <= 1_000_000 ? price : null
 }
 
 // The pools API's TVL counts only the variants SQS can price, so an alloy
 // whose variants have no market left (a deprecated alloy nobody pairs with)
 // reads $0 however much it holds. Before demoting such a pool as dust, its
-// reserves are valued at the alloy's price (the variants share the alloy's
-// unit), as the pool page's backing figure does (poolBacking). 0 when the
-// alloy has no usable price.
-const alloyPricedBackingUsd = async (
+// backing is valued by the pool page's own rules (poolBacking): each variant
+// at its own price or else the alloy's, leaving out corrupted variants and
+// those halted in both directions. 0 when the alloy has no usable price or
+// the corrupted denoms cannot be read, so the pool stays demoted.
+const fallbackBackingUsd = async (
+  pool: RawPoolOverview,
   alloyDenom: string,
-  reserveCoins: { currency: CurrencyAmount }[]
+  reserveCoins: PoolOverview["reserveCoins"],
+  statusMap: Record<string, AssetStatus> | null
 ) => {
-  const price = await getSqsAlloyPrice(alloyDenom)
-  return price === null ? 0 : _.sumBy(reserveCoins, reserveValue) * price
+  if (!statusMap) return 0
+  const denoms = reserveCoins.map((c) => c.currency.currency.coinMinimalDenom)
+  const [prices, contractStatus] = await Promise.all([
+    getSqsPrices([alloyDenom, ...denoms]),
+    getPoolContractStatus(pool.raw.contract_address),
+  ])
+  const alloyPrice = prices[alloyDenom]
+  if (
+    alloyPrice === undefined ||
+    alloyPrice > 1_000_000 ||
+    contractStatus.corruptedDenoms === null
+  ) {
+    return 0
+  }
+  return (
+    poolBacking({
+      reserveCoins,
+      prices: _.omit(prices, alloyDenom),
+      alloy: {
+        price: { amount: String(alloyPrice) },
+      } as PoolOverview["alloy"],
+      status: {
+        ...contractStatus,
+        payoutDenoms: [],
+        alloy: null,
+        reserves: _.pick(statusMap, denoms),
+      } as PoolOverview["status"],
+    }).usd ?? 0
+  )
 }
 
 const withFrontendName = (
@@ -240,8 +277,12 @@ const fillPoolOverview = async (
     !(
       alloyAssetDetail &&
       !hasUnknownDecimals &&
-      (await alloyPricedBackingUsd(alloyDenom, reserveCoins)) >=
-        MIN_SUPPORTED_TVL_USD
+      (await fallbackBackingUsd(
+        pool,
+        alloyDenom,
+        reserveCoins as PoolOverview["reserveCoins"],
+        statusMap
+      )) >= MIN_SUPPORTED_TVL_USD
     )
   const decimalSourcesDisagree = reserveCoins.filter(
     (c) => c.asset && c.asset.decimal !== c.currency.currency.coinDecimals
@@ -640,11 +681,13 @@ const getMigrationRawPools = async (
 // transmuter contract upgrade rolls out a code ID not yet added to the env).
 const ALLOYED_POOL_TYPES = ["cosmwasm-alloyed", "cosmwasm-transmuter"]
 
-// The minLiquidityUsd filter on BASE_POOLS_URL also drops an alloy whose
-// variants SQS cannot price: SQS values that pool at $0 however much it holds.
-// Its holders still need its page (backing, and how to redeem), so each listed
-// alloy missing from the filtered list is fetched again by its denom, without
-// the filter. A failure only leaves those alloys out, as before.
+// BASE_POOLS_URL does not return every alloy. Its minLiquidityUsd filter drops
+// one whose variants SQS cannot price (SQS values that pool at $0 however much
+// it holds), and the list misses some alloys above the filter too (allTON and
+// allAIOZ were absent at $392 and $444). Holders still need those pages
+// (backing, and how to redeem), so each listed alloy missing from the list is
+// fetched again by its denom, without the filter, under the same code-ID
+// allowlist. A failure only leaves those alloys out, as before.
 const getUnpricedAlloyRawPools = async (
   listed: RawPoolOverview[],
   assetMap: _.Dictionary<AssetWithDecimal>
@@ -689,7 +732,8 @@ const getUnpricedAlloyRawPools = async (
       .filter(
         (p) =>
           wanted.has(p.raw.contract_address) &&
-          ALLOYED_POOL_TYPES.includes(p.type)
+          ALLOYED_POOL_TYPES.includes(p.type) &&
+          env.NEXT_PUBLIC_CODE_IDS.includes(p.raw.code_id)
       ),
     "id"
   )
