@@ -32,6 +32,7 @@ import {
   fetchLcd,
   fetchWithRetry,
   getAssetImageUrl,
+  sqsBaseUrl,
   sqsHeaders,
 } from "@/lib/utils"
 
@@ -68,12 +69,17 @@ const BASE_POOLS_API_URL =
 const BASE_POOLS_URL = `${BASE_POOLS_API_URL}?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
-// The public SQS deployment. The frontend's own host (sqsprod) answers 403 to
+// The Foundation's SQS hosts (sqsBaseUrl): the integrators host with the
+// token, else the public one. The frontend's own host (sqsprod) answers 403 to
 // any request without an app.osmosis.zone or dashboard Origin, which a Worker
 // fetch never sends; the browser-side swap quotes (src/services/quote.ts) keep
-// using it. The integrator token is sent when set (sqsHeaders).
-const BASE_PRICE_URL = "https://sqs.osmosis.zone/tokens/prices?base={denoms}"
-const BASE_SQS_POOLS_URL = "https://sqs.osmosis.zone/pools?IDs={ids}"
+// using it.
+const sqsPricesUrl = (denoms: string[]) =>
+  `${sqsBaseUrl()}/tokens/prices?base=${denoms.map(encodeURIComponent).join(",")}`
+const sqsPoolsUrl = (ids: string[]) =>
+  `${sqsBaseUrl()}/pools?IDs=${ids.join(",")}`
+// Denoms per /tokens/prices request, keeping the URL short.
+const SQS_PRICES_BATCH = 40
 // Same LCD the contract queries use (src/services/transmuter.ts).
 const BASE_POOLMANAGER_POOL_URL =
   "https://osmosis-rest.publicnode.com/osmosis/poolmanager/v1beta1/pools/{poolId}"
@@ -124,32 +130,48 @@ const byPrevalence = <
   coins: T[]
 ) => _.sortBy(coins, (c) => -reserveValue(c))
 
-// SQS prices for the given denoms, in USD; a denom SQS cannot price is left
-// out, and a failed request gives {}. Where SQS cannot price a token onchain
-// it falls back to CoinGecko, so an alloy whose variants have no market left
-// still gets its real price here. The frontend's getAssetPrice is an onchain
-// spot quote instead, which for such an alloy runs through whatever thin pools
-// remain (allLINK read $2.15 there against LINK's $9.15).
+// SQS prices in USD for every denom a build needs, fetched once per build in a
+// few sequential requests. One request per pool, all at once, is a burst of
+// 60+ from one Worker IP: over the public host's ban threshold (sqsBaseUrl),
+// after which every price in the build came back empty. A denom SQS cannot
+// price is left out, as is every denom of a request that fails. SQS quotes in
+// one stablecoin (allUSDC), taken as USD.
+//
+// Where SQS cannot price a token onchain it falls back to CoinGecko, so an
+// alloy whose variants have no market left still gets its real price here.
+// The frontend's getAssetPrice is an onchain spot quote instead, which for
+// such an alloy runs through whatever thin pools remain (allLINK read $2.15
+// there against LINK's $9.15).
 const getSqsPrices = async (denoms: string[]) => {
-  try {
-    const response = await fetchWithRetry(
-      BASE_PRICE_URL.replace("{denoms}", denoms.join(",")),
-      { headers: sqsHeaders() }
-    )
-    if (!response.ok) return {}
-    return _.chain(await response.json())
-      .mapValues((v) => Number(_.values(v)[0]))
-      .pickBy((v) => Number.isFinite(v) && v > 0)
-      .value() as Record<string, number>
-  } catch (e) {
-    console.error(`Error fetching SQS prices: ${e}`)
-    return {}
+  const prices: Record<string, number> = {}
+  for (const batch of _.chunk(_.uniq(denoms), SQS_PRICES_BATCH)) {
+    try {
+      const response = await fetchWithRetry(sqsPricesUrl(batch), {
+        headers: sqsHeaders(),
+      })
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`)
+      }
+      Object.assign(
+        prices,
+        _.chain(await response.json())
+          .mapValues((v) => Number(_.values(v)[0]))
+          .pickBy((v) => Number.isFinite(v) && v > 0)
+          .value()
+      )
+    } catch (e) {
+      console.error(`Error fetching SQS prices: ${e}`)
+    }
   }
+  return prices
 }
 
 // The alloy's SQS price, or null; same sanity bound as the alloy price below.
-const getSqsAlloyPrice = async (alloyDenom: string) => {
-  const price = (await getSqsPrices([alloyDenom]))[alloyDenom]
+const sqsAlloyPriceOf = (
+  sqsPrices: Record<string, number>,
+  alloyDenom: string
+) => {
+  const price = sqsPrices[alloyDenom]
   return price !== undefined && price <= 1_000_000 ? price : null
 }
 
@@ -164,26 +186,18 @@ const fallbackBackingUsd = async (
   pool: RawPoolOverview,
   alloyDenom: string,
   reserveCoins: PoolOverview["reserveCoins"],
-  statusMap: Record<string, AssetStatus> | null
+  statusMap: Record<string, AssetStatus> | null,
+  sqsPrices: Record<string, number>
 ) => {
-  if (!statusMap) return 0
+  const alloyPrice = sqsAlloyPriceOf(sqsPrices, alloyDenom)
+  if (!statusMap || alloyPrice === null) return 0
   const denoms = reserveCoins.map((c) => c.currency.currency.coinMinimalDenom)
-  const [prices, contractStatus] = await Promise.all([
-    getSqsPrices([alloyDenom, ...denoms]),
-    getPoolContractStatus(pool.raw.contract_address),
-  ])
-  const alloyPrice = prices[alloyDenom]
-  if (
-    alloyPrice === undefined ||
-    alloyPrice > 1_000_000 ||
-    contractStatus.corruptedDenoms === null
-  ) {
-    return 0
-  }
+  const contractStatus = await getPoolContractStatus(pool.raw.contract_address)
+  if (contractStatus.corruptedDenoms === null) return 0
   return (
     poolBacking({
       reserveCoins,
-      prices: _.omit(prices, alloyDenom),
+      prices: _.pick(sqsPrices, denoms),
       alloy: {
         price: { amount: String(alloyPrice) },
       } as PoolOverview["alloy"],
@@ -208,7 +222,9 @@ const fillPoolOverview = async (
   // null: the frontend assetlist could not be read (flags unknown).
   statusMap: Record<string, AssetStatus> | null = {},
   frontendNames: Record<string, string> = {},
-  provenance: Record<string, Provenance> = {}
+  provenance: Record<string, Provenance> = {},
+  // The build's SQS prices (getSqsPrices), reserves and alloys alike.
+  sqsPrices: Record<string, number> = {}
 ) => {
   if (!assetMap) {
     assetMap = await getAssetMap()
@@ -281,7 +297,8 @@ const fillPoolOverview = async (
         pool,
         alloyDenom,
         reserveCoins as PoolOverview["reserveCoins"],
-        statusMap
+        statusMap,
+        sqsPrices
       )) >= MIN_SUPPORTED_TVL_USD
     )
   const decimalSourcesDisagree = reserveCoins.filter(
@@ -377,7 +394,8 @@ const fillPoolOverview = async (
     (c) => c.currency.currency.coinMinimalDenom
   )
 
-  const [liquidityChart, prices, limiters, contractStatus] = await Promise.all([
+  const prices = _.pick(sqsPrices, reserveDenoms)
+  const [liquidityChart, limiters, contractStatus] = await Promise.all([
     fetchWithRetry(BASE_LIQUIDITY_CHART_URL.replace("{poolId}", pool.id))
       .then(async (d) => {
         if (!d.ok) {
@@ -404,33 +422,6 @@ const fillPoolOverview = async (
         console.error(`Error fetching liquidity chart: ${e}`)
         return []
       }),
-    fetchWithRetry(
-      BASE_PRICE_URL.replace("{denoms}", reserveDenoms.join(",")),
-      { headers: sqsHeaders() }
-    )
-      .then(async (d) => {
-        if (!d.ok) {
-          console.warn(`Failed to fetch prices: ${d.status} ${d.statusText}`)
-          return {}
-        }
-        try {
-          return await d.json()
-        } catch (e) {
-          console.warn(`Failed to parse prices JSON: ${e}`)
-          return {}
-        }
-      })
-      // SQS quotes each price in one stablecoin (allUSDC), taken as USD.
-      .then((d) =>
-        _.chain(d)
-          .mapValues((v) => Number(_.values(v)[0]))
-          .pickBy((v) => Number.isFinite(v) && v > 0)
-          .value()
-      )
-      .catch((e) => {
-        console.error(`Error fetching prices: ${e}`)
-        return {}
-      }),
     getLimiters(pool.raw.contract_address),
     getPoolContractStatus(pool.raw.contract_address),
   ])
@@ -440,11 +431,13 @@ const fillPoolOverview = async (
   // No variant has a price of its own, and the pools API values the pool at
   // under half of what its reserves are worth at the SQS alloy price: the
   // alloy has no market left, and the frontend's spot quote reflects only the
-  // thin pools that remain. Use the SQS price (see getSqsAlloyPrice) instead.
+  // thin pools that remain. Use the SQS price (see getSqsPrices) instead.
   // A liquid alloy whose variants SQS happens not to price keeps the
   // frontend's price.
   const sqsAlloyPrice =
-    !migration && _.isEmpty(prices) ? await getSqsAlloyPrice(alloyDenom) : null
+    !migration && _.isEmpty(prices)
+      ? sqsAlloyPriceOf(sqsPrices, alloyDenom)
+      : null
   const noMarketPrice =
     sqsAlloyPrice !== null &&
     tvlUsd < (_.sumBy(valuedCoins, reserveValue) * sqsAlloyPrice) / 2
@@ -594,10 +587,9 @@ const getMigrationRawPools = async (
   if (poolIds.length === 0) return []
   let caps: Record<string, string> = {}
   try {
-    const res = await fetchWithRetry(
-      BASE_SQS_POOLS_URL.replace("{ids}", poolIds.join(",")),
-      { headers: sqsHeaders() }
-    )
+    const res = await fetchWithRetry(sqsPoolsUrl(poolIds), {
+      headers: sqsHeaders(),
+    })
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
     const data = (await res.json()) as {
       chain_model?: { pool_id?: number | string }
@@ -849,17 +841,31 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
   )
   const rawPools = [...data, ...unpriced, ...supplemented]
 
-  const provenance = await getVariantProvenanceSafe(
-    rawPools.flatMap((p) =>
-      p.reserveCoins.map(
-        (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
-      )
+  const reserveDenoms = rawPools.flatMap((p) =>
+    p.reserveCoins.map(
+      (coin) => JSON.parse(coin).currency.coinMinimalDenom as string
     )
   )
+  const [provenance, sqsPrices] = await Promise.all([
+    getVariantProvenanceSafe(reserveDenoms),
+    getSqsPrices([
+      ...reserveDenoms,
+      ...rawPools.map((p) =>
+        calculdateAlloyAssetDenom(p.raw.contract_address, p.raw.instantiate_msg)
+      ),
+    ]),
+  ])
 
   const pools = await Promise.all(
     rawPools.map((p) =>
-      fillPoolOverview(p, assetMap, statusMap, frontendNames, provenance)
+      fillPoolOverview(
+        p,
+        assetMap,
+        statusMap,
+        frontendNames,
+        provenance,
+        sqsPrices
+      )
     )
   )
 

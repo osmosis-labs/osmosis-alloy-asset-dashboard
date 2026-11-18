@@ -55,9 +55,8 @@ export const fetchWithRetry = async (
     : new Error(`fetchWithRetry failed for ${String(input)}`)
 }
 
-// Headers for server-side reads from sqs.osmosis.zone: the Osmosis Foundation
-// integrator token (Worker secret OSMOSIS_ENDPOINTS_TOKEN) when it is set,
-// which raises the rate limit. Requests work without it.
+// Headers for server-side SQS reads: the Osmosis Foundation integrator token
+// (Worker secret OSMOSIS_ENDPOINTS_TOKEN) when it is set. Use with sqsBaseUrl.
 export const sqsHeaders = (): Record<string, string> => {
   const token =
     typeof process !== "undefined"
@@ -65,6 +64,16 @@ export const sqsHeaders = (): Record<string, string> => {
       : undefined
   return token ? { "X-API-TOKEN": token } : {}
 }
+
+// Server-side SQS host. The token only takes effect on the integrators host,
+// which rejects requests without it (403) and allows 25 requests a second.
+// Without a token, the public host: it ignores the token, allows 5 a second
+// per IP, and bans an IP that sends more than 20 in one second for an hour,
+// answering 403 meanwhile.
+export const sqsBaseUrl = () =>
+  sqsHeaders()["X-API-TOKEN"]
+    ? "https://sqs.integrators.osmosis.zone"
+    : "https://sqs.osmosis.zone"
 
 // lcd.osmosis.zone bans any IP that makes more than 20 requests within 1s for
 // 12h (fail2ban; every response status counts, 429s included) and rate-limits
