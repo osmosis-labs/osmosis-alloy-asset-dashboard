@@ -63,7 +63,9 @@ const MIN_LIQUIDITY = 10
 // (surfaced in the Not Supported table, not hidden). Migration alloys are
 // exempt: they are listed for as long as the migration runs.
 const MIN_SUPPORTED_TVL_USD = 10_000
-const BASE_POOLS_URL = `https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
+const BASE_POOLS_API_URL =
+  "https://app.osmosis.zone/api/edge-trpc-pools/pools.getPools"
+const BASE_POOLS_URL = `${BASE_POOLS_API_URL}?input=%7B%22json%22%3A%7B%22limit%22%3A100%2C%22types%22%3A%5B%22cosmwasm%22%2C%22cosmwasm-transmuter%22%2C%22cosmwasm-alloyed%22%5D%2C%22minLiquidityUsd%22%3A${MIN_LIQUIDITY}%7D%7D`
 const BASE_LIQUIDITY_CHART_URL =
   "https://public-osmosis-api.numia.xyz/pools/liquidity/{poolId}/over_time"
 // The public SQS deployment. The frontend's own host (sqsprod) answers 403 to
@@ -121,6 +123,42 @@ const byPrevalence = <
 >(
   coins: T[]
 ) => _.sortBy(coins, (c) => -reserveValue(c))
+
+// The alloy's SQS price, or null. Where SQS cannot price a token onchain it
+// falls back to CoinGecko, so an alloy whose variants have no market left
+// still gets its real price here. The frontend's getAssetPrice is an onchain
+// spot quote instead, which for such an alloy runs through whatever thin pools
+// remain (allLINK read $2.15 there against LINK's $9.15).
+const getSqsAlloyPrice = async (alloyDenom: string) => {
+  try {
+    const response = await fetchWithRetry(
+      BASE_PRICE_URL.replace("{denoms}", alloyDenom),
+      { headers: sqsHeaders() }
+    )
+    if (!response.ok) return null
+    const quotes = (await response.json())?.[alloyDenom]
+    const price = Number(_.values(quotes)[0])
+    // Same sanity bound as the alloy price below.
+    return price > 0 && price <= 1_000_000 ? price : null
+  } catch (e) {
+    console.error(`Error fetching SQS alloy price: ${e}`)
+    return null
+  }
+}
+
+// The pools API's TVL counts only the variants SQS can price, so an alloy
+// whose variants have no market left (a deprecated alloy nobody pairs with)
+// reads $0 however much it holds. Before demoting such a pool as dust, its
+// reserves are valued at the alloy's price (the variants share the alloy's
+// unit), as the pool page's backing figure does (poolBacking). 0 when the
+// alloy has no usable price.
+const alloyPricedBackingUsd = async (
+  alloyDenom: string,
+  reserveCoins: { currency: CurrencyAmount }[]
+) => {
+  const price = await getSqsAlloyPrice(alloyDenom)
+  return price === null ? 0 : _.sumBy(reserveCoins, reserveValue) * price
+}
 
 const withFrontendName = (
   asset: AssetWithDecimal | undefined,
@@ -191,12 +229,20 @@ const fillPoolOverview = async (
   //      a variant whose pools-API decimals differ from its assetlist
   //      decimals (the swap form converts amounts with the assetlist's):
   //      shares, headroom and signed swap amounts would all be wrong.
-  const tvlUsd = Number(market.totalFiatValueLocked.amount)
-  const isBelowMinTvl =
-    !migration && Number.isFinite(tvlUsd) && tvlUsd < MIN_SUPPORTED_TVL_USD
   const hasUnknownDecimals = reserveCoins.some(
     (c) => typeof c.currency.currency.coinDecimals !== "number"
   )
+  const tvlUsd = Number(market.totalFiatValueLocked.amount)
+  const isBelowMinTvl =
+    !migration &&
+    Number.isFinite(tvlUsd) &&
+    tvlUsd < MIN_SUPPORTED_TVL_USD &&
+    !(
+      alloyAssetDetail &&
+      !hasUnknownDecimals &&
+      (await alloyPricedBackingUsd(alloyDenom, reserveCoins)) >=
+        MIN_SUPPORTED_TVL_USD
+    )
   const decimalSourcesDisagree = reserveCoins.filter(
     (c) => c.asset && c.asset.decimal !== c.currency.currency.coinDecimals
   )
@@ -350,12 +396,28 @@ const fillPoolOverview = async (
   let alloyAssetPrice = await getAssetPrice(alloyDenom)
   if (alloyAssetPrice && Number(alloyAssetPrice?.amount) > 1000000)
     alloyAssetPrice = null
+  // No variant has a price of its own, and the pools API values the pool at
+  // under half of what its reserves are worth at the SQS alloy price: the
+  // alloy has no market left, and the frontend's spot quote reflects only the
+  // thin pools that remain. Use the SQS price (see getSqsAlloyPrice) instead.
+  // A liquid alloy whose variants SQS happens not to price keeps the
+  // frontend's price.
+  const sqsAlloyPrice =
+    !migration && _.isEmpty(prices) ? await getSqsAlloyPrice(alloyDenom) : null
+  const noMarketPrice =
+    sqsAlloyPrice !== null &&
+    tvlUsd < (_.sumBy(valuedCoins, reserveValue) * sqsAlloyPrice) / 2
+      ? sqsAlloyPrice
+      : null
+  if (alloyAssetPrice && noMarketPrice !== null) {
+    alloyAssetPrice = { ...alloyAssetPrice, amount: String(noMarketPrice) }
+  }
   if (!alloyAssetPrice) {
     // A redemption pool's alloy shares the native's unit; its stToken is worth
     // more, so averaging the two would overprice the alloy.
     const foundAssetPrice = migration?.redemption
       ? (prices as Record<string, number>)[migration.to]
-      : _.chain(prices).values().compact().mean().value()
+      : _.chain(prices).values().compact().mean().value() || noMarketPrice
     if (foundAssetPrice) {
       alloyAssetPrice = {
         fiat: {
@@ -578,6 +640,61 @@ const getMigrationRawPools = async (
 // transmuter contract upgrade rolls out a code ID not yet added to the env).
 const ALLOYED_POOL_TYPES = ["cosmwasm-alloyed", "cosmwasm-transmuter"]
 
+// The minLiquidityUsd filter on BASE_POOLS_URL also drops an alloy whose
+// variants SQS cannot price: SQS values that pool at $0 however much it holds.
+// Its holders still need its page (backing, and how to redeem), so each listed
+// alloy missing from the filtered list is fetched again by its denom, without
+// the filter. A failure only leaves those alloys out, as before.
+const getUnpricedAlloyRawPools = async (
+  listed: RawPoolOverview[],
+  assetMap: _.Dictionary<AssetWithDecimal>
+): Promise<RawPoolOverview[]> => {
+  const listedContracts = new Set(listed.map((p) => p.raw.contract_address))
+  const missing = Object.keys(assetMap).filter((denom) => {
+    const contract = denom.match(/^factory\/([^/]+)\/alloyed\//)?.[1]
+    return contract !== undefined && !listedContracts.has(contract)
+  })
+  const wanted = new Set(missing.map((denom) => denom.split("/")[1]))
+  // The API takes at most 8 denoms per request.
+  const batches = await Promise.all(
+    _.chunk(missing, 8).map(async (denoms) => {
+      const input = {
+        json: {
+          limit: 100,
+          types: ["cosmwasm", ...ALLOYED_POOL_TYPES],
+          denoms,
+        },
+      }
+      try {
+        const response = await fetchWithRetry(
+          `${BASE_POOLS_API_URL}?input=${encodeURIComponent(JSON.stringify(input))}`
+        )
+        if (!response.ok) {
+          throw new Error(`${response.status} ${response.statusText}`)
+        }
+        return await response
+          .json()
+          .then((d) => d.result.data.json.items as RawPoolOverview[])
+      } catch (e) {
+        console.error(`[getUnpricedAlloyRawPools] ${e}`)
+        return []
+      }
+    })
+  )
+  // The denom filter also returns pools that trade the alloy (orderbooks,
+  // CL pools): keep only each alloy's own transmuter, once.
+  return _.uniqBy(
+    batches
+      .flat()
+      .filter(
+        (p) =>
+          wanted.has(p.raw.contract_address) &&
+          ALLOYED_POOL_TYPES.includes(p.type)
+      ),
+    "id"
+  )
+}
+
 export const getRawPoolsOverview = async () => {
   let response: Response
   try {
@@ -678,14 +795,15 @@ const buildPoolsOverview = async (): Promise<PoolsOverviewResult> => {
     throw new Error("asset map is empty; refusing to build all-unsupported set")
   }
 
-  const listed = new Set(data.map((p) => p.id))
+  const unpriced = await getUnpricedAlloyRawPools(data, assetMap)
+  const listed = new Set([...data, ...unpriced].map((p) => p.id))
   const supplemented = await getMigrationRawPools(
     Object.keys(MIGRATION_ALLOYS).filter((id) => !listed.has(id)),
     assetMap,
     frontendSymbols,
     frontendNames
   )
-  const rawPools = [...data, ...supplemented]
+  const rawPools = [...data, ...unpriced, ...supplemented]
 
   const provenance = await getVariantProvenanceSafe(
     rawPools.flatMap((p) =>

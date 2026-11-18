@@ -12,6 +12,7 @@ import {
   getPoolSources,
   isCorruptedVariant,
   isPayoutVariant,
+  poolBacking,
   reserveValue,
   SOURCE_GROUPINGS,
 } from "@/lib/pool-sources"
@@ -90,6 +91,19 @@ export default function PoolPage({ loaderData }: Route.ComponentProps) {
     pool.reserveCoins?.reduce((acc, a) => acc + reserveValue(a), 0) ||
     0
   const isMigration = isMigrationPool(pool)
+  // Variants SQS cannot price have no market left on Osmosis, and a plain
+  // swap out of the alloy then routes through whatever thin pools remain.
+  // The notice needs both signals: the variants have no price of their own
+  // (valued at the alloy price by poolBacking), and the pools API (SQS
+  // liquidity cap, a separate source) values the pool at under half its
+  // backing. A failed price fetch alone, or a small unpriced variant in an
+  // otherwise liquid alloy, does not show it.
+  const backing = poolBacking(pool)
+  const apiTvlUsd = Number(pool.totalFiatValueLocked?.amount)
+  const unpricedVariants =
+    backing.usd !== null && apiTvlUsd < backing.usd / 2
+      ? backing.atAlloyPrice
+      : []
   const groupedSources = {
     issuer: getPoolSources(pool, "issuer"),
     origin: getPoolSources(pool, "origin"),
@@ -163,6 +177,28 @@ export default function PoolPage({ loaderData }: Route.ComponentProps) {
             </div>
           </div>
         </div>
+        {!isMigration && unpricedVariants.length > 0 && (
+          <div
+            role="note"
+            className="w-full rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-start text-sm"
+          >
+            <p className="font-semibold">
+              No market for {unpricedVariants.join(", ")} on Osmosis
+            </p>
+            <p>
+              There is little or no trading liquidity for this pool&apos;s
+              backing, so swapping {pool.alloy.asset.symbol} straight into
+              another token can return far less than it is worth. Its backing is
+              unaffected: to exit at full value, redeem{" "}
+              {pool.alloy.asset.symbol} 1:1 for the backing asset with{" "}
+              <Link to={`/swap?pool=${pool.id}`} className="underline">
+                Transmuter Swap
+              </Link>{" "}
+              (no fee), then bridge it out to its origin chain and sell it
+              there.
+            </p>
+          </div>
+        )}
         <PoolStats
           pool={pool}
           totalAmount={totalAmount}
