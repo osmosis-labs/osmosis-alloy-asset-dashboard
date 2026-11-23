@@ -107,6 +107,13 @@ const dropRedundantLiveSnapshot = (
   if (points.length <= 1) return points
 
   const [live, ...daily] = points
+
+  // During a stall Numia's "now" snapshot can come back as 0 for every pool
+  // at once (2026-11-23), which would plunge each line to $0 on the last day.
+  // An empty or unpriced snapshot is a missing reading, not a drained pool: a
+  // pool that really empties shows 0 in the daily series once aggregated.
+  if (!(Number(live?.liquidity_usd) > 0)) return daily
+
   const liveAt = dayjs.utc(live?.timestamp)
   const latestDailyAt = dayjs.utc(daily[0]?.timestamp)
 
